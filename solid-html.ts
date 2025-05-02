@@ -61,8 +61,10 @@ function assignAttribute(elem: Element, name: string, value: any) {
     }
     elem.removeAttribute(name);
   } else if (name[0] === "@") {
-    // const delegate = DelegatedEvents.has(name.slice(1))
-    addEventListener(elem, name.slice(1), value, false);
+    let delegate = DelegatedEvents.has(name.slice(1))
+    // delegate = false
+    //delegated events dont seem to work properly
+    addEventListener(elem, name.slice(1), value, delegate);
     elem.removeAttribute(name);
   } else if (name[0] === ".") {
     if (typeof value === "function") {
