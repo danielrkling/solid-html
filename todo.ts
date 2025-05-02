@@ -45,6 +45,7 @@ const App = () => {
           required
           .value=${() => newTitle()}
           @input=${(e) => setTitle(e.currentTarget.value)}
+          
         />
         <button>+</button>
       </form>
@@ -61,7 +62,7 @@ const App = () => {
             .value=${todo.title}
             @change=${(e) => setTodos(i(), "title", e.currentTarget.value)}
           />
-          <button @click=${() => setTodos((t) => removeIndex(t, i()))}>
+          <button ...=${{onClick:() => setTodos((t) => removeIndex(t, i())) }}>
             x
           </button>
         </div>`})}
