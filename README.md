@@ -22,7 +22,7 @@ h(For,{each:()=>[1,2,3], children: (item)=>h("li",{textContent:item})})
 
 ## `html` function
 
-`html` uses lit-html style syntax. The main advantage of this is vscode extensions for lit-html now also work for this (Formatting, TS featues). The explicit nature makes it very simple as well. `html` will work with custome elements just fine. `html` can only be used for actual html elements not components. Componenets must use `h`
+`html` uses lit-html style syntax. The main advantage of this is vscode extensions for lit-html now also work for this (Formatting, TS featues). The explicit nature makes it very simple as well. `html` will work with custome elements just fine. `html` can only be used for actual html elements not components. Componenets must use `h`. Element tags cannot be dynamic.
 
 Attributes
 - `$ref` - accepts callback with the element at creation time ($so vscode extension doesnt give warning)
