@@ -20,6 +20,7 @@ import {
   assign,
   SVGElements,
   createDynamic,
+  delegateEvents,
 } from "solid-js/web";
 
 //These could probably be more unique
@@ -62,9 +63,8 @@ function assignAttribute(elem: Element, name: string, value: any) {
     elem.removeAttribute(name);
   } else if (name[0] === "@") {
     let delegate = DelegatedEvents.has(name.slice(1))
-    // delegate = false
-    //delegated events dont seem to work properly
     addEventListener(elem, name.slice(1), value, delegate);
+    delegateEvents([name.slice(1)])
     elem.removeAttribute(name);
   } else if (name[0] === ".") {
     if (typeof value === "function") {
