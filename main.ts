@@ -39,17 +39,7 @@ function App() {
 
   setInterval(increment,1000)
 
-  const result = [
-    h("button", ({
-      onClick: () => setShow(p => !p),
-      textContent: () => String(show())
-    })),
-    w(Counter, {}),
-    // Show(show,w(Counter,{})),
-    h(ctx.Provider,{value:[count,setCount],children:h(B,{})}),
-    
-  ]
-  return result
+  return html`<div ${"hole"}=${"Hole Value"} ${"Second hole"}=${"123"}>Hello ${"World!"}</div>`
 }
 
 function B(){  
@@ -61,7 +51,7 @@ function B(){
       textContent: () => String(show())
     })),
     h(Consumer,{}),
-    ()=>h(Consumer,{}),
+    h(Consumer,{}),
     w(Counter, {}),
     // Show(show,w(Counter,{})),
   ]

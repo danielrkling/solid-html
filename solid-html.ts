@@ -45,13 +45,17 @@ function getTemplate(strings: TemplateStringsArray): HTMLTemplateElement {
   if (template === undefined) {
     template = document.createElement("template");
     template.innerHTML = strings.join(marker);
+    
     let html = template.innerHTML;
+    console.log(html)
     //The markers placed at attributes will get quotes sourrounding it so we can replace those without touching the child markers
     html = html.replaceAll(`"${marker}"`, `"${attributeMarker}"`);
     //turn remaining markers into comments
     html = html.replaceAll(marker, childMarker);
+    console.log(html)
     template.innerHTML = html;
     templateCache.set(strings, template)
+    console.log(template)
   }
   return template;
 }
@@ -75,7 +79,7 @@ function assignAttribute(elem: Element, name: string, value: any) {
     let delegate = DelegatedEvents.has(event)
     addEventListener(elem, event, value, delegate);
     if (delegate) delegateEvents([event])
-    // elem.removeAttribute(name);
+    elem.removeAttribute(name);
   } else if (name[0] === ".") {
     if (typeof value === "function") {
       effect(() => {
@@ -115,10 +119,18 @@ export function html(
       const node = walker.currentNode;
       if (node.nodeType === 1) {
         for (const attr of [...(node as Element).attributes]) {
-          if (attr.value === attributeMarker) {
-            const value = values[i++];
-            assignAttribute(node as Element, attr.name, value);
+          if (attr.name === marker.toLowerCase()){
+            if (attr.value === attributeMarker){
+              assignAttribute(node as Element, values[i++], values[i++]);
+            }else{
+              assignAttribute(node as Element, "...", values[i++])
+            }
+            (node as Element).removeAttribute(attr.name)
           }
+          else if (attr.value === attributeMarker) {
+            assignAttribute(node as Element, attr.name, values[i++]);
+          }
+
         }
       } else if (node.nodeType === 8) {
         if (node.nodeValue === childNodeValue) {
