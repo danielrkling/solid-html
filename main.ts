@@ -1,69 +1,23 @@
 import { createDynamic, render, style } from "solid-js/web";
-import { createComponent, createContext, createEffect, createSignal, useContext, Show as _Show, children, For } from "solid-js";
-import { html, h, Show, Keyed, wrapProps,  w, fragment } from "./solid-html";
+import { createComponent, createContext, createEffect, createSignal, useContext, Show as _Show, children, For, createResource } from "solid-js";
+import { html, h, Show, Keyed, wrapProps, fragment, create, Suspense, Switch, Match } from "./solid-html";
 
 
 
-const [count, setCount] = createSignal(0);
-const increment = () => setCount(count => count + 5);
-
-setInterval(increment, 2000)
-const ctx = createContext([count, setCount])
-
-function Consumer() {
-  const [count,] = useContext(ctx)
-
-  return html`<div>${count}</div>`
+async function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
-
-
-function Counter() {
-  const [count, setCount] = createSignal(0);
-  const increment = () => setCount(count => count + 1);
-
-
-  return html`<button type="button" @click=${increment}>
-    Count: ${count}
-  </button>
-  `
-
-}
-
 
 
 
 function App() {
-  const [show, setShow] = createSignal(true)
-  const [count, setCount] = createSignal(0);
-  const increment = () => setCount(count => count + 1);
+  const [message] = createResource(()=>wait(2000).then(()=>"Hello"))
 
-  setInterval(increment, 1000)
+  
 
-  return html`<div ...${{ style: "color:red" }}>Hello ${"World!"}</div>`
+  return Switch(null,Match(()=>))
 }
 
-function A() {
-  const [show, setShow] = createSignal(true)
 
-  return html`<button @click=${() => setShow(v => !v)}>${() => String(show())}</button>
-  ${h(Counter, {})}
-  ${h(_Show, { when: () => show(), children: h(Counter, {}) })}
-  ${h(_Show, { when: () => show(), children: ()=>h(Counter, {}) })}`
 
-}
-
-function B() {
-
-  const [show, setShow] = createSignal(true)
-  return fragment(
-    h("button", ({
-      onClick: () => setShow(p => !p),
-      textContent: () => String(show())
-    })),
-    h(Counter, {}),
-    h(_Show, { when: () => show(), children: h(Counter, {}) }),
-    h(_Show, { when: () => show(), children: () => h(Counter, {}) }),
-  )
-}
-
-render(() => html`<div>${h(A)}</div><div>${h(B)}</div>`, document.getElementById("app")!);
+render(() => h(App,{}), document.getElementById("app")!);

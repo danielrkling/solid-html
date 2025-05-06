@@ -2,18 +2,40 @@
 
 This library is an alternative to h and html provided by solid-js for a no-build solution made to work with lit-html tooling.
 
-## `h` function
+## `h` and `create` function
 
-`h` uses createElement / createComponent and changes `()=>value` to getters on props
+`create` will create a component using uses createElement / createComponent and changes `()=>value` to getters on props. 
 
+In order to have components render in the right context, create has to be called within the context of the parent component. This is done with the `h` function.
 
+`h` wraps `create` to return an accessor to the component. Most of the time you will want to use `h`. However, this wrappin gcan cause issues when trying to render an array that reads a signal in one of its entries. The solution for this opt out of the wrap using the `create` function.
+
+Prebuilt wrappers for Show (keyed=false), Keyed (Show w/ keyed=true), For, Index, and Suspense are included for more concise code. 
 
 ```typescript
 h("button",{onClick:()=>alert("Alert"), children: "Click Me"})
 
-// In order to have components render in the right context, you will need to wrap children in components with a ()=> function. If context doesnt matter for that component you can omit
-h(Show,{when: ()=>show(),children: ()=>html`<span>Hello</span>`})
-h(For,{each:()=>[1,2,3], children: (item)=>()=>h("li",{textContent:item})})
+// Using default control flow components
+h(Show,{when: ()=>show(),children: html`<span>Hello</span>`})
+h(For,{each:()=>[1,2,3], children: (item)=>h("li",{textContent:item})})
+
+//using solid-html wrappers
+Show(()=>show(),html`<span>Hello</span>`,"Fallback")
+For(()=>[1,2,3],(item)=>h("li",{textContent:item}),"Fallback")
+
+//Issue with arrays
+function B() {
+
+  const [count, setCount] = createSignal(0);
+  setInterval(()=>setCount(v=>v+1),2000)
+
+  return [
+    ()=>count(),
+    h(Counter, {}), //Will reset state when count changes
+    create(Counter, {}), //Does not reset state when count changes
+
+  ]
+}
 
 ```
 

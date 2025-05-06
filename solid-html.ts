@@ -36,7 +36,6 @@ const attributeMarker = `$Attribute$`;
 const childNodeValue = `$Child$`
 const childMarker = `<!--${childNodeValue}-->`;
 const spreadMarker = `...${marker.toLowerCase()}`
-const isComponenet = Symbol("isComponent")
 
 const templateCache = new WeakMap<TemplateStringsArray, any>();
 
@@ -146,26 +145,23 @@ export function h<T extends ValidComponent>(
   component: T,
   props: PossibleFunction<ComponentProps<T>>
 ): JSX.Element {
+  return (() => create(component, props)) as unknown as JSX.Element
+}
+
+export function create<T extends ValidComponent>(
+  component: T,
+  props: PossibleFunction<ComponentProps<T>>
+): JSX.Element {
   if (typeof component === "string") {
-    return (() => {
-      const elem = document.createElement(component)
-      spread(elem, wrapProps(props))
-      return elem
-    }) as unknown as JSX.Element
-
-  } else
-    if (typeof component === "function") {
-      return (() => createComponent(component, wrapProps(props))) as unknown as JSX.Element
-    }
+    const elem = document.createElement(component)
+    spread(elem, wrapProps(props))
+    return elem
+  } else if (typeof component === "function") {
+    return createComponent(component, wrapProps(props))
+  }
 }
 
 
-export function fragment(...children: JSX.Element[]) {
-  return children.map(c => (typeof c === "function") ?
-    //@ts-expect-error 
-    c() :
-    c)
-}
 
 const ONCE = Symbol("ONCE")
 export function once<T extends (...args: any[]) => any>(fn: T): T {
@@ -269,19 +265,19 @@ export function Suspense(children: JSX.Element, fallback?: JSX.Element) {
 }
 
 
+export function Switch(fallback: JSX.Element, ...children: JSX.Element[]) {
+  return h(_Switch, { children, fallback });
+}
 
+export function Match<T>(when: () => (T | undefined | null | false),
+  children: JSX.Element | ((item: T) => JSX.Element)) {
+  //@ts-expect-error
+  return h(_Match, { when, children, keyed: false })
+}
 
-// const match = Symbol("Match")
-// //Wrapper function for Suspsense
-// export function Switch(...children: JSX.Element[]) {
-//   const fallback = children.find(c => c && !c[match])
-//   const _children = children.filter(c => c && c[match])
-//   return createComponent(_Switch, { children: _children, fallback });
-// }
+export function MatchKeyed<T>(when: () => (T | undefined | null | false),
+  children: JSX.Element | ((item: T) => JSX.Element)) {
+  //@ts-expect-error
 
-// export function Match<T>(when: () => (T | undefined | null | false),
-//   children: JSX.Element | ((item: T) => JSX.Element)) {
-//   var comp = createComponent(_Match, { when, children })
-//   comp[match] = true
-//   return comp;
-// }
+  return h(_Match, { when, children, keyed: true })
+}
