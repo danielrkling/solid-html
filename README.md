@@ -4,21 +4,20 @@ This library is an alternative to h and html provided by solid-js for a no-build
 
 ## `h` function
 
-`h` is essentially just a wrapper around `createDynamic` to make it lazy and change `()=>value` to getters on props
+`h` uses createElement / createComponent and changes `()=>value` to getters on props
 
-For componenets with overloads (Show) the types for properties may cause issues.
+
 
 ```typescript
-export function h<T extends ValidComponent>(
-  component: T,
-  props: PossibleFunction<ComponentProps<T>>
-): JSX.Element {
-  return (() => createDynamic(() => component, wrapProps(props))) as unknown as JSX.Element;
-}
-
 h("button",{onClick:()=>alert("Alert"), children: "Click Me"})
-h(For,{each:()=>[1,2,3], children: (item)=>h("li",{textContent:item})})
+
+// In order to have components render in the right context, you will need to wrap children in components with a ()=> function. If context doesnt matter for that component you can omit
+h(Show,{when: ()=>show(),children: ()=>html`<span>Hello</span>`})
+h(For,{each:()=>[1,2,3], children: (item)=>()=>h("li",{textContent:item})})
+
 ```
+
+
 
 ## `html` function
 
@@ -27,7 +26,7 @@ h(For,{each:()=>[1,2,3], children: (item)=>h("li",{textContent:item})})
 Attributes
 - `$ref` - accepts callback with the element at creation time ($so vscode extension doesnt give warning)
 - `...` - Spread Syntax - This will use solid property names applied to the element (e.g. onClick or on:click)
-- `@event` - Attaches listener to the element same as on:click (Not sure how to delegate here)
+- `@event` - Attaches delegated listener to the element
 - `.prop` - Applies value as element property
 - `?attr` - Toggle boolean attribute
 - `attr` - Plain attribute
@@ -36,7 +35,36 @@ Children
 - `${value}` can be placed within the content of an element 
 
 ```typescript
-html`<button class=${"flex"} ?disabled=${()=>false} @click=${()=>alert("Alert")}>Click ${"Me"}</button>`
+
+//Static properties
+html`<div class=${"container"}>Content</div>` ✅ // Class applied as an attribute
+html`<div class="${"container"}">Content</div>` ✅ // Surrounding quotes works (quotes get added automatically if not)
+html`<input .value=${"Text"} />` ✅ // Applying a property to an element
+html`<button ?disabled=${false}>Click Me</button>` ✅ // Toggle boolean attributes
+html`<button @click=${()=>console.log("Clicked!")}>Click</button>` ✅ // Attaching an event listener
+html`<input ...${{ onInput: (e) => console.log(e.target.value) }} />` ✅ // Spread syntax for properties
+html`<div $ref=${(el) => console.log(el)}>Hello</div>` ✅ // Using a ref callback
+
+
+//Reactive properties
+html`<div class=${()=>reactiveValue()}>Content</div>` ✅ // Class applied as an attribute
+html`<input .value=${()=>reactiveValue()} />` ✅ // Applying a property to an element
+html`<button ?disabled=${()=>reactiveValue()}>Click Me</button>` ✅ // Toggle boolean attributes
+html`<input ...${()=>reactiveValue()} />` ✅ // Spread syntax for properties
+
+//Child values
+html`<p>${"Dynamic Content"}</p>` ✅ // Static text inside an element
+html`<p>${()=>reactiveValue()}</p>` ✅ // Dynamic text inside an element
+html`<p>${html`<b>Content</b>`}</p>` ✅ // template inside an element
+html`<p>${h("b",{children:"Content"})}</p>` ✅ // h inside an element
+
+
+// Not supported
+html`<${dynamicTag}>Hello</${dynamicTag}>` ❌ // Element tags **cannot** be dynamic, use createDyanmic from solid-js
+html`<MyComponent></MyComponent>` ❌ // Components **must** use `h`, not `html`
+html`<div class="btn ${"bg-blue"}" ></MyComponent>` ❌ // attribute values must be 100% static or 100% dynamic
+html`<div ${dynamicName}="value" ></MyComponent>` ❌ // attribute names cannot be dynamic, use spread instead
+html`<div ${dynamicName}=${value} ></MyComponent>` ❌ // attribute names cannot be dynamic, use spread instead
 ```
 
 ## Examples
@@ -128,4 +156,36 @@ const App = () => {
 };
 
 render(App, document.getElementById("app")!);
+```
+
+### Children ownership
+
+In both components A and B, the first and second counters run in the base component context and so does not reset state when show changes. (This is not the intended behavior the second)
+
+The 3rd counter properly runs with show as the owner and will reset state
+
+```typescript
+function A() {
+  const [show, setShow] = createSignal(true)
+
+  return html`<button @click=${() => setShow(v => !v)}>${() => String(show())}</button>
+  ${h(Counter, {})}
+  ${h(_Show, { when: () => show(), children: h(Counter, {}) })}
+  ${h(_Show, { when: () => show(), children: ()=>h(Counter, {}) })}`
+
+}
+
+function B() {
+
+  const [show, setShow] = createSignal(true)
+  return [
+    h("button", ({
+      onClick: () => setShow(p => !p),
+      textContent: () => String(show())
+    })),
+    h(Counter, {}),
+    h(_Show, { when: () => show(), children: h(Counter, {}) }),
+    h(_Show, { when: () => show(), children: () => h(Counter, {}) })
+  ]
+}
 ```

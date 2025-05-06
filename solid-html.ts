@@ -35,6 +35,8 @@ const marker = "$Marker$";
 const attributeMarker = `$Attribute$`;
 const childNodeValue = `$Child$`
 const childMarker = `<!--${childNodeValue}-->`;
+const spreadMarker = `...${marker.toLowerCase()}`
+const isComponenet = Symbol("isComponent")
 
 const templateCache = new WeakMap<TemplateStringsArray, any>();
 
@@ -45,23 +47,21 @@ function getTemplate(strings: TemplateStringsArray): HTMLTemplateElement {
   if (template === undefined) {
     template = document.createElement("template");
     template.innerHTML = strings.join(marker);
-    
+
     let html = template.innerHTML;
-    console.log(html)
     //The markers placed at attributes will get quotes sourrounding it so we can replace those without touching the child markers
     html = html.replaceAll(`"${marker}"`, `"${attributeMarker}"`);
     //turn remaining markers into comments
     html = html.replaceAll(marker, childMarker);
-    console.log(html)
     template.innerHTML = html;
+    // console.log(html)
     templateCache.set(strings, template)
-    console.log(template)
   }
   return template;
 }
 
 function assignAttribute(elem: Element, name: string, value: any) {
-  if (name === "...") {
+  if (name === spreadMarker) {
     const isSvg = SVGElements.has(elem.tagName);
     if (typeof value === "function") {
       effect(() => assign(elem, value(), isSvg, true));
@@ -119,15 +119,7 @@ export function html(
       const node = walker.currentNode;
       if (node.nodeType === 1) {
         for (const attr of [...(node as Element).attributes]) {
-          if (attr.name === marker.toLowerCase()){
-            if (attr.value === attributeMarker){
-              assignAttribute(node as Element, values[i++], values[i++]);
-            }else{
-              assignAttribute(node as Element, "...", values[i++])
-            }
-            (node as Element).removeAttribute(attr.name)
-          }
-          else if (attr.value === attributeMarker) {
+          if (attr.value === attributeMarker || attr.name === spreadMarker) {
             assignAttribute(node as Element, attr.name, values[i++]);
           }
 
@@ -143,7 +135,7 @@ export function html(
     }
     return [...clone.childNodes];
   }
-  return render as unknown as JSX.Element;
+  return (render) as unknown as JSX.Element
 }
 
 export type PossibleFunction<T extends Record<string, any>> = {
@@ -155,21 +147,32 @@ export function h<T extends ValidComponent>(
   props: PossibleFunction<ComponentProps<T>>
 ): JSX.Element {
   if (typeof component === "string") {
-    const elem = document.createElement(component)
-    spread(elem, wrapProps(props))
-    return elem
+    return (() => {
+      const elem = document.createElement(component)
+      spread(elem, wrapProps(props))
+      return elem
+    }) as unknown as JSX.Element
+
   } else
     if (typeof component === "function") {
-      return createComponent(component, wrapProps(props))
+      return (() => createComponent(component, wrapProps(props))) as unknown as JSX.Element
     }
 }
 
-export function w<T extends ValidComponent>(
-  component: T,
-  props: PossibleFunction<ComponentProps<T>>
-): JSX.Element {
-  return (()=>h(component,props)) as unknown as JSX.Element
+
+export function fragment(...children: JSX.Element[]) {
+  return children.map(c => (typeof c === "function") ?
+    //@ts-expect-error 
+    c() :
+    c)
 }
+
+const ONCE = Symbol("ONCE")
+export function once<T extends (...args: any[]) => any>(fn: T): T {
+  fn[ONCE] = true
+  return fn
+}
+
 
 //Reaplces Accessor props with getters
 export function wrapProps<
@@ -177,20 +180,24 @@ export function wrapProps<
   TProps extends PossibleFunction<ComponentProps<TComponent>>
 >(props: TProps = {} as TProps): ComponentProps<TComponent> {
   const descriptors = Object.getOwnPropertyDescriptors(props);
-  for (const key in descriptors) {
+  for (const [key, descriptor] of Object.entries(descriptors)) {
+    // console.log(key,descriptor)
     if (
       key !== "ref" &&
       key.slice(0, 2) !== "on" &&
-      typeof descriptors[key].value === "function" &&
-      descriptors[key].value.length === 0
+      typeof descriptor.value === "function" &&
+      (descriptor.value.length === 0) &&
+      !descriptor.value[ONCE]
     ) {
-      const src = props[key] as () => any;
+      const src = descriptor.value;
       Object.defineProperty(props, key, {
         get() {
           return src();
         },
         enumerable: true,
       });
+
+
     }
   }
   return props as ComponentProps<TComponent>;
@@ -199,23 +206,23 @@ export function wrapProps<
 //Wrapper function to correct types
 export function Show(
   when: () => boolean,
-  children: JSX.Element,
-  fallback?: JSX.Element
+  children: JSX.Element | (() => JSX.Element),
+  fallback?: JSX.Element | (() => JSX.Element)
 ) {
   return h(_Show, ({
-    when, 
-    children, 
-    fallback, 
+    when,
+    children,
+    fallback,
     //@ts-expect-error
     keyed: false
   }));
 }
 
 //Wrapper function for keyed show
-export function Keyed<T, TRenderFunction extends (item: NonNullable<T>) => JSX.Element>(
+export function Keyed<T>(
   when: () => T,
-  children: JSX.Element | TRenderFunction,
-  fallback?: JSX.Element
+  children: JSX.Element | ((item: NonNullable<T>) => JSX.Element),
+  fallback?: JSX.Element | (() => JSX.Element)
 ) {
   return h(_Show, {
     when,
@@ -232,11 +239,11 @@ export function For<T extends readonly any[]>(
   children: (item: T[number], index: () => number) => JSX.Element,
   fallback?: JSX.Element
 ) {
-  return createComponent(_For, {
+  return h(_For, {
     get each() {
       return each();
     },
-    children: children,
+    children: once(children),
     fallback,
   });
 }
@@ -247,18 +254,18 @@ export function Index<T extends readonly any[]>(
   children: (item: () => T[number], index: number) => JSX.Element,
   fallback?: JSX.Element
 ) {
-  return createComponent(_Index, {
+  return h(_Index, {
     get each() {
       return each();
     },
-    children,
+    children: once(children),
     fallback,
   });
 }
 
 //Wrapper function for Suspsense
 export function Suspense(children: JSX.Element, fallback?: JSX.Element) {
-  return createComponent(_Suspense, { children, fallback });
+  return h(_Suspense, { children, fallback });
 }
 
 

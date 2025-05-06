@@ -1,17 +1,17 @@
-import { createDynamic, render } from "solid-js/web";
-import { createComponent, createContext, createEffect, createSignal, useContext, Show as _Show } from "solid-js";
-import { html, h, Show, Keyed, wrapProps, For, w } from "./solid-html";
+import { createDynamic, render, style } from "solid-js/web";
+import { createComponent, createContext, createEffect, createSignal, useContext, Show as _Show, children, For } from "solid-js";
+import { html, h, Show, Keyed, wrapProps,  w, fragment } from "./solid-html";
 
 
 
 const [count, setCount] = createSignal(0);
 const increment = () => setCount(count => count + 5);
 
-setInterval(increment,2000)
-const ctx = createContext([count,setCount])
+setInterval(increment, 2000)
+const ctx = createContext([count, setCount])
 
-function Consumer(){
-  const [count, ] = useContext(ctx)
+function Consumer() {
+  const [count,] = useContext(ctx)
 
   return html`<div>${count}</div>`
 }
@@ -37,24 +37,33 @@ function App() {
   const [count, setCount] = createSignal(0);
   const increment = () => setCount(count => count + 1);
 
-  setInterval(increment,1000)
+  setInterval(increment, 1000)
 
-  return html`<div ${"hole"}=${"Hole Value"} ${"Second hole"}=${"123"}>Hello ${"World!"}</div>`
+  return html`<div ...${{ style: "color:red" }}>Hello ${"World!"}</div>`
 }
 
-function B(){  
+function A() {
+  const [show, setShow] = createSignal(true)
+
+  return html`<button @click=${() => setShow(v => !v)}>${() => String(show())}</button>
+  ${h(Counter, {})}
+  ${h(_Show, { when: () => show(), children: h(Counter, {}) })}
+  ${h(_Show, { when: () => show(), children: ()=>h(Counter, {}) })}`
+
+}
+
+function B() {
 
   const [show, setShow] = createSignal(true)
-  return [
+  return fragment(
     h("button", ({
       onClick: () => setShow(p => !p),
       textContent: () => String(show())
     })),
-    h(Consumer,{}),
-    h(Consumer,{}),
-    w(Counter, {}),
-    // Show(show,w(Counter,{})),
-  ]
+    h(Counter, {}),
+    h(_Show, { when: () => show(), children: h(Counter, {}) }),
+    h(_Show, { when: () => show(), children: () => h(Counter, {}) }),
+  )
 }
 
-render(() => h(App, {}), document.getElementById("app")!);
+render(() => html`<div>${h(A)}</div><div>${h(B)}</div>`, document.getElementById("app")!);
