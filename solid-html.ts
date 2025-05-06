@@ -1,33 +1,29 @@
 import {
-  type Component,
-  type ComponentProps,
-  createComponent,
   For as _For,
   Index as _Index,
-  type JSX,
+  Match as _Match,
   Show as _Show,
   Suspense as _Suspense,
-  type ValidComponent,
-  Match as _Match,
   Switch as _Switch,
-  mapArray,
-  Accessor,
+  ErrorBoundary as _ErrorBoundary,
+  createComponent,
+  type ComponentProps,
+  type JSX,
+  type ValidComponent,
+  Context
 } from "solid-js";
 import {
+  DelegatedEvents,
+  SVGElements,
   addEventListener,
+  assign,
+  delegateEvents,
   effect,
   insert,
   setAttribute,
   setBoolAttribute,
   setProperty,
-  DelegatedEvents,
-  assign,
-  SVGElements,
-  createDynamic,
-  delegateEvents,
-  Portal as _Portal,
-  spread,
-
+  spread
 } from "solid-js/web";
 
 //These could probably be more unique
@@ -37,10 +33,8 @@ const childNodeValue = `$Child$`
 const childMarker = `<!--${childNodeValue}-->`;
 const spreadMarker = `...${marker.toLowerCase()}`
 
+
 const templateCache = new WeakMap<TemplateStringsArray, any>();
-
-const walker = document.createTreeWalker(document, 129);
-
 function getTemplate(strings: TemplateStringsArray): HTMLTemplateElement {
   let template = templateCache.get(strings);
   if (template === undefined) {
@@ -103,6 +97,7 @@ function assignAttribute(elem: Element, name: string, value: any) {
   }
 }
 
+const walker = document.createTreeWalker(document, 129);
 export function html(
   strings: TemplateStringsArray,
   ...values: any[]
@@ -137,20 +132,22 @@ export function html(
   return (render) as unknown as JSX.Element
 }
 
-export type PossibleFunction<T extends Record<string, any>> = {
-  [K in keyof T]: K extends `on${string}` | "ref" ? T[K] : T[K] | (() => T[K]);
+export type MaybeFunction<T> = T | (()=>T)
+
+export type MaybeFunctionProps<T extends Record<string, any>> = {
+  [K in keyof T]: K extends `on${string}` | "ref" ? T[K] : MaybeFunction<T[K]>;
 };
 
 export function h<T extends ValidComponent>(
   component: T,
-  props: PossibleFunction<ComponentProps<T>>
+  props: MaybeFunctionProps<ComponentProps<T>>
 ): JSX.Element {
   return (() => create(component, props)) as unknown as JSX.Element
 }
 
 export function create<T extends ValidComponent>(
   component: T,
-  props: PossibleFunction<ComponentProps<T>>
+  props: MaybeFunctionProps<ComponentProps<T>>
 ): JSX.Element {
   if (typeof component === "string") {
     const elem = document.createElement(component)
@@ -173,7 +170,7 @@ export function once<T extends (...args: any[]) => any>(fn: T): T {
 //Reaplces Accessor props with getters
 export function wrapProps<
   TComponent extends ValidComponent,
-  TProps extends PossibleFunction<ComponentProps<TComponent>>
+  TProps extends MaybeFunctionProps<ComponentProps<TComponent>>
 >(props: TProps = {} as TProps): ComponentProps<TComponent> {
   const descriptors = Object.getOwnPropertyDescriptors(props);
   for (const [key, descriptor] of Object.entries(descriptors)) {
@@ -202,8 +199,8 @@ export function wrapProps<
 //Wrapper function to correct types
 export function Show(
   when: () => boolean,
-  children: JSX.Element | (() => JSX.Element),
-  fallback?: JSX.Element | (() => JSX.Element)
+  children:  MaybeFunction<JSX.Element>,
+  fallback?: MaybeFunction<JSX.Element>
 ) {
   return h(_Show, ({
     when,
@@ -218,7 +215,7 @@ export function Show(
 export function Keyed<T>(
   when: () => T,
   children: JSX.Element | ((item: NonNullable<T>) => JSX.Element),
-  fallback?: JSX.Element | (() => JSX.Element)
+  fallback?: MaybeFunction<JSX.Element>
 ) {
   return h(_Show, {
     when,
@@ -230,10 +227,29 @@ export function Keyed<T>(
 }
 
 //Wrapper function for For
+
+
+
+export function Switch(fallback: MaybeFunction<JSX.Element>, ...children: JSX.Element[]) {
+  return h(_Switch, { children, fallback });
+}
+
+export function Match<T>(when: () => (T | undefined | null | false),
+  children: JSX.Element | ((item: T) => JSX.Element)) {
+  //@ts-expect-error
+  return h(_Match, { when, children, keyed: false })
+}
+
+export function MatchKeyed<T>(when: () => (T | undefined | null | false),
+  children: JSX.Element | ((item: T) => JSX.Element)) {
+  //@ts-expect-error
+  return h(_Match, { when, children, keyed: true })
+}
+
 export function For<T extends readonly any[]>(
   each: () => T | false | null | undefined,
   children: (item: T[number], index: () => number) => JSX.Element,
-  fallback?: JSX.Element
+  fallback?: MaybeFunction<JSX.Element>
 ) {
   return h(_For, {
     get each() {
@@ -248,7 +264,7 @@ export function For<T extends readonly any[]>(
 export function Index<T extends readonly any[]>(
   each: () => T | false | null | undefined,
   children: (item: () => T[number], index: number) => JSX.Element,
-  fallback?: JSX.Element
+  fallback?: MaybeFunction<JSX.Element>
 ) {
   return h(_Index, {
     get each() {
@@ -260,24 +276,17 @@ export function Index<T extends readonly any[]>(
 }
 
 //Wrapper function for Suspsense
-export function Suspense(children: JSX.Element, fallback?: JSX.Element) {
+export function Suspense(children: MaybeFunction<JSX.Element>, fallback?: MaybeFunction<JSX.Element>) {
   return h(_Suspense, { children, fallback });
 }
 
-
-export function Switch(fallback: JSX.Element, ...children: JSX.Element[]) {
-  return h(_Switch, { children, fallback });
+export function ErrorBoundary(
+  children: MaybeFunction<JSX.Element>,
+  fallback: MaybeFunction<JSX.Element> | ((err: any, reset: () => void) => JSX.Element)
+): JSX.Element {
+  return h(_ErrorBoundary, { children, fallback })
 }
 
-export function Match<T>(when: () => (T | undefined | null | false),
-  children: JSX.Element | ((item: T) => JSX.Element)) {
-  //@ts-expect-error
-  return h(_Match, { when, children, keyed: false })
-}
-
-export function MatchKeyed<T>(when: () => (T | undefined | null | false),
-  children: JSX.Element | ((item: T) => JSX.Element)) {
-  //@ts-expect-error
-
-  return h(_Match, { when, children, keyed: true })
+export function Context<T>(context: Context<T>, value: T | (() => T), children: MaybeFunction<JSX.Element>) {
+  return h(context.Provider, { value, children })
 }

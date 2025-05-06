@@ -1,23 +1,27 @@
-import { createDynamic, render, style } from "solid-js/web";
-import { createComponent, createContext, createEffect, createSignal, useContext, Show as _Show, children, For, createResource } from "solid-js";
-import { html, h, Show, Keyed, wrapProps, fragment, create, Suspense, Switch, Match } from "./solid-html";
+import { createContext, createResource, useContext } from "solid-js";
+import { render } from "solid-js/web";
+import { Match, Suspense, Switch, create, h, html } from "./solid-html";
 
-
+const ctx = createContext("Global")
 
 async function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function Consumer() {
+
+  return html`<span>${useContext(ctx)}</span>`
+}
 
 
 function App() {
-  const [message] = createResource(()=>wait(2000).then(()=>"Hello"))
+  const [message] = createResource(() => wait(2000).then(() => "Hello"))
 
-  
 
-  return Switch(null,Match(()=>))
+
+  return h(ctx.Provider, { value: "App", children: [h(Consumer,{}), create(Consumer,{})] })
 }
 
 
 
-render(() => h(App,{}), document.getElementById("app")!);
+render(() => h(App, {}), document.getElementById("app")!);

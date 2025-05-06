@@ -1,43 +1,43 @@
-import { createSignal, batch, For, createEffect } from "solid-js";
+import { createSignal, batch, createEffect } from "solid-js";
 import { SetStoreFunction, Store, createStore } from "solid-js/store"
 import { render } from "solid-js/web";
-import { h, html } from "./solid-html";
+import { h, html, For } from "./solid-html";
 
 export function createLocalStore<T extends object>(
-    name: string,
-    init: T
+  name: string,
+  init: T
 ): [Store<T>, SetStoreFunction<T>] {
-    const localState = localStorage.getItem(name);
-    const [state, setState] = createStore<T>(
-        localState ? JSON.parse(localState) : init
-    );
-    createEffect(() => localStorage.setItem(name, JSON.stringify(state)));
-    return [state, setState];
+  const localState = localStorage.getItem(name);
+  const [state, setState] = createStore<T>(
+    localState ? JSON.parse(localState) : init
+  );
+  createEffect(() => localStorage.setItem(name, JSON.stringify(state)));
+  return [state, setState];
 }
 
 export function removeIndex<T>(array: readonly T[], index: number): T[] {
-    return [...array.slice(0, index), ...array.slice(index + 1)];
+  return [...array.slice(0, index), ...array.slice(index + 1)];
 }
 
 type TodoItem = { title: string; done: boolean };
 
 const App = () => {
-    const [newTitle, setTitle] = createSignal("");
-    const [todos, setTodos] = createLocalStore<TodoItem[]>("todo list", []);
+  const [newTitle, setTitle] = createSignal("");
+  const [todos, setTodos] = createLocalStore<TodoItem[]>("todo list", []);
 
-    const addTodo = (e: SubmitEvent) => {
-        e.preventDefault();
-        batch(() => {
-            setTodos(todos.length, {
-                title: newTitle(),
-                done: false,
-            });
-            setTitle("");
-        });
-    };
+  const addTodo = (e: SubmitEvent) => {
+    e.preventDefault();
+    batch(() => {
+      setTodos(todos.length, {
+        title: newTitle(),
+        done: false,
+      });
+      setTitle("");
+    });
+  };
 
-    return (
-        html`
+  return (
+    html`
       <h3>Simple Todos Example</h3>
       <form @submit=${addTodo}>
         <input
@@ -49,9 +49,8 @@ const App = () => {
         />
         <button>+</button>
       </form>
-      ${h(For, {
-            each: () => todos, children: (todo, i) =>
-                html`<div>
+      ${For(() => todos, (todo, i) =>
+      html`<div>
           <input
             type="checkbox"
             ?checked=${() => todo.done}
@@ -62,13 +61,13 @@ const App = () => {
             .value=${todo.title}
             @change=${(e) => setTodos(i(), "title", e.currentTarget.value)}
           />
-          <button ...=${{onClick:() => setTodos((t) => removeIndex(t, i())) }}>
+          <button ...${{ onClick: () => setTodos((t) => removeIndex(t, i())) }}>
             x
           </button>
-        </div>`})}
+        </div>`)}
 
     `
-    );
+  );
 };
 
 render(App, document.getElementById("app")!);
