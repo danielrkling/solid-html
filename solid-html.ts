@@ -143,6 +143,7 @@ export function h<T extends ValidComponent>(
   props: MaybeFunctionProps<ComponentProps<T>>,
   ...children: JSX.Element[]
 ): JSX.Element {
+  //children in spread syntax override children in props
   if (children.length === 1){
     //@ts-expect-error
     props.children = children[0]
