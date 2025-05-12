@@ -140,15 +140,17 @@ export type MaybeFunctionProps<T extends Record<string, any>> = {
 
 export function h<T extends ValidComponent>(
   component: T,
-  props: MaybeFunctionProps<ComponentProps<T>>
+  props: MaybeFunctionProps<ComponentProps<T>>,
+  ...children: JSX.Element[]
 ): JSX.Element {
-  return (() => create(component, props)) as unknown as JSX.Element
-}
+  if (children.length === 1){
+    //@ts-expect-error
+    props.children = children[0]
+  }else if (children.length >1){
+    //@ts-expect-error
+    props.children = children
+  }
 
-export function create<T extends ValidComponent>(
-  component: T,
-  props: MaybeFunctionProps<ComponentProps<T>>
-): JSX.Element {
   if (typeof component === "string") {
     const elem = document.createElement(component)
     spread(elem, wrapProps(props))
@@ -287,6 +289,7 @@ export function ErrorBoundary(
   return h(_ErrorBoundary, { children, fallback })
 }
 
-export function Context<T>(context: Context<T>, value: T | (() => T), children: MaybeFunction<JSX.Element>) {
+//Context must have lazy children
+export function Context<T>(context: Context<T>, value: T | (() => T), children: ()=>JSX.Element) {
   return h(context.Provider, { value, children })
 }

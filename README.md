@@ -2,13 +2,13 @@
 
 This library is an alternative to h and html provided by solid-js for a no-build solution made to work with lit-html tooling.
 
-## `h` and `create` function
+## `h` function
 
-`create` will create a component using uses createElement / createComponent and changes `()=>value` to getters on props. 
+`h` will create a component using uses createElement / createComponent and changes `()=>value` to getters on props.
+Properties with names starting with "on" are omitted as well as if the function has any parameters (fn.length>0). 
 
-In order to have components render in the right context, create has to be called within the context of the parent component. This is done with the `h` function.
+In order to have components render in the right context, `h` has to be wrapped like `()=>h()` for children of context providers or any component providing context within it.
 
-`h` wraps `create` to return an accessor to the component. Most of the time you will want to use `h`. However, this wrappin gcan cause issues when trying to render an array that reads a signal in one of its entries. The solution for this opt out of the wrap using the `create` function.
 
 Prebuilt wrappers for Show (keyed=false), Keyed (Show w/ keyed=true), For, Index, and Suspense are included for more concise code. 
 

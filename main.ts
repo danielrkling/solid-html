@@ -1,6 +1,6 @@
 import { createContext, createResource, useContext } from "solid-js";
 import { render } from "solid-js/web";
-import { Match, Suspense, Switch, create, h, html } from "./solid-html";
+import { Context, Match, Suspense, Switch, h, html } from "./solid-html";
 
 const ctx = createContext("Global")
 
@@ -21,7 +21,6 @@ function App() {
 
   return h(ctx.Provider, { value: "App", children: [h(Consumer,{}), create(Consumer,{})] })
 }
-
 
 
 render(() => h(App, {}), document.getElementById("app")!);
