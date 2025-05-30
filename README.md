@@ -43,7 +43,7 @@ function B() {
 
 ## `html` function
 
-`html` uses lit-html style syntax. The main advantage of this is vscode extensions for lit-html now also work for this (Formatting, TS featues). The explicit nature makes it very simple as well. `html` will work with custome elements just fine. `html` can only be used for actual html elements not components. Componenets must use `h`. Element tags cannot be dynamic.
+`html` uses lit-html style syntax. The main advantage of this is vscode extensions for lit-html now also work for this (Formatting, TS featues). The explicit nature makes it very simple as well. `html` will work with custom elements just fine. `html` can only be used for actual html elements not components. Componenets must use `h`. Element tags cannot be dynamic.
 
 Attributes
 - `$ref` - accepts callback with the element at creation time ($so vscode extension doesnt give warning)
@@ -85,6 +85,7 @@ html`<p>${h("b",{children:"Content"})}</p>` ✅ // h inside an element
 html`<${dynamicTag}>Hello</${dynamicTag}>` ❌ // Element tags **cannot** be dynamic, use createDyanmic from solid-js
 html`<MyComponent></MyComponent>` ❌ // Components **must** use `h`, not `html`
 html`<div class="btn ${"bg-blue"}" ></MyComponent>` ❌ // attribute values must be 100% static or 100% dynamic
+html`<div ${dynamicName} ></MyComponent>` ❌ // attribute names cannot be dynamic, use spread instead
 html`<div ${dynamicName}="value" ></MyComponent>` ❌ // attribute names cannot be dynamic, use spread instead
 html`<div ${dynamicName}=${value} ></MyComponent>` ❌ // attribute names cannot be dynamic, use spread instead
 ```

@@ -1,7 +1,7 @@
 import { createSignal, batch, createEffect } from "solid-js";
 import { SetStoreFunction, Store, createStore } from "solid-js/store"
 import { render } from "solid-js/web";
-import { h, html, For } from "./solid-html";
+import { h, html, For } from "../src";
 
 export function createLocalStore<T extends object>(
   name: string,

@@ -1,6 +1,6 @@
 import { createContext, createResource, useContext } from "solid-js";
 import { render } from "solid-js/web";
-import { Context, Match, Suspense, Switch, h, html } from "./solid-html";
+import { Context, Match, Suspense, Switch, h, html } from "../src";
 
 const ctx = createContext("Global")
 
@@ -15,11 +15,8 @@ function Consumer() {
 
 
 function App() {
-  const [message] = createResource(() => wait(2000).then(() => "Hello"))
 
-
-
-  return h(ctx.Provider, { value: "App", children: [h(Consumer,{}), create(Consumer,{})] })
+  return html`<div  ...${{"attr1":1}} .class=${"red"} >${"Child"}</div>`
 }
 
 
