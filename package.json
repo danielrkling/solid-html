@@ -2,7 +2,7 @@
   "name": "solid-html",
   "version": "1.0.0",
   "description": "A package for using SolidJS with HTML.",
-  "main": "dist/index.js",
+  "main": "dist/index.esm.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "vite build",
@@ -21,10 +21,16 @@
   "author": "Daniel Kling danielrkling@gmail.com",
   "license": "MIT",
   "dependencies": {
-    "solid-js": "^1.9.6",
-    "vite-plugin-dts": "^4.5.4"
+    "solid-js": "^1.9.6"    
   },
   "devDependencies": {
-    "vite": "^6.3.4"
+    "vite": "^6.3.4",
+    "vite-plugin-dts": "^4.5.4"
+  },
+    "exports": {
+    ".": {
+      "import": "./index.mjs",
+      "types": "./index.d.ts"
+    }
   }
 }
