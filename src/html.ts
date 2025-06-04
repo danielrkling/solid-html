@@ -1,17 +1,17 @@
 import {
-    type JSX
+  type JSX
 } from "solid-js";
 import {
-    DelegatedEvents,
-    SVGElements,
-    addEventListener,
-    assign,
-    delegateEvents,
-    effect,
-    insert,
-    setAttribute,
-    setBoolAttribute,
-    setProperty
+  DelegatedEvents,
+  SVGElements,
+  addEventListener,
+  assign,
+  delegateEvents,
+  effect,
+  insert,
+  setAttribute,
+  setBoolAttribute,
+  setProperty
 } from "solid-js/web";
 
 //These could probably be more unique
@@ -103,6 +103,13 @@ export function html(
         for (const attr of [...(node as Element).attributes]) {
           if (attr.value === attributeMarker || attr.name === spreadMarker) {
             assignAttribute(node as Element, attr.name, values[i++]);
+          } else if (attr.value.includes(childMarker)) {
+            const strings = attr.value.split(childMarker);
+            let parts = [strings[0]] as any[]
+            for (let j = 1; j < strings.length; j++) {
+              parts.push(values[i++], strings[j]);
+            }
+            assignAttribute(node as Element, attr.name, () => parts.map(v => typeof v === "function" ? v() : v).join(''));
           }
 
         }

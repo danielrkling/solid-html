@@ -4,10 +4,12 @@ This library is an alternative to h and html provided by solid-js for a no-build
 
 ## `h` function
 
-`h` will create a component using uses createElement / createComponent and changes `()=>value` to getters on props.
-Properties with names starting with "on" are omitted as well as if the function has any parameters (fn.length>0). 
+`h` will create a component using uses createElement / createComponent and will wrap `()=>value` props in getters under the following conditions:
+ - property name !== "ref" or begins with "on"
+ - function has length of 0 meaning no arguments
+ - function is not registered with `once`
 
-In order to have components render in the right context, `h` has to be wrapped like `()=>h()` for children of context providers or any component providing context within it.
+In order to have components render in the right context, `h` may have to be wrapped like `()=>h()` for children of context providers or any component providing context within it.
 
 
 Prebuilt wrappers for Show (keyed=false), Keyed (Show w/ keyed=true), For, Index, and Suspense are included for more concise code. 
@@ -85,7 +87,7 @@ html`<p>${h("b",{children:"Content"})}</p>` ✅ // h inside an element
 html`<${dynamicTag}>Hello</${dynamicTag}>` ❌ // Element tags **cannot** be dynamic, use createDyanmic from solid-js
 html`<MyComponent></MyComponent>` ❌ // Components **must** use `h`, not `html`
 html`<div class="btn ${"bg-blue"}" ></MyComponent>` ❌ // attribute values must be 100% static or 100% dynamic
-html`<div ${dynamicName} ></MyComponent>` ❌ // attribute names cannot be dynamic, use spread instead
+html`<div ${dynamicName} ></MyComponent>` ❌ // boolean attribute names cannot be dynamic, use spread instead
 html`<div ${dynamicName}="value" ></MyComponent>` ❌ // attribute names cannot be dynamic, use spread instead
 html`<div ${dynamicName}=${value} ></MyComponent>` ❌ // attribute names cannot be dynamic, use spread instead
 ```
