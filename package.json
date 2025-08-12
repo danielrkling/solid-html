@@ -21,13 +21,14 @@
   "author": "Daniel Kling danielrkling@gmail.com",
   "license": "MIT",
   "dependencies": {
-    "solid-js": "^1.9.6"    
+    "solid-js": "^1.9.6"
   },
   "devDependencies": {
+    "@solidjs/router": "^0.15.3",
     "vite": "^6.3.4",
     "vite-plugin-dts": "^4.5.4"
   },
-    "exports": {
+  "exports": {
     ".": {
       "import": "./index.mjs",
       "types": "./index.d.ts"

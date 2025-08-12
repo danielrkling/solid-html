@@ -120,7 +120,7 @@ export function html(
         }
       } else if (node.nodeType === 8) {
         if (node.nodeValue === markerMatch) {
-          // node.nodeValue = i.toString();
+          node.nodeValue = `${marker}${valueIndex}` //I don't know why but this prevents misplaced elements
           const value = values[valueIndex++];
           const parent = node.parentNode;
           if (parent) insert(parent, value, node);
