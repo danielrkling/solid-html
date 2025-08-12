@@ -12,7 +12,7 @@ This library is an alternative to h and html provided by solid-js for a no-build
 In order to have components render in the right context, `h` may have to be wrapped like `()=>h()` for children of context providers or any component providing context within it.
 
 
-Prebuilt wrappers for Show (keyed=false), Keyed (Show w/ keyed=true), For, Index, and Suspense are included for more concise code. 
+Prebuilt wrappers for Show (keyed=false), Keyed (Show w/ keyed=true), For, Index, and Suspense are included for more concise code and type checking. 
 
 ```typescript
 h("button",{onClick:()=>alert("Alert"), children: "Click Me"})
@@ -48,12 +48,12 @@ function B() {
 `html` uses lit-html style syntax. The main advantage of this is vscode extensions for lit-html now also work for this (Formatting, TS featues). The explicit nature makes it very simple as well. `html` will work with custom elements just fine. `html` can only be used for actual html elements not components. Componenets must use `h`. Element tags cannot be dynamic.
 
 Attributes
-- `$ref` - accepts callback with the element at creation time ($so vscode extension doesnt give warning)
+- `` - accepts callback with the element at creation time ($so vscode extension doesnt give warning)
 - `...` - Spread Syntax - This will use solid property names applied to the element (e.g. onClick or on:click)
-- `@event` - Attaches delegated listener to the element
-- `.prop` - Applies value as element property
-- `?attr` - Toggle boolean attribute
-- `attr` - Plain attribute
+- `@event=` - Attaches delegated listener to the element
+- `.prop=` - Applies value as element property
+- `?attr=` - Toggle boolean attribute
+- `attr=` - Plain attribute
 
 Children
 - `${value}` can be placed within the content of an element 
