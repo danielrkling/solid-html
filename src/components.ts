@@ -64,7 +64,7 @@ export function Match<T>(when: () => (T | undefined | null | false),
 
 export function MatchKeyed<T>(when: () => (T | undefined | null | false),
   children: JSX.Element | ((item: T) => JSX.Element)) {
-  //@ts-expect-error
+  // @ts-expect-error
   return h(_Match, { when, children, keyed: true })
 }
 
