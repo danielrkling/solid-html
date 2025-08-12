@@ -14,7 +14,6 @@ import { Dynamic, NoHydration, Portal } from 'solid-js/web'
 
 
 const defaultRegistry = {
-
     For,
     Index,
     Match,
@@ -46,7 +45,6 @@ function getXml(strings: TemplateStringsArray) {
             `<xml ${xmlns}>${contents}</xml>`,
             'text/xml',
         ).firstChild!;
-        console.log(xml)
         xmlCache.set(strings, xml)
     }
     return xml.childNodes;
