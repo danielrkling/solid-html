@@ -4,15 +4,17 @@ This library is an alternative to h and html provided by solid-js for a no-build
 
 ## `h` function
 
-`h` will create a component using uses createElement / createComponent and will wrap `()=>value` props in getters under the following conditions:
+`h` will create a component using createElement for strings and createComponent for functions. 
+
+It will wrap `()=>value` props in getters under the following conditions:
  - property name !== "ref" or begins with "on"
- - function has length of 0 meaning no arguments
+ - function has length of 0 (no arguments)
  - function is not registered with `once`
 
-In order to have components render in the right context, `h` may have to be wrapped like `()=>h()` for children of context providers or any component providing context within it.
+In order to have components render in the right context, `h` may have to be wrapped like `()=>h()` for children of context providers or any component providing context within it. This delays the creation of the element to after the context is set.
 
 
-Prebuilt wrappers for Show (keyed=false), Keyed (Show w/ keyed=true), For, Index, and Suspense are included for more concise code and type checking. 
+### Examples
 
 ```typescript
 h("button",{onClick:()=>alert("Alert"), children: "Click Me"})
@@ -45,15 +47,15 @@ function B() {
 
 ## `html` function
 
-`html` uses lit-html style syntax. The main advantage of this is vscode extensions for lit-html now also work for this (Formatting, TS featues). The explicit nature makes it very simple as well. `html` will work with custom elements just fine. `html` can only be used for actual html elements not components. Componenets must use `h`. Element tags cannot be dynamic.
+`html` uses lit-html style syntax. The main advantage of this is vscode extensions for lit-html now also work for this (Formatting, TS featues). The explicit nature makes it very simple as well. `html` will work with custom elements just fine. `html` can only be used for actual html elements not components. Componenets must use `h` or `xml`. Element tags cannot be dynamic. `svg` and `mathml` are also exporting and should only be used for fragments within svgs or mathml tags.
 
 Attributes
-- `` - accepts callback with the element at creation time ($so vscode extension doesnt give warning)
-- `...` - Spread Syntax - This will use solid property names applied to the element (e.g. onClick or on:click)
-- `@event=` - Attaches delegated listener to the element
-- `.prop=` - Applies value as element property
-- `?attr=` - Toggle boolean attribute
-- `attr=` - Plain attribute
+- `${}` - accepts callback with the element at creation time
+- `...${}` - Spread Syntax - This will use solid property names applied to the element (e.g. onClick or on:click)
+- `@event=${}` - Attaches delegated listener to the element
+- `.prop=${}` - Applies value as element property
+- `?attr=${}` - Toggle boolean attribute
+- `attr=${}` - Plain attribute
 
 Children
 - `${value}` can be placed within the content of an element 
@@ -61,13 +63,16 @@ Children
 ```typescript
 
 //Static properties
-html`<div class=${"container"}>Content</div>` ✅ // Class applied as an attribute
-html`<div class="${"container"}">Content</div>` ✅ // Surrounding quotes works (quotes get added automatically if not)
-html`<input .value=${"Text"} />` ✅ // Applying a property to an element
-html`<button ?disabled=${false}>Click Me</button>` ✅ // Toggle boolean attributes
+html`<div class="container">Content</div>` ✅ // Attribute applied without binding
+html`<div class=${"container"}>Content</div>` ✅ // Attribute applied with binding
+html`<div class="btn ${"bg-blue"}">Content</div>` ✅ // Attribute applied with multi-part binding
+html`<button disabled>Click Me</button>` ✅ // Boolean attribute applied without binding
+html`<button ?disabled=${false}>Click Me</button>` ✅ // Boolean attribute applied with binding
 html`<button @click=${()=>console.log("Clicked!")}>Click</button>` ✅ // Attaching an event listener
 html`<input ...${{ onInput: (e) => console.log(e.target.value) }} />` ✅ // Spread syntax for properties
-html`<div $ref=${(el) => console.log(el)}>Hello</div>` ✅ // Using a ref callback
+html`<input .value=${3} />` ✅ // Applying a property to an element. **Must** use binding
+html`<input .value="Text ${"MoreText"}" />` ✅ // Multi-part bindings for string properties
+html`<div ${(el) => console.log(el)}>Hello</div>` ✅ // Any binding inside an element that is not attribute is a ref callback
 
 
 //Reactive properties
@@ -81,15 +86,64 @@ html`<p>${"Dynamic Content"}</p>` ✅ // Static text inside an element
 html`<p>${()=>reactiveValue()}</p>` ✅ // Dynamic text inside an element
 html`<p>${html`<b>Content</b>`}</p>` ✅ // template inside an element
 html`<p>${h("b",{children:"Content"})}</p>` ✅ // h inside an element
-
+html`<p>${jsx`<b>Content</b>`}</p>` ✅ // jsx inside an element
 
 // Not supported
 html`<${dynamicTag}>Hello</${dynamicTag}>` ❌ // Element tags **cannot** be dynamic, use createDyanmic from solid-js
-html`<MyComponent></MyComponent>` ❌ // Components **must** use `h`, not `html`
-html`<div class="btn ${"bg-blue"}" ></MyComponent>` ❌ // attribute values must be 100% static or 100% dynamic
-html`<div ${dynamicName} ></MyComponent>` ❌ // boolean attribute names cannot be dynamic, use spread instead
-html`<div ${dynamicName}="value" ></MyComponent>` ❌ // attribute names cannot be dynamic, use spread instead
-html`<div ${dynamicName}=${value} ></MyComponent>` ❌ // attribute names cannot be dynamic, use spread instead
+html`<MyComponent></MyComponent>` ❌ // Components **must** use `h` or `jsx`, not `html`
+html`<div ${dynamicName}="value" ></div>` ❌ // attribute names cannot be dynamic, use spread instead
+html`<div ${dynamicName}=${value} ></div>` ❌ // attribute names cannot be dynamic, use spread instead
+html`<input .value="Text" />` ❌ // Properties must have a binding
+```
+## XML Function
+`xml` parses the template as XML and calls h on each element. Components can be defined on the global xml function or a local xml function. Taken from https://pota.quack.uy/XML and applied to Solid. Context works as expected. Component and Attributes names must be valid XML
+
+```typescript
+const ctx = createContext("Default")
+
+xml.define({ Counter, Provider: ctx.Provider })
+
+function App() {
+    return xml`<For each=${["A","B","C"]}>${(v)=>xml`<Provider value=${v}><Counter></Counter></Provider>`}</For>`
+}
+
+
+function Counter() {
+    const [count, setCount] = createSignal(0)
+    return xml`<div><button on:click=${()=>setCount(v=>v+1)} >Button ${useContext(ctx)}: ${count}</button></div>`
+}
+```
+
+### Notes
+- `children` as an attribute will be used as long as the node doesnt have any `childNodes` (just like in JSX). It must be totally empty, or else the children attribute will be ignored
+- on `xml.define` the registry is case sensitive
+- on `xml.define` it is possible to define a component named div, and make all divs behave differently. This is a warning, not a recommendation.
+
+## Components
+
+Prebuilt wrappers for Solid's control for components are exported for more concise code and correct type checking.
+
+
+```typescript
+function Show(when: () => boolean, children: JSX.Element, fallback?: JSX.Element): JSX.Element;
+
+function Keyed<T>(when: () => T, children: JSX.Element | ((item: NonNullable<T>) => JSX.Element), fallback?: JSX.Element): JSX.Element;
+
+function For<T extends readonly any[]>(each: () => T | false | null | undefined, children: (item: T[number], index: () => number) => JSX.Element, fallback?: JSX.Element): JSX.Element;
+
+function Index<T extends readonly any[]>(each: () => T | false | null | undefined, children: (item: () => T[number], index: number) => JSX.Element, fallback?: JSX.Element): JSX.Element;
+
+function Context<T>(context: Context<T>, value: T | (() => T), children: () => JSX.Element): JSX.Element;
+
+function Suspense(children: JSX.Element, fallback?: JSX.Element): JSX.Element;
+
+function ErrorBoundary(children: JSX.Element, fallback: JSX.Element | ((err: any, reset: () => void) => JSX.Element)): JSX.Element;
+
+function Switch(fallback: JSX.Element, ...children: JSX.Element[]): JSX.Element;
+
+function Match<T>(when: () => (T | undefined | null | false), children: JSX.Element | ((item: T) => JSX.Element)): JSX.Element;
+
+function MatchKeyed<T>(when: () => (T | undefined | null | false), children: JSX.Element | ((item: T) => JSX.Element)): JSX.Element;
 ```
 
 ## Examples

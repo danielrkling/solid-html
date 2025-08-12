@@ -59,7 +59,7 @@ function getValue(value: any) {
 }
 const toArray = Array.from
 
-function toH(jsx: ReturnType<typeof JSX>, cached: NodeList, values: any[]) {
+function toH(jsx: ReturnType<typeof XML>, cached: NodeList, values: any[]) {
     let index = 0
     function nodes(node: any) {
         // console.log(node)
@@ -91,7 +91,7 @@ function toH(jsx: ReturnType<typeof JSX>, cached: NodeList, values: any[]) {
 
             ; /[A-Z]/.test(tagName) &&
                 !jsx.components[tagName] &&
-                console.warn(`html: Forgot to jsx.define({ ${tagName} })?`)
+                console.warn(`xml: Forgot to jsx.define({ ${tagName} })?`)
 
             return h(jsx.components[tagName] || tagName, props)
         } else if (node.nodeType === 3) {
@@ -118,7 +118,7 @@ function toH(jsx: ReturnType<typeof JSX>, cached: NodeList, values: any[]) {
                 return document.createComment(value)
             }
         } else {
-            console.error(`jsx: nodeType not supported ${node.nodeType}`)
+            console.error(`xml: nodeType not supported ${node.nodeType}`)
         }
     }
 
@@ -126,20 +126,20 @@ function toH(jsx: ReturnType<typeof JSX>, cached: NodeList, values: any[]) {
 }
 
 
-export function JSX() {
+export function XML() {
 
-    function jsx(template: TemplateStringsArray, ...values: any[]) {
-        return toH(jsx, getXml(template), values)
+    function xml(template: TemplateStringsArray, ...values: any[]) {
+        return toH(xml, getXml(template), values)
     }
 
-    jsx.components = { ...defaultRegistry }
-    jsx.define = (userComponents: Record<string, any>) => {
+    xml.components = { ...defaultRegistry }
+    xml.define = (userComponents: Record<string, any>) => {
         for (const name in userComponents) {
-            jsx.components[name] = userComponents[name]
+            xml.components[name] = userComponents[name]
         }
     }
 
-    return jsx
+    return xml
 }
 
-export const jsx = JSX()
+export const xml = XML()

@@ -105,7 +105,7 @@ export const HTML_RESULT = 1;
 export const SVG_RESULT = 2;
 export const MATHML_RESULT = 3;
 
-type ResultType = typeof HTML_RESULT | typeof SVG_RESULT | typeof MATHML_RESULT;
+export type ResultType = typeof HTML_RESULT | typeof SVG_RESULT | typeof MATHML_RESULT;
 
 // export const html = tag(HTML_RESULT);
 
