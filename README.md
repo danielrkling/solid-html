@@ -113,11 +113,29 @@ function Counter() {
     return xml`<div><button on:click=${()=>setCount(v=>v+1)} >Button ${useContext(ctx)}: ${count}</button></div>`
 }
 ```
+The following components are the default registry.
+
+```typescript
+const defaultRegistry = {
+    For,
+    Index,
+    Match,
+    Suspense,
+    ErrorBoundary,
+    Show,
+    Switch,
+    Dynamic,
+    Portal,
+    NoHydration
+}
+```
 
 ### Notes
 - `children` as an attribute will be used as long as the node doesnt have any `childNodes` (just like in JSX). It must be totally empty, or else the children attribute will be ignored
 - on `xml.define` the registry is case sensitive
 - on `xml.define` it is possible to define a component named div, and make all divs behave differently. This is a warning, not a recommendation.
+
+
 
 ## Components
 
