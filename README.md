@@ -173,8 +173,24 @@ function Counter() {
   const increment = () => setCount(count => count + 1);
 
   return html`<button type="button" @click=${increment}>
-  Count: ${count}
-</button>`
+    Count: ${count}
+  </button>`
+}
+
+function Counter() {
+  const [count, setCount] = createSignal(0);
+  const increment = () => setCount(count => count + 1);
+
+  return xml`<button type="button" onClick=${increment}>
+    Count: ${count}
+  </button>`
+}
+
+function Counter() {
+  const [count, setCount] = createSignal(0);
+  const increment = () => setCount(count => count + 1);
+
+  return h("button",{type:"button",onClick:increment},()=>`Count: ${count()}`)
 }
 ```
 
