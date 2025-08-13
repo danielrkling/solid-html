@@ -57,7 +57,7 @@ export function h<T extends ValidComponent>(
 }
 
 
-const markedOnce = new WeakSet();
+export const markedOnce = new WeakSet();
 
 /**
  * Marks a function so it is not wrapped as a getter by h().
