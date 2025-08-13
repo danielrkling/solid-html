@@ -12,6 +12,19 @@ const doc = document;
 
 //#endregion
 //#region src/h.ts
+/**
+
+* Hyperscript function for Solid-compatible components and elements. Accepts a component or tag name, props, and children.
+
+* Children passed as arguments override `children` in props.
+
+* @example
+
+* h("button", { onClick: () => alert("Hi") }, "Click Me")
+
+* h(MyComponent, { foo: 1 }, html`<span>Child</span>`)
+
+*/
 function h(component, props, ...children) {
 	if (children.length === 1) props.children = children[0];
 	else if (children.length > 1) props.children = children;
@@ -22,10 +35,26 @@ function h(component, props, ...children) {
 	} else if (isFunction(component)) return createComponent(component, wrapProps(props));
 }
 const markedOnce = /* @__PURE__ */ new WeakSet();
+/**
+
+* Marks a function so it is not wrapped as a getter by h().
+
+* Useful for event handlers or functions that should not be auto-accessed.
+
+* @example
+
+* once(() => doSomething())
+
+*/
 function once(fn) {
 	markedOnce.add(fn);
 	return fn;
 }
+/**
+
+* Internal: Replaces accessor props with getters for reactivity, except for refs and event handlers.
+
+*/
 function wrapProps(props = {}) {
 	for (const [key, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(props))) {
 		const value = descriptor.value;
@@ -41,6 +70,15 @@ function wrapProps(props = {}) {
 
 //#endregion
 //#region src/components.ts
+/**
+
+* Solid-compatible Show component. Renders children if `when` is truthy, otherwise renders `fallback`.
+
+* @example
+
+* Show(() => isVisible(), html`<span>Hello</span>`, "Fallback")
+
+*/
 function Show(when, children, fallback) {
 	return h(Show$1, {
 		when,
@@ -49,7 +87,16 @@ function Show(when, children, fallback) {
 		keyed: false
 	});
 }
-function Keyed(when, children, fallback) {
+/**
+
+* Show component with keyed mode. Renders children with keyed context if `when` is truthy.
+
+* @example
+
+* ShowKeyed(() => user(), user => html`<span>${user.name}</span>`, "No user")
+
+*/
+function ShowKeyed(when, children, fallback) {
 	return h(Show$1, {
 		when,
 		children,
@@ -57,12 +104,30 @@ function Keyed(when, children, fallback) {
 		keyed: true
 	});
 }
+/**
+
+* Switch component for conditional rendering. Renders the first matching child, or `fallback` if none match.
+
+* @example
+
+* Switch("No match", Match(() => cond1(), html`A`), Match(() => cond2(), html`B`))
+
+*/
 function Switch(fallback, ...children) {
 	return h(Switch$1, {
 		children,
 		fallback
 	});
 }
+/**
+
+* Match component for use inside Switch. Renders children if `when` is truthy.
+
+* @example
+
+* Match(() => value() === 1, html`One`)
+
+*/
 function Match(when, children) {
 	return h(Match$1, {
 		when,
@@ -70,6 +135,15 @@ function Match(when, children) {
 		keyed: false
 	});
 }
+/**
+
+* Keyed Match component for use inside Switch. Renders children with keyed context if `when` is truthy.
+
+* @example
+
+* MatchKeyed(() => user(), user => html`<span>${user.name}</span>`)
+
+*/
 function MatchKeyed(when, children) {
 	return h(Match$1, {
 		when,
@@ -77,6 +151,15 @@ function MatchKeyed(when, children) {
 		keyed: true
 	});
 }
+/**
+
+* For component for iterating over arrays. Renders children for each item in `each`.
+
+* @example
+
+* For(() => items(), (item) => html`<li>${item}</li>`)
+
+*/
 function For(each, children, fallback) {
 	return h(For$1, {
 		get each() {
@@ -86,6 +169,15 @@ function For(each, children, fallback) {
 		fallback
 	});
 }
+/**
+
+* Index component for iterating over arrays by index. Renders children for each item in `each`.
+
+* @example
+
+* Index(() => items(), (item, i) => html`<li>${item()}</li>`)
+
+*/
 function Index(each, children, fallback) {
 	return h(Index$1, {
 		get each() {
@@ -95,18 +187,45 @@ function Index(each, children, fallback) {
 		fallback
 	});
 }
+/**
+
+* Suspense component for async boundaries. Renders `children` or `fallback` while loading.
+
+* @example
+
+* Suspense(html`<div>Loaded</div>`, html`<div>Loading...</div>`)
+
+*/
 function Suspense(children, fallback) {
 	return h(Suspense$1, {
 		children,
 		fallback
 	});
 }
+/**
+
+* ErrorBoundary component. Catches errors in children and renders `fallback` on error.
+
+* @example
+
+* ErrorBoundary(html`<App />`, (err) => html`<div>Error: ${err.message}</div>`)
+
+*/
 function ErrorBoundary(children, fallback) {
 	return h(ErrorBoundary$1, {
 		children,
 		fallback
 	});
 }
+/**
+
+* Context provider component. Provides a context value to all children.
+
+* @example
+
+* Context(MyContext, value, () => html`<Child />`)
+
+*/
 function Context(context, value, children) {
 	return h(context.Provider, {
 		value,
@@ -281,6 +400,13 @@ const getTemplateHtml = (strings, type) => {
 //#region src/html.ts
 const walker = doc.createTreeWalker(doc, 129);
 const templateCache = /* @__PURE__ */ new WeakMap();
+/**
+
+* Returns a parsed template and its bound attributes for a given template string and type.
+
+* @internal
+
+*/
 function getTemplate(strings, type) {
 	let template = templateCache.get(strings);
 	if (template === void 0) {
@@ -288,9 +414,17 @@ function getTemplate(strings, type) {
 		const element = doc.createElement("template");
 		element.innerHTML = html$1;
 		template = [element, attributes];
+		templateCache.set(strings, template);
 	}
 	return template;
 }
+/**
+
+* Assigns a property, attribute, boolean, or event handler to an element, supporting reactivity.
+
+* @internal
+
+*/
 function assignAttribute(elem, name, value) {
 	if (name[0] === "@") {
 		const event = name.slice(1);
@@ -309,6 +443,13 @@ function assignAttribute(elem, name, value) {
 	else if (isFunction(value)) effect(() => setAttribute(elem, name, value()));
 	else setAttribute(elem, name, value);
 }
+/**
+
+* Creates a tagged template function for html/svg/mathml templates with Solid reactivity.
+
+* @internal
+
+*/
 function createHtml(type) {
 	return function html$1(strings, ...values) {
 		function render() {
@@ -355,12 +496,52 @@ function createHtml(type) {
 		return render;
 	};
 }
+/**
+
+* Tagged template for creating reactive HTML templates with Solid. Use for DOM elements only.
+
+*
+
+* @example
+
+* html`<div class="foo">${bar}</div>`
+
+* html`<button @click=${onClick}>Click</button>`
+
+*/
 const html = createHtml(HTML_RESULT);
+/**
+
+* Tagged template for creating reactive SVG templates with Solid. Use inside <svg> only.
+
+*
+
+* @example
+
+* svg`<circle cx="10" cy="10" r="5" />`
+
+*/
 const svg = createHtml(SVG_RESULT);
+/**
+
+* Tagged template for creating reactive MathML templates with Solid. Use inside <math> only.
+
+*
+
+* @example
+
+* mathml`<math><mi>x</mi></math>`
+
+*/
 const mathml = createHtml(MATHML_RESULT);
 
 //#endregion
 //#region src/xml.ts
+/**
+
+* Default registry of built-in Solid control flow and utility components for XML templates.
+
+*/
 const defaultRegistry = {
 	For: For$1,
 	Index: Index$1,
@@ -383,6 +564,13 @@ const marker = "MARKER46846";
 const markerRX = new RegExp(`(${marker})`, "g");
 const markerAttr = new RegExp(`=${marker}`, "g");
 const xmlCache = /* @__PURE__ */ new WeakMap();
+/**
+
+* Parses a template string as XML and returns the child nodes, using a cache for performance.
+
+* @internal
+
+*/
 function getXml(strings) {
 	let xml$1 = xmlCache.get(strings);
 	if (xml$1 === void 0) {
@@ -399,6 +587,13 @@ function getValue(value) {
 	return value;
 }
 const toArray = Array.from;
+/**
+
+* Converts parsed XML nodes and values into Solid hyperscript calls.
+
+* @internal
+
+*/
 function toH(jsx, cached, values) {
 	let index = 0;
 	function nodes(node) {
@@ -431,6 +626,27 @@ function toH(jsx, cached, values) {
 	}
 	return flat(toArray(cached).map(nodes));
 }
+/**
+
+* Creates an XML template tag function for Solid, supporting custom component registries.
+
+* Use `xml.define({ ... })` to add or override components.
+
+*
+
+* @example
+
+* const xml = XML({ MyComponent })
+
+* xml`<MyComponent foo="bar">${child}</MyComponent>`
+
+*
+
+* @param userComponents Custom components to add to the registry.
+
+* @returns An xml template tag function.
+
+*/
 function XML(userComponents = {}) {
 	function xml$1(template, ...values) {
 		return toH(xml$1, getXml(template), values);
@@ -443,8 +659,19 @@ function XML(userComponents = {}) {
 	xml$1.define(userComponents);
 	return xml$1;
 }
+/**
+
+* Default XML template tag for Solid, with built-in registry. Use `xml.define` to add components.
+
+*
+
+* @example
+
+* xml`<For each=${list}>${item => xml`<div>${item}</div>`}</For>`
+
+*/
 const xml = XML();
 
 //#endregion
-export { Context, ErrorBoundary, For, Index, Keyed, Match, MatchKeyed, Show, Suspense, Switch, XML, h, html, mathml, once, svg, wrapProps, xml };
+export { Context, ErrorBoundary, For, Index, Match, MatchKeyed, Show, ShowKeyed, Suspense, Switch, XML, h, html, mathml, once, svg, xml };
 //# sourceMappingURL=index.mjs.map

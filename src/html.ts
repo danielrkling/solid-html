@@ -31,7 +31,13 @@ type Template = [
 
 const walker = doc.createTreeWalker(doc, 129);
 
+
 const templateCache = new WeakMap<TemplateStringsArray, Template>();
+
+/**
+ * Returns a parsed template and its bound attributes for a given template string and type.
+ * @internal
+ */
 function getTemplate(strings: TemplateStringsArray, type: ResultType): Template {
   let template = templateCache.get(strings);
   if (template === undefined) {
@@ -39,10 +45,15 @@ function getTemplate(strings: TemplateStringsArray, type: ResultType): Template 
     const element = doc.createElement("template");
     element.innerHTML = html;
     template = [element, attributes];
+    templateCache.set(strings, template);
   }
   return template;
 }
 
+/**
+ * Assigns a property, attribute, boolean, or event handler to an element, supporting reactivity.
+ * @internal
+ */
 function assignAttribute(elem: Element, name: string, value: any) {
   if (name[0] === "@") {
     const event = name.slice(1);
@@ -74,6 +85,11 @@ function assignAttribute(elem: Element, name: string, value: any) {
   }
 }
 
+
+/**
+ * Creates a tagged template function for html/svg/mathml templates with Solid reactivity.
+ * @internal
+ */
 function createHtml(type: ResultType){
   return function html(
     strings: TemplateStringsArray,
@@ -144,8 +160,30 @@ function createHtml(type: ResultType){
   }
 }
 
+
+/**
+ * Tagged template for creating reactive HTML templates with Solid. Use for DOM elements only.
+ *
+ * @example
+ * html`<div class="foo">${bar}</div>`
+ * html`<button @click=${onClick}>Click</button>`
+ */
 export const html = createHtml(HTML_RESULT)
+
+/**
+ * Tagged template for creating reactive SVG templates with Solid. Use inside <svg> only.
+ *
+ * @example
+ * svg`<circle cx="10" cy="10" r="5" />`
+ */
 export const svg = createHtml(SVG_RESULT)
+
+/**
+ * Tagged template for creating reactive MathML templates with Solid. Use inside <math> only.
+ *
+ * @example
+ * mathml`<math><mi>x</mi></math>`
+ */
 export const mathml = createHtml(MATHML_RESULT)
 
 

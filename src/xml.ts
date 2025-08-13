@@ -14,6 +14,10 @@ import { doc, isFunction } from './util'
 
 
 
+
+/**
+ * Default registry of built-in Solid control flow and utility components for XML templates.
+ */
 const defaultRegistry = {
     For,
     Index,
@@ -36,7 +40,13 @@ const markerRX = new RegExp(`(${marker})`, 'g')
 const markerAttr = new RegExp(`=${marker}`, 'g')
 
 
+
 const xmlCache = new WeakMap<TemplateStringsArray, Node>();
+
+/**
+ * Parses a template string as XML and returns the child nodes, using a cache for performance.
+ * @internal
+ */
 function getXml(strings: TemplateStringsArray) {
     let xml = xmlCache.get(strings);
     if (xml === undefined) {
@@ -58,6 +68,10 @@ function getValue(value: any) {
 }
 const toArray = Array.from
 
+/**
+ * Converts parsed XML nodes and values into Solid hyperscript calls.
+ * @internal
+ */
 function toH(jsx: ReturnType<typeof XML>, cached: NodeList, values: any[]) {
     let index = 0
     function nodes(node: any) {
@@ -125,8 +139,19 @@ function toH(jsx: ReturnType<typeof XML>, cached: NodeList, values: any[]) {
 }
 
 
-export function XML(userComponents: Record<string, any> = {}) {
 
+/**
+ * Creates an XML template tag function for Solid, supporting custom component registries.
+ * Use `xml.define({ ... })` to add or override components.
+ *
+ * @example
+ * const xml = XML({ MyComponent })
+ * xml`<MyComponent foo="bar">${child}</MyComponent>`
+ *
+ * @param userComponents Custom components to add to the registry.
+ * @returns An xml template tag function.
+ */
+export function XML(userComponents: Record<string, any> = {}) {
     function xml(template: TemplateStringsArray, ...values: any[]) {
         return toH(xml, getXml(template), values)
     }
@@ -143,5 +168,12 @@ export function XML(userComponents: Record<string, any> = {}) {
     return xml
 }
 
+
+/**
+ * Default XML template tag for Solid, with built-in registry. Use `xml.define` to add components.
+ *
+ * @example
+ * xml`<For each=${list}>${item => xml`<div>${item}</div>`}</For>`
+ */
 export const xml = XML()
 
