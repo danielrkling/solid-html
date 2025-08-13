@@ -21,26 +21,24 @@ import {
   marker,
   markerMatch,
 } from "./lit-html";
+import { doc, isFunction } from "./util";
 
 
-type Template = {
-  element: HTMLTemplateElement;
-  attributes: string[];
-};
+type Template = [
+  element: HTMLTemplateElement,
+  attributes: string[]
+]
 
-const walker = document.createTreeWalker(document, 129);
+const walker = doc.createTreeWalker(doc, 129);
 
 const templateCache = new WeakMap<TemplateStringsArray, Template>();
 function getTemplate(strings: TemplateStringsArray, type: ResultType): Template {
   let template = templateCache.get(strings);
   if (template === undefined) {
     const [html, attributes] = getTemplateHtml(strings, type);
-    const element = document.createElement("template");
+    const element = doc.createElement("template");
     element.innerHTML = html;
-    template = {
-      element,
-      attributes,
-    };
+    template = [element, attributes];
   }
   return template;
 }
@@ -53,7 +51,7 @@ function assignAttribute(elem: Element, name: string, value: any) {
     if (delegate) delegateEvents([event]);
     elem.removeAttribute(name);
   } else if (name[0] === ".") {
-    if (typeof value === "function") {
+    if (isFunction(value)) {
       effect(() => {
         setProperty(elem, name.slice(1), value());
       });
@@ -62,13 +60,13 @@ function assignAttribute(elem: Element, name: string, value: any) {
     }
     elem.removeAttribute(name);
   } else if (name[0] === "?") {
-    if (typeof value === "function") {
+    if (isFunction(value)) {
       effect(() => setBoolAttribute(elem, name.slice(1), value()));
     } else {
       setBoolAttribute(elem, name.slice(1), value);
     }
   } else {
-    if (typeof value === "function") {
+    if (isFunction(value)) {
       effect(() => setAttribute(elem, name, value()));
     } else {
       setAttribute(elem, name, value);
@@ -82,7 +80,7 @@ function createHtml(type: ResultType){
     ...values: any[]
   ): JSX.Element {
     function render() {
-      const { element, attributes } = getTemplate(strings, type);
+      const [element,attributes] = getTemplate(strings, type);
       const clone = element.content.cloneNode(true);
   
       let valueIndex = 0;
@@ -104,7 +102,7 @@ function createHtml(type: ResultType){
                   parts.push(values[valueIndex++], strings[j]);
                 }
                 assignAttribute(node as Element, attributes[boundAttributeIndex++], () =>
-                  parts.map((v) => (typeof v === "function" ? v() : v)).join("")
+                  parts.map((v) => (isFunction(v) ? v() : v)).join("")
                 );
               }
               (node as Element).removeAttribute(attr.name);
@@ -112,7 +110,7 @@ function createHtml(type: ResultType){
               //Spread
               const isSvg = SVGElements.has((node as Element).tagName);
               const value = values[valueIndex++];
-              if (typeof value === "function") {
+              if (isFunction(value)) {
                 effect(() => assign(node as Element, value(), isSvg, true));
               } else {
                 assign(node as Element, value, isSvg, true);
@@ -121,7 +119,7 @@ function createHtml(type: ResultType){
             } else if (attr.name.startsWith(marker)) {
               //Refs
               const value = values[valueIndex++];
-              if (typeof value === "function") {
+              if (isFunction(value)) {
                 value(node as Element);
               }
               (node as Element).removeAttribute(attr.name);
@@ -130,7 +128,7 @@ function createHtml(type: ResultType){
   
         } else if (node.nodeType === 8) {
           if (node.nodeValue === markerMatch) {
-            node.nodeValue = `${marker}${valueIndex}` //I don't know why, but this prevents misplaced elements
+            node.nodeValue = marker + valueIndex  //I don't know why, but this prevents misplaced elements
             const value = values[valueIndex++];
             const parent = node.parentNode;
             if (parent) insert(parent, value, node);

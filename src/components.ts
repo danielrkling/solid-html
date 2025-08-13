@@ -1,5 +1,5 @@
 import {
-    Context,
+    type Context as _Context,
     ErrorBoundary as _ErrorBoundary,
     For as _For,
     Index as _Index,
@@ -110,6 +110,6 @@ export function ErrorBoundary(
 }
 
 //Context must have lazy children
-export function Context<T>(context: Context<T>, value: T | (() => T), children: ()=>JSX.Element) {
+export function Context<T>(context: _Context<T>, value: T | (() => T), children: ()=>JSX.Element) {
   return h(context.Provider, { value, children })
 }

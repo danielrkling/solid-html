@@ -15,20 +15,6 @@ export const markerMatch = "?" + marker;
 // syntax because it's slightly smaller, but parses as a comment node.
 export const nodeMarker = `<${markerMatch}>`;
 
-const d = document;
-
-// Creates a dynamic marker. We never have to search for these in the DOM.
-const createMarker = () => d.createComment("");
-
-// https://tc39.github.io/ecma262/#sec-typeof-operator
-type Primitive = null | undefined | boolean | number | string | symbol | bigint;
-const isPrimitive = (value: unknown): value is Primitive =>
-  value === null || (typeof value != "object" && typeof value != "function");
-const isArray = Array.isArray;
-const isIterable = (value: unknown): value is Iterable<unknown> =>
-  isArray(value) ||
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  typeof (value as any)?.[Symbol.iterator] === "function";
 
 const SPACE_CHAR = `[ \t\n\f\r]`;
 const ATTR_VALUE_CHAR = `[^ \t\n\f\r"'\`<>=]`;
@@ -107,16 +93,7 @@ export const MATHML_RESULT = 3;
 
 export type ResultType = typeof HTML_RESULT | typeof SVG_RESULT | typeof MATHML_RESULT;
 
-// export const html = tag(HTML_RESULT);
 
-// export const svg = tag(SVG_RESULT);
-
-// export const mathml = tag(MATHML_RESULT);
-
-const walker = d.createTreeWalker(
-  d,
-  129 /* NodeFilter.SHOW_{ELEMENT|COMMENT} */
-);
 
 /**
  * Returns an HTML string for the given TemplateStringsArray and result type

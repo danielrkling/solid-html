@@ -8,8 +8,9 @@ import {
     Suspense,
     Switch,
 } from 'solid-js'
-import h from 'solid-js/h'
+import {h} from './h'
 import { Dynamic, NoHydration, Portal } from 'solid-js/web'
+import { doc, isFunction } from './util'
 
 
 
@@ -52,7 +53,7 @@ function getXml(strings: TemplateStringsArray) {
 
 const flat = (arr: any) => (arr.length === 1 ? arr[0] : arr)
 function getValue(value: any) {
-    while (typeof value === 'function') value = value()
+    while (isFunction(value)) value = value()
     return value
 }
 const toArray = Array.from
@@ -91,7 +92,7 @@ function toH(jsx: ReturnType<typeof XML>, cached: NodeList, values: any[]) {
                 !jsx.components[tagName] &&
                 console.warn(`xml: Forgot to jsx.define({ ${tagName} })?`)
 
-            return h(jsx.components[tagName] || tagName, props)
+            return ()=>h(jsx.components[tagName] || tagName, props)
         } else if (node.nodeType === 3) {
             // text
 
@@ -111,9 +112,9 @@ function toH(jsx: ReturnType<typeof XML>, cached: NodeList, values: any[]) {
                 const val = value
                     .split(markerRX)
                     .map((x: string) => (x === marker ? values[index++] : x))
-                return () => document.createComment(val.map(getValue).join(''))
+                return () => doc.createComment(val.map(getValue).join(''))
             } else {
-                return document.createComment(value)
+                return doc.createComment(value)
             }
         } else {
             console.error(`xml: nodeType not supported ${node.nodeType}`)
@@ -124,7 +125,7 @@ function toH(jsx: ReturnType<typeof XML>, cached: NodeList, values: any[]) {
 }
 
 
-export function XML() {
+export function XML(userComponents: Record<string, any> = {}) {
 
     function xml(template: TemplateStringsArray, ...values: any[]) {
         return toH(xml, getXml(template), values)
@@ -135,9 +136,12 @@ export function XML() {
         for (const name in userComponents) {
             xml.components[name] = userComponents[name]
         }
+        return xml
     }
+    xml.define(userComponents)
 
     return xml
 }
 
 export const xml = XML()
+

@@ -1,14 +1,13 @@
 import {
-    createComponent,
-    type ComponentProps,
-    type JSX,
-    type ValidComponent
+  createComponent,
+  type ComponentProps,
+  type JSX,
+  type ValidComponent,
 } from "solid-js";
-import {
-    spread
-} from "solid-js/web";
+import { spread } from "solid-js/web";
+import { doc, isFunction, isString } from "./util";
 
-export type MaybeFunction<T> = T | (()=>T)
+export type MaybeFunction<T> = T | (() => T);
 
 export type MaybeFunctionProps<T extends Record<string, any>> = {
   [K in keyof T]: K extends `on${string}` | "ref" ? T[K] : MaybeFunction<T[K]>;
@@ -20,58 +19,52 @@ export function h<T extends ValidComponent>(
   ...children: JSX.Element[]
 ): JSX.Element {
   //children in spread syntax override children in props
-  if (children.length === 1){
+  if (children.length === 1) {
     //@ts-expect-error
-    props.children = children[0]
-  }else if (children.length >1){
+    props.children = children[0];
+  } else if (children.length > 1) {
     //@ts-expect-error
-    props.children = children
+    props.children = children;
   }
 
-  if (typeof component === "string") {
-    const elem = document.createElement(component)
-    spread(elem, wrapProps(props))
-    return elem
-  } else if (typeof component === "function") {
-    return createComponent(component, wrapProps(props))
+  if (isString(component)) {
+    const elem = doc.createElement(component);
+    spread(elem, wrapProps(props));
+    return elem;
+  } else if (isFunction(component)) {
+    return createComponent(component, wrapProps(props));
   }
 }
 
-
-
-const markedOnce = new WeakSet()
+const markedOnce = new WeakSet();
 export function once<T extends (...args: any[]) => any>(fn: T): T {
-  markedOnce.add(fn)
-  return fn
+  markedOnce.add(fn);
+  return fn;
 }
 
-
-//Reaplces Accessor props with getters
+//Replaces Accessor props with getters
 export function wrapProps<
   TComponent extends ValidComponent,
   TProps extends MaybeFunctionProps<ComponentProps<TComponent>>
 >(props: TProps = {} as TProps): ComponentProps<TComponent> {
-  const descriptors = Object.getOwnPropertyDescriptors(props);
-  for (const [key, descriptor] of Object.entries(descriptors)) {
-    // console.log(key,descriptor)
+  for (const [key, descriptor] of Object.entries(
+    Object.getOwnPropertyDescriptors(props)
+  )) {
+    const value = descriptor.value;
     if (
       key !== "ref" &&
       key.slice(0, 2) !== "on" &&
-      typeof descriptor.value === "function" &&
-      (descriptor.value.length === 0) &&
-      !markedOnce.has(descriptor.value)
+      isFunction(value) &&
+      value.length === 0 &&
+      !markedOnce.has(value)
     ) {
-      const src = descriptor.value;
       Object.defineProperty(props, key, {
         get() {
-          return src();
+          return value();
         },
         enumerable: true,
       });
-
-
     }
   }
   return props as ComponentProps<TComponent>;
 }
-
