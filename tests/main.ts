@@ -49,7 +49,7 @@ function Counter() {
   const increment = () => setCount(count => count + 1);
 
   return (
-    html`<button type="button" prop:value=${1} @click=${increment}>
+    html`<button type="button" .value=${1} @click=${increment}>
       Button ${useContext(ctx)}: ${()=>count()}
     </button>`
   );
