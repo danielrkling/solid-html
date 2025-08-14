@@ -21,10 +21,10 @@ function Counter() {
   const increment = () => setCount(count => count + 1);
 
   return (
-    html`<button type="button" @click=${increment}>
-      Button ${useContext(ctx)}: ${()=>count()}
+    html`<button type="button" ${console.warn} ${console.error}1  prop:Solid=${1} @click=${increment}>
+      Count ${"A"}: <span style="color:red">${()=>count()}</span>
     </button>`
   );
 }
 
-render(App, document.getElementById("app")!);
+render(Counter, document.getElementById("app")!);

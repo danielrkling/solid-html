@@ -18,7 +18,7 @@ import {
   SVG_RESULT,
   boundAttributeSuffix,
   getTemplateHtml,
-  marker,
+  // marker,
   markerMatch,
 } from "./lit-html";
 import { doc, isFunction } from "./util";
@@ -29,58 +29,80 @@ type Template = [
   attributes: string[]
 ]
 
-const walker = doc.createTreeWalker(doc, 129);
+const walker = doc.createTreeWalker(doc, 133);
 
 
-const templateCache = new WeakMap<TemplateStringsArray, Template>();
+const templateCache = new WeakMap<TemplateStringsArray, HTMLTemplateElement>();
+
+const marker = `$marker$`
+
+
 
 /**
  * Returns a parsed template and its bound attributes for a given template string and type.
  * @internal
  */
-function getTemplate(strings: TemplateStringsArray, type: ResultType): Template {
+function getTemplate(strings: TemplateStringsArray, type: ResultType): HTMLTemplateElement {
   let template = templateCache.get(strings);
   if (template === undefined) {
-    const [html, attributes] = getTemplateHtml(strings, type);
+    // const [html, attributes] = getTemplateHtml(strings, type);
+    const html = strings.join(marker)
     const element = doc.createElement("template");
     element.innerHTML = html;
-    template = [element, attributes];
-    templateCache.set(strings, template);
+    template = element
+    templateCache.set(strings, element);
   }
   return template;
 }
+
+type AttributeType = "attribute" | "boolean" | "property" | "event" | "delegated-event"
+type Prefixes = Record<string, AttributeType>
+
+const prefixes: Prefixes = {
+  // "": "attribute",
+  "@": "delegated-event",
+  "?": "boolean",
+  ".": "property",
+  "attr:": "attribute",
+  "bool:": "boolean",
+  "on:": "event",
+  "prop:": "property"
+
+}
+
 
 /**
  * Assigns a property, attribute, boolean, or event handler to an element, supporting reactivity.
  * @internal
  */
-function assignAttribute(elem: Element, name: string, value: any) {
-  if (name[0] === "@") {
-    const event = name.slice(1);
-    let delegate = DelegatedEvents.has(event);
-    addEventListener(elem, event, value, delegate);
-    if (delegate) delegateEvents([event]);
-    elem.removeAttribute(name);
-  } else if (name[0] === ".") {
+function assignAttribute(elem: Element, nameWithPrefix: string, value: any, prefixes: Prefixes) {
+  const prefix = Object.keys(prefixes).find(v => nameWithPrefix.startsWith(v))
+  const type = prefixes[prefix!]
+  const name = nameWithPrefix?.slice(prefix?.length)
+  elem.removeAttribute(nameWithPrefix)
+  if (type === "boolean") {
     if (isFunction(value)) {
-      effect(() => {
-        setProperty(elem, name.slice(1), value());
-      });
+      effect(() => setBoolAttribute(elem, name, value()));
     } else {
-      setProperty(elem, name.slice(1), value);
+      setBoolAttribute(elem, name, value)
     }
-    elem.removeAttribute(name);
-  } else if (name[0] === "?") {
+  } else if (type === "property") {
     if (isFunction(value)) {
-      effect(() => setBoolAttribute(elem, name.slice(1), value()));
+      effect(() => setProperty(elem, name, value()));
     } else {
-      setBoolAttribute(elem, name.slice(1), value);
+      setProperty(elem, name, value)
     }
+  } else if (type === "event") {
+    addEventListener(elem, name, value, false);
+  } else if (type === "delegated-event") {
+    let delegate = DelegatedEvents.has(name);
+    addEventListener(elem, name, value, delegate);
+    if (delegate) delegateEvents([name]);
   } else {
     if (isFunction(value)) {
       effect(() => setAttribute(elem, name, value()));
     } else {
-      setAttribute(elem, name, value);
+      setAttribute(elem, name, value)
     }
   }
 }
@@ -90,39 +112,26 @@ function assignAttribute(elem: Element, name: string, value: any) {
  * Creates a tagged template function for html/svg/mathml templates with Solid reactivity.
  * @internal
  */
-function createHtml(type: ResultType){
-  return function html(
+function HTML(prefixes?: Prefixes, type: ResultType = 1) {
+  function html(
     strings: TemplateStringsArray,
     ...values: any[]
   ): JSX.Element {
     function render() {
-      const [element,attributes] = getTemplate(strings, type);
+      const element = getTemplate(strings, type);
       const clone = element.content.cloneNode(true);
-  
+
       let valueIndex = 0;
       let boundAttributeIndex = 0;
       walker.currentNode = clone;
-  
+
+
       while (walker.nextNode()) {
         const node = walker.currentNode;
+
         if (node.nodeType === 1) {
           for (const attr of [...(node as Element).attributes]) {
-            if (attr.name.endsWith(boundAttributeSuffix)) {
-              //Bound attribute/prop/event
-              if (attr.value === marker) {
-                assignAttribute(node as Element, attributes[boundAttributeIndex++], values[valueIndex++]);
-              } else {
-                const strings = attr.value.split(marker);
-                let parts = [strings[0]] as any[];
-                for (let j = 1; j < strings.length; j++) {
-                  parts.push(values[valueIndex++], strings[j]);
-                }
-                assignAttribute(node as Element, attributes[boundAttributeIndex++], () =>
-                  parts.map((v) => (isFunction(v) ? v() : v)).join("")
-                );
-              }
-              (node as Element).removeAttribute(attr.name);
-            } else if (attr.name === `...${marker}`) {
+            if (attr.name === `...${marker}`) {
               //Spread
               const isSvg = SVGElements.has((node as Element).tagName);
               const value = values[valueIndex++];
@@ -139,18 +148,36 @@ function createHtml(type: ResultType){
                 value(node as Element);
               }
               (node as Element).removeAttribute(attr.name);
+            } else if (attr.value === marker) {
+              assignAttribute(node as Element, attr.name, values[valueIndex++], html.prefixes);
+            } else if (attr.value.includes(marker)) {
+              const strings = attr.value.split(marker);
+              let parts = [strings[0]] as any[];
+              for (let j = 1; j < strings.length; j++) {
+                parts.push(values[valueIndex++], strings[j]);
+              }
+              assignAttribute(node as Element, attr.name, () =>
+                parts.map((v) => (isFunction(v) ? v() : v)).join(""), html.prefixes
+              );
             }
+
           }
-  
-        } else if (node.nodeType === 8) {
-          if (node.nodeValue === markerMatch) {
-            node.nodeValue = marker + valueIndex  //I don't know why, but this prevents misplaced elements
-            const value = values[valueIndex++];
-            const parent = node.parentNode;
-            if (parent) insert(parent, value, node);
+
+        } else if (node.nodeType === 3 && node.nodeValue?.includes(marker)) {
+          const parts = node.nodeValue?.split(marker)
+          const parent = node.parentElement!
+          parent.insertBefore(doc.createTextNode(parts[0]), node)
+          for (let i = 1; i < parts.length; i++) {
+            const textNode = doc.createTextNode(parts[i])
+            node.parentElement?.insertBefore(textNode, node)
+            insert(parent, values[valueIndex++], textNode);
           }
+          walker.currentNode = node.previousSibling!
+          parent.removeChild(node)
+
         }
       }
+
       if (type === SVG_RESULT || type === MATHML_RESULT) {
         return [...clone.firstChild!.childNodes]
       }
@@ -158,6 +185,13 @@ function createHtml(type: ResultType){
     }
     return render as unknown as JSX.Element;
   }
+
+  html.prefixes = prefixes
+  html.addPrefixes = (prefixes: Prefixes) => {
+    Object.assign(html.prefixes, prefixes)
+  }
+
+  return html
 }
 
 
@@ -168,7 +202,7 @@ function createHtml(type: ResultType){
  * html`<div class="foo">${bar}</div>`
  * html`<button @click=${onClick}>Click</button>`
  */
-export const html = createHtml(HTML_RESULT)
+export const html = HTML(HTML_RESULT)
 
 /**
  * Tagged template for creating reactive SVG templates with Solid. Use inside <svg> only.
@@ -176,7 +210,7 @@ export const html = createHtml(HTML_RESULT)
  * @example
  * svg`<circle cx="10" cy="10" r="5" />`
  */
-export const svg = createHtml(SVG_RESULT)
+export const svg = HTML(SVG_RESULT)
 
 /**
  * Tagged template for creating reactive MathML templates with Solid. Use inside <math> only.
@@ -184,7 +218,9 @@ export const svg = createHtml(SVG_RESULT)
  * @example
  * mathml`<math><mi>x</mi></math>`
  */
-export const mathml = createHtml(MATHML_RESULT)
+export const mathml = HTML(MATHML_RESULT)
+
+
 
 
 
