@@ -24,7 +24,9 @@ export function assignEvent(
   value: any,
   prev?: any
 ) {
-  node.addEventListener(name, value);
+  prev && node.removeEventListener(name, prev);
+  value && node.addEventListener(name, value);
+  return value; 
 }
 
 export function assignDelegatedEvent(
@@ -36,6 +38,7 @@ export function assignDelegatedEvent(
   let delegate = DelegatedEvents.has(name);
   addEventListener(node, name, value, delegate);
   if (delegate) delegateEvents([name]);
+  return value;
 }
 
 export function assignProperty(
@@ -45,6 +48,7 @@ export function assignProperty(
   prev?: any
 ) {
   node[name] = value;
+  return value;
 }
 
 export function assignBooleanAttribute(
@@ -58,6 +62,7 @@ export function assignBooleanAttribute(
   } else {
     node.removeAttribute(name);
   }
+  return value;
 }
 
 export function assignAttribute(
@@ -66,7 +71,12 @@ export function assignAttribute(
   value: any,
   prev?: any
 ) {
+  if (value === null || value === undefined) {
+    node.removeAttribute(name);
+    return value;
+  }
   node.setAttribute(name, value);
+  return value;
 }
 
 export function assignRef(node: Element, name: string, value: any, prev?: any) {
@@ -94,9 +104,9 @@ export function assign(
   value: any,
   prev?: any
 ) {
+  if (value === prev) return value
   for (const [prefix, assignFn] of rules) {
     if (name.startsWith(prefix)) {
-      elem.removeAttribute(name); // Remove the original attribute to prevent conflicts
       name = name.slice(prefix.length);
       if (isFunction(value) && !markedOnce.has(value)) {
         effect(() => (prev = assignFn(elem, name, value, prev)));
@@ -115,27 +125,28 @@ export function spread(
   rules: AssignmentRules,
   elem: Element,
   props: any,
-  prev?: any
+  prev: any = {}
 ) {
   if (isFunction(props) && !markedOnce.has(props)) {
     effect(() => {
-      spreadProps(rules, elem, props());
+      prev = spreadProps(rules, elem, props(), prev);
     });
   } else {
-    spreadProps(rules, elem, props);
+    prev = spreadProps(rules, elem, props, prev);
   }
 }
 
 function spreadProps(
   rules: AssignmentRules,
   elem: Element,
-  props: Record<string, any>
+  props: Record<string, any>,
+  prev: any = {}
 ) {
   for (const [name, value] of Object.entries(props)) {
     if (name === "children") {
       insert(elem, value);
     } else {
-      assign(rules, elem, name, value);
+      assign(rules, elem, name, value, prev[name]);
     }
   }
 }
