@@ -1,8 +1,25 @@
 import { ComponentProps, Context as Context$1, ErrorBoundary as ErrorBoundary$1, For as For$1, Index as Index$1, JSX, Match as Match$1, Show as Show$1, Suspense as Suspense$1, Switch as Switch$1, ValidComponent } from "solid-js";
 import { Dynamic, NoHydration, Portal } from "solid-js/web";
 
+//#region src/assign.d.ts
+type AssignmentFunction = (node: Element, name: string, value: any, prev: any) => any;
+type AssignmentRule = [string, AssignmentFunction];
+type AssignmentRules = Array<AssignmentRule>;
+declare function assignEvent(node: Element, name: string, value: any, prev?: any): void;
+declare function assignDelegatedEvent(node: Element, name: string, value: any, prev?: any): void;
+declare function assignProperty(node: Element, name: string, value: any, prev?: any): void;
+declare function assignBooleanAttribute(node: Element, name: string, value: any, prev?: any): void;
+declare function assignAttribute(node: Element, name: string, value: any, prev?: any): void;
+declare function assignRef(node: Element, name: string, value: any, prev?: any): void;
+declare const defaultRules: AssignmentRules;
+/**
+ * Assigns a property, attribute, boolean, or event handler to an element, supporting reactivity.
+ * @internal
+ */
+declare function assign(rules: AssignmentRules, elem: Element, name: string, value: any, prev?: any): void;
+declare function spread(rules: AssignmentRules, elem: Element, props: any, prev?: any): void;
+//#endregion
 //#region src/h.d.ts
-
 /**
  * A value or a function returning a value. Used for reactive or static props.
  * @example
@@ -15,14 +32,15 @@ type MaybeFunction<T> = T | (() => T);
  * type P = MaybeFunctionProps<{ foo: number; onClick: () => void }>
  */
 type MaybeFunctionProps<T extends Record<string, any>> = { [K in keyof T]: K extends `on${string}` | "ref" ? T[K] : MaybeFunction<T[K]> };
-/**
- * Hyperscript function for Solid-compatible components and elements. Accepts a component or tag name, props, and children.
- * Children passed as arguments override `children` in props.
- * @example
- * h("button", { onClick: () => alert("Hi") }, "Click Me")
- * h(MyComponent, { foo: 1 }, html`<span>Child</span>`)
- */
-declare function h<T extends ValidComponent>(component: T, props: MaybeFunctionProps<ComponentProps<T>>, ...children: JSX.Element[]): JSX.Element;
+declare function H(rules?: AssignmentRules): {
+  <T extends ValidComponent>(component: T, props: MaybeFunctionProps<ComponentProps<T>>, ...children: JSX.Element[]): JSX.Element;
+  addRules(...newRules: AssignmentRules): void;
+};
+declare const h: {
+  <T extends ValidComponent>(component: T, props: MaybeFunctionProps<ComponentProps<T>>, ...children: JSX.Element[]): JSX.Element;
+  addRules(...newRules: AssignmentRules): void;
+};
+declare const markedOnce: WeakSet<WeakKey>;
 /**
  * Marks a function so it is not wrapped as a getter by h().
  * Useful for event handlers or functions that should not be auto-accessed.
@@ -93,7 +111,31 @@ declare function ErrorBoundary(children: MaybeFunction<JSX.Element>, fallback: M
  */
 declare function Context<T>(context: Context$1<T>, value: T | (() => T), children: () => JSX.Element): JSX.Element;
 //#endregion
+//#region src/lit-html.d.ts
+/** TemplateResult types */
+declare const HTML_RESULT = 1;
+declare const SVG_RESULT = 2;
+declare const MATHML_RESULT = 3;
+type ResultType = typeof HTML_RESULT | typeof SVG_RESULT | typeof MATHML_RESULT;
+/**
+ * Returns an HTML string for the given TemplateStringsArray and result type
+ * (HTML or SVG), along with the case-sensitive bound attribute names in
+ * template order. The HTML contains comment markers denoting the `ChildPart`s
+ * and suffixes on bound attributes denoting the `AttributeParts`.
+ *
+ * @param strings template strings array
+ * @param type HTML or SVG
+ * @return Array containing `[html, attrNames]` (array returned for terseness,
+ *     to avoid object fields since this code is shared with non-minified SSR
+ *     code)
+ */
+//#endregion
 //#region src/html.d.ts
+/**
+ * Creates a tagged template function for html/svg/mathml templates with Solid reactivity.
+ * @internal
+ */
+declare function HTML(rules?: AssignmentRules, type?: ResultType): (strings: TemplateStringsArray, ...values: any[]) => JSX.Element;
 /**
  * Tagged template for creating reactive HTML templates with Solid. Use for DOM elements only.
  *
@@ -129,7 +171,7 @@ declare const mathml: (strings: TemplateStringsArray, ...values: any[]) => JSX.E
  * @param userComponents Custom components to add to the registry.
  * @returns An xml template tag function.
  */
-declare function XML(userComponents?: Record<string, any>): {
+declare function XML(rules?: AssignmentRules, components?: Record<string, any>): {
   (template: TemplateStringsArray, ...values: any[]): any;
   components: {
     For: typeof For$1;
@@ -143,7 +185,8 @@ declare function XML(userComponents?: Record<string, any>): {
     Portal: typeof Portal;
     NoHydration: typeof NoHydration;
   };
-  define(userComponents: Record<string, any>): /*elided*/any;
+  define(userComponents: Record<string, any>): void;
+  addRules(...newRules: AssignmentRules): void;
 };
 /**
  * Default XML template tag for Solid, with built-in registry. Use `xml.define` to add components.
@@ -165,8 +208,9 @@ declare const xml: {
     Portal: typeof Portal;
     NoHydration: typeof NoHydration;
   };
-  define(userComponents: Record<string, any>): /*elided*/any;
+  define(userComponents: Record<string, any>): void;
+  addRules(...newRules: AssignmentRules): void;
 };
 //#endregion
-export { Context, ErrorBoundary, For, Index, Match, MatchKeyed, MaybeFunction, MaybeFunctionProps, Show, ShowKeyed, Suspense, Switch, XML, h, html, mathml, once, svg, xml };
+export { AssignmentFunction, AssignmentRule, AssignmentRules, Context, ErrorBoundary, For, H, HTML, Index, Match, MatchKeyed, MaybeFunction, MaybeFunctionProps, Show, ShowKeyed, Suspense, Switch, XML, assign, assignAttribute, assignBooleanAttribute, assignDelegatedEvent, assignEvent, assignProperty, assignRef, defaultRules, h, html, markedOnce, mathml, once, spread, svg, xml };
 //# sourceMappingURL=index.d.mts.map

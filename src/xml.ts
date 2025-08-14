@@ -176,4 +176,4 @@ export function XML(
  * @example
  * xml`<For each=${list}>${item => xml`<div>${item}</div>`}</For>`
  */
-export const xml = XML(defaultRegistry, defaultRules);
+export const xml = XML(defaultRules);
