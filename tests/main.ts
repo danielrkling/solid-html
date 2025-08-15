@@ -1,6 +1,35 @@
 import { render } from "solid-js/web";
 import { createSignal, createContext, useContext } from "solid-js";
-import {html, xml, h} from "../src"
+import {
+  XML,
+  H,
+  HTML,
+  assignEvent,
+  assignProperty,
+  assignDelegatedEvent,
+  assignBooleanAttribute,
+  assignAttribute,
+  once,
+  AssignmentRules,
+  assignRef,
+  defaultRules,
+
+} from "../src";
+
+const rules: AssignmentRules = [
+  ["on:", assignEvent],
+  ["@", assignDelegatedEvent],
+  ["prop:", assignProperty],
+  [".", assignProperty],
+  ["bool:", assignBooleanAttribute],
+  ["?", assignBooleanAttribute],
+  ["attr:", assignAttribute],
+  ["ref:", assignRef]
+]
+
+const html = HTML(defaultRules);
+const h = H(defaultRules);
+const xml = XML(defaultRules)
 
 const ctx = createContext("Default")
 
@@ -12,7 +41,7 @@ function App() {
 
 //Hyperscript style
 function Div(props){
-  return h("div",{style:()=>`color:${props.color}`},"Example for h")
+  return h("div",{style:()=>`color:${props.color}`,"on:click":once(console.info)},"Example for h")
 }
 
 //Lit style templating
@@ -21,7 +50,7 @@ function Counter() {
   const increment = () => setCount(count => count + 1);
 
   return (
-    html`<button type="button" @click=${increment}>
+    html`<button attr:type="button" prop:value=${1} on:click=${increment}>
       Button ${useContext(ctx)}: ${()=>count()}
     </button>`
   );

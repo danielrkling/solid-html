@@ -1,5 +1,5 @@
 import { ErrorBoundary as ErrorBoundary$1, For as For$1, Index as Index$1, Match as Match$1, Show as Show$1, Suspense as Suspense$1, Switch as Switch$1, createComponent } from "solid-js";
-import { DelegatedEvents, Dynamic, NoHydration, Portal, SVGElements, addEventListener, assign, delegateEvents, effect, insert, setAttribute, setBoolAttribute, setProperty, spread } from "solid-js/web";
+import { DelegatedEvents, Dynamic, NoHydration, Portal, SVGElements, addEventListener, delegateEvents, effect, insert } from "solid-js/web";
 
 //#region src/util.ts
 function isString(value) {
@@ -11,29 +11,81 @@ function isFunction(value) {
 const doc = document;
 
 //#endregion
-//#region src/h.ts
+//#region src/assign.ts
+function assignEvent(node, name, value, prev) {
+	node.addEventListener(name, value);
+}
+function assignDelegatedEvent(node, name, value, prev) {
+	let delegate = DelegatedEvents.has(name);
+	addEventListener(node, name, value, delegate);
+	if (delegate) delegateEvents([name]);
+}
+function assignProperty(node, name, value, prev) {
+	node[name] = value;
+}
+function assignBooleanAttribute(node, name, value, prev) {
+	if (value) node.setAttribute(name, "");
+	else node.removeAttribute(name);
+}
+function assignAttribute(node, name, value, prev) {
+	node.setAttribute(name, value);
+}
+function assignRef(node, name, value, prev) {
+	if (isFunction(value)) value(node);
+}
+const defaultRules = [
+	["on:", assignEvent],
+	["prop:", assignProperty],
+	["bool:", assignBooleanAttribute],
+	["attr:", assignAttribute],
+	["ref:", assignRef]
+];
 /**
 
-* Hyperscript function for Solid-compatible components and elements. Accepts a component or tag name, props, and children.
+* Assigns a property, attribute, boolean, or event handler to an element, supporting reactivity.
 
-* Children passed as arguments override `children` in props.
-
-* @example
-
-* h("button", { onClick: () => alert("Hi") }, "Click Me")
-
-* h(MyComponent, { foo: 1 }, html`<span>Child</span>`)
+* @internal
 
 */
-function h(component, props, ...children) {
-	if (children.length === 1) props.children = children[0];
-	else if (children.length > 1) props.children = children;
-	if (isString(component)) {
-		const elem = doc.createElement(component);
-		spread(elem, wrapProps(props));
-		return elem;
-	} else if (isFunction(component)) return createComponent(component, wrapProps(props));
+function assign(rules, elem, name, value, prev) {
+	for (const [prefix, assignFn] of rules) if (name.startsWith(prefix)) {
+		elem.removeAttribute(name);
+		name = name.slice(prefix.length);
+		if (isFunction(value) && !markedOnce.has(value)) effect(() => prev = assignFn(elem, name, value, prev));
+		else assignFn(elem, name, value, prev);
+		return;
+	}
+	assignAttribute(elem, name, value);
 }
+function spread(rules, elem, props, prev) {
+	if (isFunction(props) && !markedOnce.has(props)) effect(() => {
+		spreadProps(rules, elem, props());
+	});
+	else spreadProps(rules, elem, props);
+}
+function spreadProps(rules, elem, props) {
+	for (const [name, value] of Object.entries(props)) if (name === "children") insert(elem, value);
+	else assign(rules, elem, name, value);
+}
+
+//#endregion
+//#region src/h.ts
+function H(rules = []) {
+	function h$1(component, props, ...children) {
+		if (children.length === 1) props.children = children[0];
+		else if (children.length > 1) props.children = children;
+		if (isString(component)) {
+			const elem = doc.createElement(component);
+			spread(rules, elem, wrapProps(props));
+			return elem;
+		} else if (isFunction(component)) return createComponent(component, wrapProps(props));
+	}
+	h$1.addRules = (...newRules) => {
+		rules.push(...newRules);
+	};
+	return h$1;
+}
+const h = H(defaultRules);
 const markedOnce = /* @__PURE__ */ new WeakSet();
 /**
 
@@ -58,7 +110,7 @@ function once(fn) {
 function wrapProps(props = {}) {
 	for (const [key, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(props))) {
 		const value = descriptor.value;
-		if (key !== "ref" && key.slice(0, 2) !== "on" && isFunction(value) && value.length === 0 && !markedOnce.has(value)) Object.defineProperty(props, key, {
+		if (isFunction(value) && value.length === 0 && !markedOnce.has(value)) Object.defineProperty(props, key, {
 			get() {
 				return value();
 			},
@@ -420,37 +472,12 @@ function getTemplate(strings, type) {
 }
 /**
 
-* Assigns a property, attribute, boolean, or event handler to an element, supporting reactivity.
-
-* @internal
-
-*/
-function assignAttribute(elem, name, value) {
-	if (name[0] === "@") {
-		const event = name.slice(1);
-		let delegate = DelegatedEvents.has(event);
-		addEventListener(elem, event, value, delegate);
-		if (delegate) delegateEvents([event]);
-		elem.removeAttribute(name);
-	} else if (name[0] === ".") {
-		if (isFunction(value)) effect(() => {
-			setProperty(elem, name.slice(1), value());
-		});
-		else setProperty(elem, name.slice(1), value);
-		elem.removeAttribute(name);
-	} else if (name[0] === "?") if (isFunction(value)) effect(() => setBoolAttribute(elem, name.slice(1), value()));
-	else setBoolAttribute(elem, name.slice(1), value);
-	else if (isFunction(value)) effect(() => setAttribute(elem, name, value()));
-	else setAttribute(elem, name, value);
-}
-/**
-
 * Creates a tagged template function for html/svg/mathml templates with Solid reactivity.
 
 * @internal
 
 */
-function createHtml(type) {
+function HTML(rules = [], type = 1) {
 	return function html$1(strings, ...values) {
 		function render() {
 			const [element, attributes] = getTemplate(strings, type);
@@ -462,19 +489,21 @@ function createHtml(type) {
 				const node = walker.currentNode;
 				if (node.nodeType === 1) {
 					for (const attr of [...node.attributes]) if (attr.name.endsWith(boundAttributeSuffix)) {
-						if (attr.value === marker$1) assignAttribute(node, attributes[boundAttributeIndex++], values[valueIndex++]);
+						let value;
+						if (attr.value === marker$1) value = values[valueIndex++];
 						else {
 							const strings$1 = attr.value.split(marker$1);
 							let parts = [strings$1[0]];
 							for (let j = 1; j < strings$1.length; j++) parts.push(values[valueIndex++], strings$1[j]);
-							assignAttribute(node, attributes[boundAttributeIndex++], () => parts.map((v) => isFunction(v) ? v() : v).join(""));
+							value = () => parts.map((v) => isFunction(v) ? v() : v).join("");
 						}
+						assign(rules, node, attributes[boundAttributeIndex++], value);
 						node.removeAttribute(attr.name);
 					} else if (attr.name === `...${marker$1}`) {
-						const isSvg = SVGElements.has(node.tagName);
+						SVGElements.has(node.tagName);
 						const value = values[valueIndex++];
-						if (isFunction(value)) effect(() => assign(node, value(), isSvg, true));
-						else assign(node, value, isSvg, true);
+						if (isFunction(value)) effect(() => spread(rules, node, value()));
+						else spread(rules, node, value);
 						node.removeAttribute(attr.name);
 					} else if (attr.name.startsWith(marker$1)) {
 						const value = values[valueIndex++];
@@ -493,6 +522,9 @@ function createHtml(type) {
 			if (type === SVG_RESULT || type === MATHML_RESULT) return [...clone.firstChild.childNodes];
 			return [...clone.childNodes];
 		}
+		render.addRules = (...newRules) => {
+			rules.push(...newRules);
+		};
 		return render;
 	};
 }
@@ -509,7 +541,7 @@ function createHtml(type) {
 * html`<button @click=${onClick}>Click</button>`
 
 */
-const html = createHtml(HTML_RESULT);
+const html = HTML(defaultRules, HTML_RESULT);
 /**
 
 * Tagged template for creating reactive SVG templates with Solid. Use inside <svg> only.
@@ -521,7 +553,7 @@ const html = createHtml(HTML_RESULT);
 * svg`<circle cx="10" cy="10" r="5" />`
 
 */
-const svg = createHtml(SVG_RESULT);
+const svg = HTML(defaultRules, SVG_RESULT);
 /**
 
 * Tagged template for creating reactive MathML templates with Solid. Use inside <math> only.
@@ -533,7 +565,7 @@ const svg = createHtml(SVG_RESULT);
 * mathml`<math><mi>x</mi></math>`
 
 */
-const mathml = createHtml(MATHML_RESULT);
+const mathml = HTML(defaultRules, MATHML_RESULT);
 
 //#endregion
 //#region src/xml.ts
@@ -594,8 +626,9 @@ const toArray = Array.from;
 * @internal
 
 */
-function toH(jsx, cached, values) {
+function toH(jsx, cached, values, rules) {
 	let index = 0;
+	const h$1 = H(rules);
 	function nodes(node) {
 		if (node.nodeType === 1) {
 			const tagName = node.tagName;
@@ -611,7 +644,7 @@ function toH(jsx, cached, values) {
 			const childNodes = node.childNodes;
 			if (childNodes.length) props.children = flat(toArray(childNodes).map(nodes).filter((n) => n));
 			/[A-Z]/.test(tagName) && !jsx.components[tagName] && console.warn(`xml: Forgot to jsx.define({ ${tagName} })?`);
-			return () => h(jsx.components[tagName] || tagName, props);
+			return () => h$1(jsx.components[tagName] || tagName, props);
 		} else if (node.nodeType === 3) {
 			const value = node.nodeValue;
 			if (value.trim() === marker) return values[index++];
@@ -647,16 +680,20 @@ function toH(jsx, cached, values) {
 * @returns An xml template tag function.
 
 */
-function XML(userComponents = {}) {
+function XML(rules = defaultRules, components = {}) {
 	function xml$1(template, ...values) {
-		return toH(xml$1, getXml(template), values);
+		return toH(xml$1, getXml(template), values, rules);
 	}
-	xml$1.components = { ...defaultRegistry };
-	xml$1.define = (userComponents$1) => {
-		for (const name in userComponents$1) xml$1.components[name] = userComponents$1[name];
-		return xml$1;
+	xml$1.components = {
+		...defaultRegistry,
+		...components
 	};
-	xml$1.define(userComponents);
+	xml$1.define = (userComponents) => {
+		Object.assign(xml$1.components, userComponents);
+	};
+	xml$1.addRules = (...newRules) => {
+		rules.push(...newRules);
+	};
 	return xml$1;
 }
 /**
@@ -670,8 +707,8 @@ function XML(userComponents = {}) {
 * xml`<For each=${list}>${item => xml`<div>${item}</div>`}</For>`
 
 */
-const xml = XML();
+const xml = XML(defaultRules);
 
 //#endregion
-export { Context, ErrorBoundary, For, Index, Match, MatchKeyed, Show, ShowKeyed, Suspense, Switch, XML, h, html, mathml, once, svg, xml };
+export { Context, ErrorBoundary, For, H, HTML, Index, Match, MatchKeyed, Show, ShowKeyed, Suspense, Switch, XML, assign, assignAttribute, assignBooleanAttribute, assignDelegatedEvent, assignEvent, assignProperty, assignRef, defaultRules, h, html, markedOnce, mathml, once, spread, svg, xml };
 //# sourceMappingURL=index.mjs.map
