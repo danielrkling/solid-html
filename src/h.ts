@@ -40,7 +40,7 @@ export function H(rules: AssignmentRules = []) {
 
     if (isString(component)) {
       const elem = doc.createElement(component);
-      spread(rules, elem, wrapProps(props));
+      spread(rules, elem, props);
       return elem;
     } else if (isFunction(component)) {
       return createComponent(component, wrapProps(props));

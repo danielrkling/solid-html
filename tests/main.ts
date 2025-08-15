@@ -12,6 +12,7 @@ import {
   once,
   AssignmentRules,
   assignRef,
+  defaultRules,
 
 } from "../src";
 
@@ -26,9 +27,9 @@ const rules: AssignmentRules = [
   ["ref:", assignRef]
 ]
 
-const html = HTML(rules);
-const h = H(rules);
-const xml = XML(rules)
+const html = HTML(defaultRules);
+const h = H(defaultRules);
+const xml = XML(defaultRules)
 
 const ctx = createContext("Default")
 
@@ -40,7 +41,7 @@ function App() {
 
 //Hyperscript style
 function Div(props){
-  return h("div",{style:()=>`color:${props.color}`,"ref:click":once(console.info)},"Example for h")
+  return h("div",{style:()=>`color:${props.color}`,"on:click":once(console.info)},"Example for h")
 }
 
 //Lit style templating
@@ -49,7 +50,7 @@ function Counter() {
   const increment = () => setCount(count => count + 1);
 
   return (
-    html`<button type="button" .value=${1} @click=${increment}>
+    html`<button attr:type="button" prop:value=${1} on:click=${increment}>
       Button ${useContext(ctx)}: ${()=>count()}
     </button>`
   );

@@ -6,7 +6,7 @@ import {
   insert,
 } from "solid-js/web";
 import { isFunction } from "./util";
-import { markedOnce } from "./h";
+
 
 export type AssignmentFunction = (
   node: Element,
@@ -15,7 +15,7 @@ export type AssignmentFunction = (
   prev: any
 ) => any;
 
-export type AssignmentRule = [string, AssignmentFunction];
+export type AssignmentRule = [RegExp, AssignmentFunction];
 export type AssignmentRules = Array<AssignmentRule>;
 
 export function assignEvent(
@@ -86,11 +86,11 @@ export function assignRef(node: Element, name: string, value: any, prev?: any) {
 }
 
 export const defaultRules: AssignmentRules = [
-  ["on:", assignEvent],
-  ["prop:", assignProperty],
-  ["bool:", assignBooleanAttribute],
-  ["attr:", assignAttribute],
-  ["ref:", assignRef],
+  [/^on:(.*)/, assignEvent],
+  [/^prop:(.*)/, assignProperty],
+  [/^bool:(.*)/, assignBooleanAttribute],
+  [/^attr:(.*)/, assignAttribute],
+  [/^ref:(.*)/, assignRef],
 ];
 
 /**
@@ -105,10 +105,11 @@ export function assign(
   prev?: any
 ) {
   if (value === prev) return value
-  for (const [prefix, assignFn] of rules) {
-    if (name.startsWith(prefix)) {
-      name = name.slice(prefix.length);
-      if (isFunction(value) && !markedOnce.has(value)) {
+  for (const [regexp, assignFn] of rules) {    
+    const m = name.match(regexp)
+    if (m) {
+      name = m[1];
+      if (isFunction(value)) {
         effect(() => (prev = assignFn(elem, name, value, prev)));
       } else {
         assignFn(elem, name, value, prev);
@@ -127,7 +128,7 @@ export function spread(
   props: any,
   prev: any = {}
 ) {
-  if (isFunction(props) && !markedOnce.has(props)) {
+  if (isFunction(props)) {
     effect(() => {
       prev = spreadProps(rules, elem, props(), prev);
     });
