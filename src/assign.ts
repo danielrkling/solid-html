@@ -5,8 +5,7 @@ import {
   effect,
   insert,
 } from "solid-js/web";
-import { isFunction } from "./util";
-
+import { isFunction, isString } from "./util";
 
 export type AssignmentFunction = (
   node: Element,
@@ -15,7 +14,18 @@ export type AssignmentFunction = (
   prev: any
 ) => any;
 
-export type AssignmentRule = [RegExp, AssignmentFunction];
+export type RuleFilter = (
+  node: Element,
+  name: string,
+  value: any,
+  prev: any
+) => string;
+
+export type AssignmentRule = {
+  filter: string | RuleFilter;
+  assign: AssignmentFunction;
+  isReactive?: boolean;
+};
 export type AssignmentRules = Array<AssignmentRule>;
 
 export function assignEvent(
@@ -26,7 +36,7 @@ export function assignEvent(
 ) {
   prev && node.removeEventListener(name, prev);
   value && node.addEventListener(name, value);
-  return value; 
+  return value;
 }
 
 export function assignDelegatedEvent(
@@ -47,7 +57,7 @@ export function assignProperty(
   value: any,
   prev?: any
 ) {
-  node[name] = value;
+  (node as any)[name] = value;
   return value;
 }
 
@@ -86,11 +96,12 @@ export function assignRef(node: Element, name: string, value: any, prev?: any) {
 }
 
 export const defaultRules: AssignmentRules = [
-  [/^on:(.*)/, assignEvent],
-  [/^prop:(.*)/, assignProperty],
-  [/^bool:(.*)/, assignBooleanAttribute],
-  [/^attr:(.*)/, assignAttribute],
-  [/^ref:(.*)/, assignRef],
+  { filter: "on:", assign: assignEvent },
+  { filter: "don:", assign: assignDelegatedEvent },
+  { filter: "prop:", assign: assignProperty },
+  { filter: "bool:", assign: assignBooleanAttribute },
+  { filter: "attr:", assign: assignAttribute },
+  { filter: "ref:", assign: assignRef },
 ];
 
 /**
@@ -104,15 +115,20 @@ export function assign(
   value: any,
   prev?: any
 ) {
-  if (value === prev) return value
-  for (const [regexp, assignFn] of rules) {    
-    const m = name.match(regexp)
-    if (m) {
-      name = m[1];
-      if (isFunction(value)) {
-        effect(() => (prev = assignFn(elem, name, value, prev)));
+  if (value === prev) return value;
+  for (const { filter, assign, isReactive = true } of rules) {
+    if (isString(filter) && name.startsWith(filter)) {
+      name = name.slice(filter.length);
+    } else if (isFunction(filter)) {
+      name = filter(elem, name, value, prev);
+    } else {
+      continue;
+    }
+    if (name) {
+      if (isFunction(value) && isReactive) {
+        effect(() => (prev = assign(elem, name, value, prev)));
       } else {
-        assignFn(elem, name, value, prev);
+        assign(elem, name, value, prev);
       }
 
       return;
@@ -145,9 +161,9 @@ function spreadProps(
 ) {
   for (const [name, value] of Object.entries(props)) {
     if (name === "children") {
-      insert(elem, value);
+      prev[name] = insert(elem, value, );
     } else {
-      assign(rules, elem, name, value, prev[name]);
+      prev[name] = assign(rules, elem, name, value, prev[name]);
     }
   }
 }

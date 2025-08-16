@@ -65,7 +65,7 @@ export const markedOnce = new WeakSet();
  * once(() => doSomething())
  */
 export function once<T extends (...args: any[]) => any>(fn: T): T {
-  markedOnce.add(fn);
+  if (isFunction(fn)) markedOnce.add(fn);
   return fn;
 }
 
