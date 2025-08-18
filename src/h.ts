@@ -4,7 +4,7 @@ import {
   type JSX,
   type ValidComponent,
 } from "solid-js";
-import { spread } from "solid-js/web";
+import { spread, SVGElements } from "solid-js/web";
 import { doc, isFunction, isString } from "./util";
 
 
@@ -49,7 +49,7 @@ export function h<T extends ValidComponent>(
 
   if (isString(component)) {
     const elem = doc.createElement(component);
-    spread(elem, wrapProps(props));
+    spread(elem, props, SVGElements.has(component));
     return elem;
   } else if (isFunction(component)) {
     return createComponent(component, wrapProps(props));
