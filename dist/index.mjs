@@ -481,7 +481,12 @@ function toH(jsx, cached, values) {
 				props[name] = value;
 			}
 			const childNodes = node.childNodes;
-			if (childNodes.length) props.children = () => flat(toArray(childNodes).map(nodes).filter((n) => n));
+			if (childNodes.length) Object.defineProperty(props, "children", {
+				get() {
+					return flat(toArray(childNodes).map(nodes).filter((n) => n));
+				},
+				configurable: true
+			});
 			/[A-Z]/.test(tagName) && !jsx.components[tagName] && console.warn(`xml: Forgot to jsx.define({ ${tagName} })?`);
 			return h(jsx.components[tagName] || tagName, props);
 		} else if (node.nodeType === 3) {
