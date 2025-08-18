@@ -8,7 +8,7 @@ import {
     Suspense,
     Switch,
 } from 'solid-js'
-import {h} from './h'
+import { h } from './h'
 import { Dynamic, NoHydration, Portal } from 'solid-js/web'
 import { doc, isFunction } from './util'
 
@@ -99,7 +99,12 @@ function toH(jsx: ReturnType<typeof XML>, cached: NodeList, values: any[]) {
             // gather children
             const childNodes = node.childNodes
             if (childNodes.length) {
-                props.children = ()=>flat(toArray(childNodes).map(nodes).filter(n => n))
+                Object.defineProperty(props, 'children', {
+                    get() {
+                        return flat(toArray(childNodes).map(nodes).filter(n => n));
+                    },
+                    configurable: true, // Allows the property to be changed later
+                });
             }
 
             ; /[A-Z]/.test(tagName) &&
