@@ -1,25 +1,8 @@
-import { ComponentProps, Context as Context$1, ErrorBoundary as ErrorBoundary$1, For as For$1, Index as Index$1, JSX, Match as Match$1, Show as Show$1, Suspense as Suspense$1, Switch as Switch$1, ValidComponent } from "solid-js";
-import { Dynamic, NoHydration, Portal } from "solid-js/web";
+import * as solid_js0 from "solid-js";
+import { ComponentProps, Context as Context$1, JSX, ValidComponent } from "solid-js";
 
-//#region src/assign.d.ts
-type AssignmentFunction = (node: Element, name: string, value: any, prev: any) => any;
-type AssignmentRule = [string, AssignmentFunction];
-type AssignmentRules = Array<AssignmentRule>;
-declare function assignEvent(node: Element, name: string, value: any, prev?: any): void;
-declare function assignDelegatedEvent(node: Element, name: string, value: any, prev?: any): void;
-declare function assignProperty(node: Element, name: string, value: any, prev?: any): void;
-declare function assignBooleanAttribute(node: Element, name: string, value: any, prev?: any): void;
-declare function assignAttribute(node: Element, name: string, value: any, prev?: any): void;
-declare function assignRef(node: Element, name: string, value: any, prev?: any): void;
-declare const defaultRules: AssignmentRules;
-/**
- * Assigns a property, attribute, boolean, or event handler to an element, supporting reactivity.
- * @internal
- */
-declare function assign(rules: AssignmentRules, elem: Element, name: string, value: any, prev?: any): void;
-declare function spread(rules: AssignmentRules, elem: Element, props: any, prev?: any): void;
-//#endregion
-//#region src/h.d.ts
+//#region src/types.d.ts
+
 /**
  * A value or a function returning a value. Used for reactive or static props.
  * @example
@@ -32,24 +15,18 @@ type MaybeFunction<T> = T | (() => T);
  * type P = MaybeFunctionProps<{ foo: number; onClick: () => void }>
  */
 type MaybeFunctionProps<T extends Record<string, any>> = { [K in keyof T]: K extends `on${string}` | "ref" ? T[K] : MaybeFunction<T[K]> };
-declare function H(rules?: AssignmentRules): {
-  <T extends ValidComponent>(component: T, props: MaybeFunctionProps<ComponentProps<T>>, ...children: JSX.Element[]): JSX.Element;
-  addRules(...newRules: AssignmentRules): void;
+type AssignmentFunction = (node: Element, name: string, value: any, prev: any) => any;
+type RuleFilter = (node: Element, name: string, value: any, prev: any) => string;
+type AssignmentRule = {
+  filter: string | RuleFilter;
+  assign: AssignmentFunction;
+  isReactive?: boolean;
 };
-declare const h: {
-  <T extends ValidComponent>(component: T, props: MaybeFunctionProps<ComponentProps<T>>, ...children: JSX.Element[]): JSX.Element;
-  addRules(...newRules: AssignmentRules): void;
-};
-declare const markedOnce: WeakSet<WeakKey>;
-/**
- * Marks a function so it is not wrapped as a getter by h().
- * Useful for event handlers or functions that should not be auto-accessed.
- * @example
- * once(() => doSomething())
- */
-declare function once<T extends (...args: any[]) => any>(fn: T): T;
+type AssignmentRules = Array<AssignmentRule>;
+type ComponentRegistry = Record<string, ValidComponent>;
 //#endregion
 //#region src/components.d.ts
+declare function getValue<T>(value: MaybeFunction<T>): T;
 /**
  * Solid-compatible Show component. Renders children if `when` is truthy, otherwise renders `fallback`.
  * @example
@@ -111,6 +88,24 @@ declare function ErrorBoundary(children: MaybeFunction<JSX.Element>, fallback: M
  */
 declare function Context<T>(context: Context$1<T>, value: T | (() => T), children: () => JSX.Element): JSX.Element;
 //#endregion
+//#region src/h.d.ts
+declare function H(components?: Record<string, any>, rules?: AssignmentRules): {
+  <T extends ValidComponent>(component: T, props: MaybeFunctionProps<ComponentProps<T>>, ...children: JSX.Element[]): JSX.Element;
+  components: {
+    [x: string]: any;
+  };
+  define(components: Record<string, ValidComponent>): void;
+  rules: AssignmentRule[];
+};
+declare const markedOnce: WeakSet<WeakKey>;
+/**
+ * Marks a function so it is not wrapped as a getter by h().
+ * Useful for event handlers or functions that should not be auto-accessed.
+ * @example
+ * once(() => doSomething())
+ */
+declare function once<T extends (...args: any[]) => any>(fn: T): T;
+//#endregion
 //#region src/lit-html.d.ts
 /** TemplateResult types */
 declare const HTML_RESULT = 1;
@@ -135,82 +130,71 @@ type ResultType = typeof HTML_RESULT | typeof SVG_RESULT | typeof MATHML_RESULT;
  * Creates a tagged template function for html/svg/mathml templates with Solid reactivity.
  * @internal
  */
-declare function HTML(rules?: AssignmentRules, type?: ResultType): (strings: TemplateStringsArray, ...values: any[]) => JSX.Element;
-/**
- * Tagged template for creating reactive HTML templates with Solid. Use for DOM elements only.
- *
- * @example
- * html`<div class="foo">${bar}</div>`
- * html`<button @click=${onClick}>Click</button>`
- */
-declare const html: (strings: TemplateStringsArray, ...values: any[]) => JSX.Element;
-/**
- * Tagged template for creating reactive SVG templates with Solid. Use inside <svg> only.
- *
- * @example
- * svg`<circle cx="10" cy="10" r="5" />`
- */
-declare const svg: (strings: TemplateStringsArray, ...values: any[]) => JSX.Element;
-/**
- * Tagged template for creating reactive MathML templates with Solid. Use inside <math> only.
- *
- * @example
- * mathml`<math><mi>x</mi></math>`
- */
-declare const mathml: (strings: TemplateStringsArray, ...values: any[]) => JSX.Element;
+declare function HTML(type?: ResultType, rules?: AssignmentRules): {
+  (strings: TemplateStringsArray, ...values: any[]): JSX.Element;
+  rules: AssignmentRule[];
+};
 //#endregion
 //#region src/xml.d.ts
-/**
- * Creates an XML template tag function for Solid, supporting custom component registries.
- * Use `xml.define({ ... })` to add or override components.
- *
- * @example
- * const xml = XML({ MyComponent })
- * xml`<MyComponent foo="bar">${child}</MyComponent>`
- *
- * @param userComponents Custom components to add to the registry.
- * @returns An xml template tag function.
- */
-declare function XML(rules?: AssignmentRules, components?: Record<string, any>): {
+declare function XML(components?: ComponentRegistry, rules?: AssignmentRules): {
   (template: TemplateStringsArray, ...values: any[]): any;
-  components: {
-    For: typeof For$1;
-    Index: typeof Index$1;
-    Match: typeof Match$1;
-    Suspense: typeof Suspense$1;
-    ErrorBoundary: typeof ErrorBoundary$1;
-    Show: typeof Show$1;
-    Switch: typeof Switch$1;
-    Dynamic: typeof Dynamic;
-    Portal: typeof Portal;
-    NoHydration: typeof NoHydration;
+  h: {
+    <T extends solid_js0.ValidComponent>(component: T, props: MaybeFunctionProps<solid_js0.ComponentProps<T>>, ...children: solid_js0.JSX.Element[]): solid_js0.JSX.Element;
+    components: {
+      [x: string]: any;
+    };
+    define(components: Record<string, solid_js0.ValidComponent>): void;
+    rules: AssignmentRule[];
   };
-  define(userComponents: Record<string, any>): void;
-  addRules(...newRules: AssignmentRules): void;
-};
-/**
- * Default XML template tag for Solid, with built-in registry. Use `xml.define` to add components.
- *
- * @example
- * xml`<For each=${list}>${item => xml`<div>${item}</div>`}</For>`
- */
-declare const xml: {
-  (template: TemplateStringsArray, ...values: any[]): any;
-  components: {
-    For: typeof For$1;
-    Index: typeof Index$1;
-    Match: typeof Match$1;
-    Suspense: typeof Suspense$1;
-    ErrorBoundary: typeof ErrorBoundary$1;
-    Show: typeof Show$1;
-    Switch: typeof Switch$1;
-    Dynamic: typeof Dynamic;
-    Portal: typeof Portal;
-    NoHydration: typeof NoHydration;
-  };
-  define(userComponents: Record<string, any>): void;
-  addRules(...newRules: AssignmentRules): void;
 };
 //#endregion
-export { AssignmentFunction, AssignmentRule, AssignmentRules, Context, ErrorBoundary, For, H, HTML, Index, Match, MatchKeyed, MaybeFunction, MaybeFunctionProps, Show, ShowKeyed, Suspense, Switch, XML, assign, assignAttribute, assignBooleanAttribute, assignDelegatedEvent, assignEvent, assignProperty, assignRef, defaultRules, h, html, markedOnce, mathml, once, spread, svg, xml };
+//#region src/assign.d.ts
+declare function assignEvent(node: Element, name: string, value: any, prev?: any): any;
+declare function assignDelegatedEvent(node: Element, name: string, value: any, prev?: any): any;
+declare function assignProperty(node: Element, name: string, value: any, prev?: any): any;
+declare function assignBooleanAttribute(node: Element, name: string, value: any, prev?: any): any;
+declare function assignAttribute(node: Element, name: string, value: any, prev?: any): any;
+declare function assignAttributeNS(namespace: string, node: Element, name: string, value: any, prev?: any): any;
+declare function assignClass(node: Element, name: string, value: any, prev?: any): any;
+declare function assignStyle(node: Element, name: string, value: any, prev?: any): any;
+declare function assignRef(node: Element, name: string, value: any, prev?: any): void;
+declare function assign(rules: AssignmentRules, elem: Element, name: string, value: any, prev?: any): any;
+declare function spread(rules: AssignmentRules, elem: Element, props: any, prev?: any): any;
+//#endregion
+//#region src/defaults.d.ts
+declare const defaultRules: AssignmentRules;
+declare const defaultComponents: ComponentRegistry;
+declare const h: {
+  <T extends ValidComponent>(component: T, props: MaybeFunctionProps<solid_js0.ComponentProps<T>>, ...children: solid_js0.JSX.Element[]): solid_js0.JSX.Element;
+  components: {
+    [x: string]: any;
+  };
+  define(components: Record<string, ValidComponent>): void;
+  rules: AssignmentRule[];
+};
+declare const xml: {
+  (template: TemplateStringsArray, ...values: any[]): any;
+  h: {
+    <T extends ValidComponent>(component: T, props: MaybeFunctionProps<solid_js0.ComponentProps<T>>, ...children: solid_js0.JSX.Element[]): solid_js0.JSX.Element;
+    components: {
+      [x: string]: any;
+    };
+    define(components: Record<string, ValidComponent>): void;
+    rules: AssignmentRule[];
+  };
+};
+declare const html: {
+  (strings: TemplateStringsArray, ...values: any[]): solid_js0.JSX.Element;
+  rules: AssignmentRule[];
+};
+declare const svg: {
+  (strings: TemplateStringsArray, ...values: any[]): solid_js0.JSX.Element;
+  rules: AssignmentRule[];
+};
+declare const mathml: {
+  (strings: TemplateStringsArray, ...values: any[]): solid_js0.JSX.Element;
+  rules: AssignmentRule[];
+};
+//#endregion
+export { AssignmentFunction, AssignmentRule, AssignmentRules, ComponentRegistry, Context, ErrorBoundary, For, H, HTML, Index, Match, MatchKeyed, MaybeFunction, MaybeFunctionProps, RuleFilter, Show, ShowKeyed, Suspense, Switch, XML, assign, assignAttribute, assignAttributeNS, assignBooleanAttribute, assignClass, assignDelegatedEvent, assignEvent, assignProperty, assignRef, assignStyle, defaultComponents, defaultRules, getValue, h, html, markedOnce, mathml, once, spread, svg, xml };
 //# sourceMappingURL=index.d.mts.map

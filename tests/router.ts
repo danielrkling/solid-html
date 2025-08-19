@@ -52,7 +52,7 @@ function App() {
 }
 
 function Home() {
-  return html`<div  class:even=${() => time() % 2} class="base-class" style:width=${() => `${time() * 4}px`} >Home</div>`
+  return xml`<div   class:even=${() => time() % 2} class="base-class" style:width=${() => `${time() * 4}px`} >Home</div>`
 }
 
 function About() {
