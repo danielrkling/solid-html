@@ -6,28 +6,10 @@ import {
   insert,
 } from "solid-js/web";
 import { isFunction, isString } from "./util";
-import { Config } from "./config";
+import { AssignmentRules } from "./types";
 
-export type AssignmentFunction = (
-  node: Element,
-  name: string,
-  value: any,
-  prev: any
-) => any;
 
-export type RuleFilter = (
-  node: Element,
-  name: string,
-  value: any,
-  prev: any
-) => string;
 
-export type AssignmentRule = {
-  filter: string | RuleFilter;
-  assign: AssignmentFunction;
-  isReactive?: boolean;
-};
-export type AssignmentRules = Array<AssignmentRule>;
 
 export function assignEvent(
   node: Element,
@@ -122,7 +104,7 @@ export function assignStyle(
   value: any,
   prev?: any
 ) {
-  (node as HTMLElement).style[name] = value ? value : "";
+  (node as HTMLElement).style[name as any] = value ? value : "";
   return value;
 }
 
@@ -133,12 +115,8 @@ export function assignRef(node: Element, name: string, value: any, prev?: any) {
   }
 }
 
-/**
- * Assigns a property, attribute, boolean, or event handler to an element, supporting reactivity.
- * @internal
- */
 export function assign(
-  config: Config,
+  rules: AssignmentRules,
   elem: Element,
   name: string,
   value: any,
@@ -149,7 +127,7 @@ export function assign(
     return insert(elem, value);
   }
 
-  for (const rule of config.rules) {
+  for (const rule of rules) {
     const { filter, assign, isReactive = true } = rule;
     if (isString(filter) && name.startsWith(filter)) {
       name = name.slice(filter.length);
@@ -167,18 +145,12 @@ export function assign(
       return prev;
     }
   }
-  if (isFunction(value)) {
-    effect(() => (prev = config.defaultRule(elem, name, value(), prev)));
-  } else {
-    prev = config.defaultRule(elem, name, value, prev);
-  }
-  return prev;
 }
 
 
 
 export function spread(
-  config: Config,
+  rules: AssignmentRules,
   elem: Element,
   props: any,
   prev: any = {}
@@ -187,12 +159,12 @@ export function spread(
   if (isFunction(props)) {
     effect(() => {
       for (const [name, value] of Object.entries(props())) {
-        prev[name] = assign(config, elem, name, value, prev[name]);
+        prev[name] = assign(rules, elem, name, value, prev[name]);
       }
     });
   } else {
     for (const [name, value] of Object.entries(props)) {
-      prev[name] = assign(config, elem, name, value, prev[name]);
+      prev[name] = assign(rules, elem, name, value, prev[name]);
     }
   }
   return prev;

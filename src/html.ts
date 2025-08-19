@@ -4,8 +4,7 @@ import {
   insert,
   SVGElements
 } from "solid-js/web";
-import { assign, spread } from "./assign";
-import { Config, defaultConfig } from "./config";
+
 import {
   boundAttributeSuffix,
   getTemplateHtml,
@@ -17,6 +16,9 @@ import {
   SVG_RESULT,
 } from "./lit-html";
 import { doc, isFunction } from "./util";
+import { AssignmentRules } from "./types";
+import { assign, spread } from "./assign";
+import { defaultRules } from "./defaults";
 
 
 
@@ -51,8 +53,8 @@ function getTemplate(
  * Creates a tagged template function for html/svg/mathml templates with Solid reactivity.
  * @internal
  */
-export function HTML(config: Config  = defaultConfig,type: ResultType = 1) {
-  return function html(
+export function HTML(type: ResultType = 1, rules: AssignmentRules = []) {
+  function html(
     strings: TemplateStringsArray,
     ...values: any[]
   ): JSX.Element {
@@ -82,16 +84,16 @@ export function HTML(config: Config  = defaultConfig,type: ResultType = 1) {
                 value = () => parts.map((v) => (isFunction(v) ? v() : v)).join("");
 
               }
-              assign(config, node as Element, attributes[boundAttributeIndex++], value);
+              assign(rules, node as Element, attributes[boundAttributeIndex++], value);
               (node as Element).removeAttribute(attr.name);
             } else if (attr.name === `...${marker}`) {
               //Spread
               const isSvg = SVGElements.has((node as Element).tagName);
               const value = values[valueIndex++];
               if (isFunction(value)) {
-                effect(() => spread(config,node as Element, value() ));
+                effect(() => spread(rules, node as Element, value()));
               } else {
-                spread(config, node as Element, value);
+                spread(rules, node as Element, value);
               }
               (node as Element).removeAttribute(attr.name);
             } else if (attr.name.startsWith(marker)) {
@@ -121,29 +123,10 @@ export function HTML(config: Config  = defaultConfig,type: ResultType = 1) {
 
     return render as unknown as JSX.Element;
   };
+
+
+  html.rules = [...rules, ...defaultRules];
+
+  return html;
 }
 
-/**
- * Tagged template for creating reactive HTML templates with Solid. Use for DOM elements only.
- *
- * @example
- * html`<div class="foo">${bar}</div>`
- * html`<button @click=${onClick}>Click</button>`
- */
-export const html = HTML(defaultConfig, HTML_RESULT);
-
-/**
- * Tagged template for creating reactive SVG templates with Solid. Use inside <svg> only.
- *
- * @example
- * svg`<circle cx="10" cy="10" r="5" />`
- */
-export const svg = HTML(defaultConfig, SVG_RESULT);
-
-/**
- * Tagged template for creating reactive MathML templates with Solid. Use inside <math> only.
- *
- * @example
- * mathml`<math><mi>x</mi></math>`
- */
-export const mathml = HTML(defaultConfig, MATHML_RESULT);

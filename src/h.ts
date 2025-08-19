@@ -5,27 +5,15 @@ import {
   type ValidComponent,
 } from "solid-js";
 import { spread } from "./assign";
-import { Config, defaultConfig } from "./config";
+import { defaultComponents, defaultRules } from "./defaults";
 import { doc, isFunction, isString } from "./util";
 import { SVGElements } from "solid-js/web";
+import { AssignmentRules, MaybeFunctionProps } from "./types";
 
-/**
- * A value or a function returning a value. Used for reactive or static props.
- * @example
- * type X = MaybeFunction<string>; // string | () => string
- */
-export type MaybeFunction<T> = T | (() => T);
 
-/**
- * Props where each value can be a value or a function, except for event handlers and refs.
- * @example
- * type P = MaybeFunctionProps<{ foo: number; onClick: () => void }>
- */
-export type MaybeFunctionProps<T extends Record<string, any>> = {
-  [K in keyof T]: K extends `on${string}` | "ref" ? T[K] : MaybeFunction<T[K]>;
-};
 
-export function H(config: Config = defaultConfig) {
+export function H(components: Record<string, any> = {}, rules: AssignmentRules = []) {
+
   function h<T extends ValidComponent>(
     component: T,
     props: MaybeFunctionProps<ComponentProps<T>>,
@@ -42,7 +30,7 @@ export function H(config: Config = defaultConfig) {
 
     if (isString(component)) {
       if (/[A-Z]/.test(component)) {
-        const componentFunction = (config.components)[component];
+        const componentFunction = (h.components)[component];
         if (componentFunction) {
           return createComponent(componentFunction, wrapProps(props));
         }
@@ -50,18 +38,21 @@ export function H(config: Config = defaultConfig) {
       }
 
       const elem = SVGElements.has(component) ? doc.createElementNS("http://www.w3.org/2000/svg", component) : doc.createElement(component);
-      spread(config, elem, props);
+      spread(h.rules, elem, props);
       return elem;
     } else if (isFunction(component)) {
       return createComponent(component, wrapProps(props));
     }
   }
-
+  h.components = {...defaultComponents, ...components};
+  h.define = (components: Record<string, ValidComponent>) => {
+    Object.assign(h.components, components);
+  };
+  h.rules = [...rules, ...defaultRules];
 
   return h;
 }
 
-export const h = H();
 
 export const markedOnce = new WeakSet();
 

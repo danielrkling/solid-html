@@ -1,5 +1,6 @@
-import { Config, defaultConfig } from "./config";
+
 import { H } from "./h";
+import { AssignmentRules, ComponentRegistry } from "./types";
 import { doc, isFunction } from "./util";
 
 const xmlns = ["on", "prop", "bool", "attr", "ref", "style", "class", "xlink",]
@@ -35,105 +36,82 @@ function getValue(value: any) {
 }
 const toArray = Array.from;
 
-/**
- * Converts parsed XML nodes and values into Solid hyperscript calls.
- * @internal
- */
-function toH(config: Config = defaultConfig, cached: NodeList, values: any[]) {
-  let index = 0;
-  const h = H(config);
-  function nodes(node: any) {
-    // console.log(node)
-    if (node.nodeType === 1) {
-      // element
-      const tagName = node.tagName;
 
-      // gather props
-      const props = {} as Record<string, any>;
-      for (let { name, value } of node.attributes) {
-        
-        if (value === marker) {
-          value = values[index++];
-        } else if (value.includes(marker)) {
+export function XML(components: ComponentRegistry = {}, rules: AssignmentRules = []) {
+  function xml(template: TemplateStringsArray, ...values: any[]) {
+    const cached = getXml(template);
+    let index = 0;
+
+    function nodes(node: any) {
+      // console.log(node)
+      if (node.nodeType === 1) {
+        // element
+        const tagName = node.tagName;
+
+        // gather props
+        const props = {} as Record<string, any>;
+        for (let { name, value } of node.attributes) {
+
+          if (value === marker) {
+            value = values[index++];
+          } else if (value.includes(marker)) {
+            const val = value
+              .split(markerRX)
+              .map((x: string) => (x === marker ? values[index++] : x));
+
+            value = () => val.map(getValue).join("");
+          }
+          props[name] = value;
+        }
+
+        // gather children
+        const childNodes = node.childNodes;
+        if (childNodes.length) {
+          Object.defineProperty(props, "children", {
+            get() {
+              return flat(
+                toArray(childNodes)
+                  .map(nodes)
+                  .filter((n) => n)
+              );
+            },
+            enumerable: true,
+          });
+        }
+
+        return xml.h(tagName, props);
+      } else if (node.nodeType === 3) {
+        // text
+
+        const value = node.nodeValue;
+        if (value.trim() === marker) {
+          return values[index++];
+        }
+        return value.includes(marker)
+          ? value
+            .split(markerRX)
+            .map((x: string) => (x === marker ? values[index++] : x))
+          : value;
+      } else if (node.nodeType === 8) {
+        // comment
+        const value = node.nodeValue;
+        if (value.includes(marker)) {
           const val = value
             .split(markerRX)
             .map((x: string) => (x === marker ? values[index++] : x));
-
-          value = () => val.map(getValue).join("");
+          return () => doc.createComment(val.map(getValue).join(""));
+        } else {
+          return doc.createComment(value);
         }
-        props[name] = value;
-      }
-
-      // gather children
-      const childNodes = node.childNodes;
-      if (childNodes.length) {
-        Object.defineProperty(props, "children", {
-          get() {
-            return flat(
-              toArray(childNodes)
-                .map(nodes)
-                .filter((n) => n)
-            );
-          },
-          enumerable: true,
-        });
-      }
-
-      return h(tagName, props);
-    } else if (node.nodeType === 3) {
-      // text
-
-      const value = node.nodeValue;
-      if (value.trim() === marker) {
-        return values[index++];
-      }
-      return value.includes(marker)
-        ? value
-          .split(markerRX)
-          .map((x: string) => (x === marker ? values[index++] : x))
-        : value;
-    } else if (node.nodeType === 8) {
-      // comment
-      const value = node.nodeValue;
-      if (value.includes(marker)) {
-        const val = value
-          .split(markerRX)
-          .map((x: string) => (x === marker ? values[index++] : x));
-        return () => doc.createComment(val.map(getValue).join(""));
       } else {
-        return doc.createComment(value);
+        console.error(`xml: nodeType not supported ${node.nodeType}`);
       }
-    } else {
-      console.error(`xml: nodeType not supported ${node.nodeType}`);
     }
+
+    return flat(toArray(cached).map(nodes));
   }
 
-  return flat(toArray(cached).map(nodes));
-}
-
-/**
- * Creates an XML template tag function for Solid, supporting custom component registries.
- * Use `xml.define({ ... })` to add or override components.
- *
- * @example
- * const xml = XML({ MyComponent })
- * xml`<MyComponent foo="bar">${child}</MyComponent>`
- *
- * @param userComponents Custom components to add to the registry.
- * @returns An xml template tag function.
- */
-export function XML(config: Config = defaultConfig) {
-  function xml(template: TemplateStringsArray, ...values: any[]) {
-    return toH(config, getXml(template), values);
-  }
+  xml.h = H(components, rules);
 
   return xml;
 }
-
-/**
- * Default XML template tag for Solid, with built-in registry. Use `xml.define` to add components.
- *
- * @example
- * xml`<For each=${list}>${item => xml`<div>${item}</div>`}</For>`
- */
-export const xml = XML(defaultConfig);

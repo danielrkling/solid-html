@@ -2,23 +2,17 @@ import { A, HashRouter, Route, createAsync, type RouteSectionProps } from "@soli
 import { render, Suspense } from "solid-js/web";
 import { h, html, XML, once } from "../src";
 import { createSignal } from "solid-js";
-import { defaultConfig } from "../src/config";
 
 const [time, setTime] = createSignal(0)
 
 setInterval(() => setTime(s => s + 1), 1000)
 
 const xml = XML({
-  defaultRule: defaultConfig.defaultRule,
-  rules: defaultConfig.rules,
-  components: {
-    ...defaultConfig.components,
-    A,
-    HashRouter,
-    Route,
-    Suspense,
-    Routes
-  },
+  A,
+  HashRouter,
+  Route,
+  Suspense,
+  Routes
 });
 
 function Routes() {
@@ -44,7 +38,7 @@ function Layout(props: RouteSectionProps) {
     </div>
     <main class="bg-base-100 w-full overflow-auto grow">
       ${props.children}
-      EdgeCase=${"Hello"} can be prevented with \${"=" + "Hello"} like Solved${"="+"Hello"}
+      EdgeCase=${"Hello"} can be prevented with \${"=" + "Hello"} like Solved${"=" + "Hello"}
     </main>
 `;
 }

@@ -7,9 +7,19 @@ import {
   Show as _Show,
   Suspense as _Suspense,
   Switch as _Switch,
+  createComponent,
   type JSX,
 } from "solid-js";
-import { MaybeFunction, h, once } from "./h";
+import { MaybeFunction } from "./types";
+
+export function getValue<T>(value: MaybeFunction<T>): T {
+  if (typeof value === "function") {
+    //@ts-expect-error
+    return value();
+  }else{
+    return value;
+  }
+}
 
 /**
  * Solid-compatible Show component. Renders children if `when` is truthy, otherwise renders `fallback`.
@@ -21,10 +31,16 @@ export function Show(
   children: MaybeFunction<JSX.Element>,
   fallback?: MaybeFunction<JSX.Element>
 ): JSX.Element {
-  return h(_Show, {
-    when,
-    children,
-    fallback,
+  return createComponent(_Show, {
+    get when() {
+      return when();
+    },
+    get children() {
+      return getValue(children);
+    },
+    get fallback() {
+      return getValue(fallback);
+    },
     //@ts-expect-error
     keyed: false,
   });
@@ -40,11 +56,17 @@ export function ShowKeyed<T>(
   children: JSX.Element | ((item: NonNullable<T>) => JSX.Element),
   fallback?: MaybeFunction<JSX.Element>
 ): JSX.Element {
-  return h(_Show, {
-    when,
-    //@ts-expect-error
-    children,
-    fallback,
+  return createComponent(_Show, {
+    get when() {
+      return when();
+    },
+    get children() {
+      //@ts-expect-error
+      return getValue(children);
+    },
+    get fallback() {
+      return getValue(fallback);
+    },
     keyed: true,
   });
 }
@@ -58,7 +80,14 @@ export function Switch(
   fallback: MaybeFunction<JSX.Element>,
   ...children: JSX.Element[]
 ): JSX.Element {
-  return h(_Switch, { children, fallback });
+  return createComponent(_Switch, {
+    get children() {
+      return getValue(children);
+    },
+    get fallback() {
+      return getValue(fallback);
+    },
+  });
 }
 
 /**
@@ -70,8 +99,15 @@ export function Match<T>(
   when: () => T | undefined | null | false,
   children: JSX.Element | ((item: T) => JSX.Element)
 ): JSX.Element {
-  //@ts-expect-error
-  return h(_Match, { when, children, keyed: false });
+  return createComponent(_Match, {
+    get when() {
+      return when();
+    },
+    //@ts-expect-error
+    children,
+    //@ts-expect-error
+    keyed: false
+  });
 }
 
 /**
@@ -83,8 +119,14 @@ export function MatchKeyed<T>(
   when: () => T | undefined | null | false,
   children: JSX.Element | ((item: T) => JSX.Element)
 ): JSX.Element {
-  // @ts-expect-error
-  return h(_Match, { when, children, keyed: true });
+  return createComponent(_Match, {
+    get when() {
+      return when();
+    },
+    //@ts-expect-error
+    children,
+    keyed: true
+  });
 }
 
 /**
@@ -97,12 +139,14 @@ export function For<T extends readonly any[]>(
   children: (item: T[number], index: () => number) => JSX.Element,
   fallback?: MaybeFunction<JSX.Element>
 ): JSX.Element {
-  return h(_For, {
+  return createComponent(_For, {
     get each() {
       return each();
     },
-    children: once(children),
-    fallback,
+    children,
+    get fallback() {
+      return getValue(fallback);
+    }
   });
 }
 
@@ -116,12 +160,14 @@ export function Index<T extends readonly any[]>(
   children: (item: () => T[number], index: number) => JSX.Element,
   fallback?: MaybeFunction<JSX.Element>
 ): JSX.Element {
-  return h(_Index, {
+  return createComponent(_Index, {
     get each() {
       return each();
     },
-    children: once(children),
-    fallback,
+    children,
+    get fallback() {
+      return getValue(fallback);
+    }
   });
 }
 
@@ -134,7 +180,14 @@ export function Suspense(
   children: MaybeFunction<JSX.Element>,
   fallback?: MaybeFunction<JSX.Element>
 ): JSX.Element {
-  return h(_Suspense, { children, fallback });
+  return createComponent(_Suspense, {
+    get children() {
+      return getValue(children);
+    },
+    get fallback() {
+      return getValue(fallback);
+    },
+  });
 }
 
 /**
@@ -148,7 +201,14 @@ export function ErrorBoundary(
     | MaybeFunction<JSX.Element>
     | ((err: any, reset: () => void) => JSX.Element)
 ): JSX.Element {
-  return h(_ErrorBoundary, { children, fallback });
+  return createComponent(_ErrorBoundary, {
+    get children() {
+      return getValue(children);
+    },
+    get fallback() {
+      return getValue(fallback);
+    },
+  });
 }
 
 /**
@@ -161,5 +221,12 @@ export function Context<T>(
   value: T | (() => T),
   children: () => JSX.Element
 ): JSX.Element {
-  return h(context.Provider, { value, children });
+  return createComponent(context.Provider, {
+    get children() {
+      return getValue(children);
+    },
+    get value() {
+      return getValue(value);
+    },
+  });
 }
