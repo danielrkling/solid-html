@@ -13,7 +13,7 @@ import { doc, isFunction } from "./util";
 import { AssignmentRules, defaultRules } from "./assign";
 import { Config, defaultConfig } from "./config";
 
-const xmlns = ["on", "prop", "bool", "attr", "ref", "xlink", "xml"]
+const xmlns = ["on", "prop", "bool", "attr", "ref"]
   .map((ns) => `xmlns:${ns}="/"`)
   .join(" ");
 
