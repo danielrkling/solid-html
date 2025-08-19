@@ -6,6 +6,7 @@ import {
 } from "solid-js";
 import { doc, isFunction, isString } from "./util";
 import { AssignmentRules, defaultRules, spread } from "./assign";
+import { defaultConfig, Config } from "./config";
 
 /**
  * A value or a function returning a value. Used for reactive or static props.
@@ -23,7 +24,7 @@ export type MaybeFunctionProps<T extends Record<string, any>> = {
   [K in keyof T]: K extends `on${string}` | "ref" ? T[K] : MaybeFunction<T[K]>;
 };
 
-export function H(rules: AssignmentRules = []) {
+export function H(config: Config = defaultConfig) {
   function h<T extends ValidComponent>(
     component: T,
     props: MaybeFunctionProps<ComponentProps<T>>,
@@ -40,21 +41,18 @@ export function H(rules: AssignmentRules = []) {
 
     if (isString(component)) {
       const elem = doc.createElement(component);
-      spread(rules, elem, props);
+      spread(config, elem, props);
       return elem;
     } else if (isFunction(component)) {
       return createComponent(component, wrapProps(props));
     }
   }
 
-  h.addRules = (...newRules: AssignmentRules) => {
-    rules.push(...newRules);
-  };
 
   return h;
 }
 
-export const h = H(defaultRules);
+export const h = H();
 
 export const markedOnce = new WeakSet();
 

@@ -24,6 +24,7 @@ import {
 import { doc, isFunction } from "./util";
 import { markedOnce } from "./h";
 import { assign, AssignmentFunction, AssignmentRules, defaultRules, spread } from "./assign";
+import { Config, defaultConfig } from "./config";
 
 
 
@@ -58,7 +59,7 @@ function getTemplate(
  * Creates a tagged template function for html/svg/mathml templates with Solid reactivity.
  * @internal
  */
-export function HTML(rules: AssignmentRules = [],type: ResultType = 1) {
+export function HTML(config: Config  = defaultConfig,type: ResultType = 1) {
   return function html(
     strings: TemplateStringsArray,
     ...values: any[]
@@ -89,16 +90,16 @@ export function HTML(rules: AssignmentRules = [],type: ResultType = 1) {
                 value = () => parts.map((v) => (isFunction(v) ? v() : v)).join("");
 
               }
-              assign(rules, node as Element, attributes[boundAttributeIndex++], value);
+              assign(config, node as Element, attributes[boundAttributeIndex++], value);
               (node as Element).removeAttribute(attr.name);
             } else if (attr.name === `...${marker}`) {
               //Spread
               const isSvg = SVGElements.has((node as Element).tagName);
               const value = values[valueIndex++];
               if (isFunction(value)) {
-                effect(() => spread(rules,node as Element, value() ));
+                effect(() => spread(config,node as Element, value() ));
               } else {
-                spread(rules, node as Element, value);
+                spread(config, node as Element, value);
               }
               (node as Element).removeAttribute(attr.name);
             } else if (attr.name.startsWith(marker)) {
@@ -125,10 +126,6 @@ export function HTML(rules: AssignmentRules = [],type: ResultType = 1) {
       return [...clone.childNodes];
     }
 
-    render.addRules = (...newRules: AssignmentRules) => {
-      rules.push(...newRules);
-    }
-
 
     return render as unknown as JSX.Element;
   };
@@ -141,7 +138,7 @@ export function HTML(rules: AssignmentRules = [],type: ResultType = 1) {
  * html`<div class="foo">${bar}</div>`
  * html`<button @click=${onClick}>Click</button>`
  */
-export const html = HTML(defaultRules, HTML_RESULT);
+export const html = HTML(defaultConfig, HTML_RESULT);
 
 /**
  * Tagged template for creating reactive SVG templates with Solid. Use inside <svg> only.
@@ -149,7 +146,7 @@ export const html = HTML(defaultRules, HTML_RESULT);
  * @example
  * svg`<circle cx="10" cy="10" r="5" />`
  */
-export const svg = HTML(defaultRules, SVG_RESULT);
+export const svg = HTML(defaultConfig, SVG_RESULT);
 
 /**
  * Tagged template for creating reactive MathML templates with Solid. Use inside <math> only.
@@ -157,4 +154,4 @@ export const svg = HTML(defaultRules, SVG_RESULT);
  * @example
  * mathml`<math><mi>x</mi></math>`
  */
-export const mathml = HTML(defaultRules, MATHML_RESULT);
+export const mathml = HTML(defaultConfig, MATHML_RESULT);

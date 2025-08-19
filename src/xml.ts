@@ -11,24 +11,9 @@ import { H } from "./h";
 import { Dynamic, NoHydration, Portal } from "solid-js/web";
 import { doc, isFunction } from "./util";
 import { AssignmentRules, defaultRules } from "./assign";
+import { Config, defaultConfig } from "./config";
 
-/**
- * Default registry of built-in Solid control flow and utility components for XML templates.
- */
-const defaultRegistry = {
-  For,
-  Index,
-  Match,
-  Suspense,
-  ErrorBoundary,
-  Show,
-  Switch,
-  Dynamic,
-  Portal,
-  NoHydration,
-};
-
-const xmlns = ["on", "prop", "bool", "attr"]
+const xmlns = ["on", "prop", "bool", "attr", "ref", "xlink", "xml"]
   .map((ns) => `xmlns:${ns}="/"`)
   .join(" ");
 
@@ -65,14 +50,9 @@ const toArray = Array.from;
  * Converts parsed XML nodes and values into Solid hyperscript calls.
  * @internal
  */
-function toH(
-  jsx: ReturnType<typeof XML>,
-  cached: NodeList,
-  values: any[],
-  rules: AssignmentRules
-) {
+function toH(config: Config = defaultConfig, cached: NodeList, values: any[]) {
   let index = 0;
-  const h = H(rules);
+  const h = H(config);
   function nodes(node: any) {
     // console.log(node)
     if (node.nodeType === 1) {
@@ -97,18 +77,22 @@ function toH(
       // gather children
       const childNodes = node.childNodes;
       if (childNodes.length) {
-        props.children = flat(
-          toArray(childNodes)
-            .map(nodes)
-            .filter((n) => n)
-        );
+        Object.defineProperty(props, "children", {
+          get() {
+            return flat(
+              toArray(childNodes)
+                .map(nodes)
+                .filter((n) => n)
+            );
+          },
+        });
       }
 
       /[A-Z]/.test(tagName) &&
-        !jsx.components[tagName] &&
+        !config.components[tagName] &&
         console.warn(`xml: Forgot to jsx.define({ ${tagName} })?`);
 
-      return () => h(jsx.components[tagName] || tagName, props);
+      return h(config.components[tagName] || tagName, props);
     } else if (node.nodeType === 3) {
       // text
 
@@ -151,21 +135,10 @@ function toH(
  * @param userComponents Custom components to add to the registry.
  * @returns An xml template tag function.
  */
-export function XML(
-  rules: AssignmentRules = defaultRules,
-  components: Record<string, any> = {}
-) {
+export function XML(config: Config = defaultConfig) {
   function xml(template: TemplateStringsArray, ...values: any[]) {
-    return toH(xml, getXml(template), values, rules);
+    return toH(config, getXml(template), values);
   }
-
-  xml.components = { ...defaultRegistry, ...components };
-  xml.define = (userComponents: Record<string, any>) => {
-    Object.assign(xml.components, userComponents);
-  };
-  xml.addRules = (...newRules: AssignmentRules) => {
-    rules.push(...newRules);
-  };
 
   return xml;
 }
@@ -176,4 +149,4 @@ export function XML(
  * @example
  * xml`<For each=${list}>${item => xml`<div>${item}</div>`}</For>`
  */
-export const xml = XML(defaultRules);
+export const xml = XML(defaultConfig);

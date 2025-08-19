@@ -6,6 +6,7 @@ import {
   insert,
 } from "solid-js/web";
 import { isFunction, isString } from "./util";
+import { Config } from "./config";
 
 export type AssignmentFunction = (
   node: Element,
@@ -89,6 +90,22 @@ export function assignAttribute(
   return value;
 }
 
+export function assignAttributeNS(
+  namespace: string,
+  node: Element,
+  name: string,
+  value: any,
+  prev?: any, 
+) {
+  if (value === null || value === undefined) {
+    node.removeAttributeNS(namespace,name);
+    return value;
+  }
+  node.setAttributeNS(namespace,name, value);
+  return value;
+}
+
+
 export function assignRef(node: Element, name: string, value: any, prev?: any) {
   if (isFunction(value)) {
     value(node);
@@ -102,6 +119,8 @@ export const defaultRules: AssignmentRules = [
   { filter: "bool:", assign: assignBooleanAttribute },
   { filter: "attr:", assign: assignAttribute },
   { filter: "ref:", assign: assignRef },
+  { filter: "xlink:", assign: (e,n,v,p)=> assignAttributeNS("http://www.w3.org/1999/xlink",e, n, v, p) },
+  { filter: "xml:", assign: (e,n,v,p)=> assignAttributeNS("http://www.w3.org/XML/1998/namespace",e, n, v, p) },
 ];
 
 /**
@@ -109,14 +128,14 @@ export const defaultRules: AssignmentRules = [
  * @internal
  */
 export function assign(
-  rules: AssignmentRules,
+  config: Config,
   elem: Element,
   name: string,
   value: any,
   prev?: any
 ) {
   if (value === prev) return value;
-  for (const { filter, assign, isReactive = true } of rules) {
+  for (const { filter, assign, isReactive = true } of config.rules) {
     if (isString(filter) && name.startsWith(filter)) {
       name = name.slice(filter.length);
     } else if (isFunction(filter)) {
@@ -135,26 +154,26 @@ export function assign(
     }
   }
   // If no syntax matched, default to setting the attribute
-  assignAttribute(elem, name, value);
+  config.defaultRule(elem, name, value, prev);
 }
 
 export function spread(
-  rules: AssignmentRules,
+  config: Config,
   elem: Element,
   props: any,
   prev: any = {}
 ) {
   if (isFunction(props)) {
     effect(() => {
-      prev = spreadProps(rules, elem, props(), prev);
+      prev = spreadProps(config, elem, props(), prev);
     });
   } else {
-    prev = spreadProps(rules, elem, props, prev);
+    prev = spreadProps(config, elem, props, prev);
   }
 }
 
 function spreadProps(
-  rules: AssignmentRules,
+  config: Config,
   elem: Element,
   props: Record<string, any>,
   prev: any = {}
@@ -163,7 +182,7 @@ function spreadProps(
     if (name === "children") {
       prev[name] = insert(elem, value, );
     } else {
-      prev[name] = assign(rules, elem, name, value, prev[name]);
+      prev[name] = assign(config, elem, name, value, prev[name]);
     }
   }
 }
