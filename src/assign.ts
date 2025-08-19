@@ -46,6 +46,7 @@ export function assignDelegatedEvent(
   value: any,
   prev?: any
 ) {
+  name = name.toLowerCase()
   let delegate = DelegatedEvents.has(name);
   addEventListener(node, name, value, delegate);
   if (delegate) delegateEvents([name]);
@@ -95,13 +96,33 @@ export function assignAttributeNS(
   node: Element,
   name: string,
   value: any,
-  prev?: any, 
+  prev?: any,
 ) {
   if (value === null || value === undefined) {
-    node.removeAttributeNS(namespace,name);
+    node.removeAttributeNS(namespace, name);
     return value;
   }
-  node.setAttributeNS(namespace,name, value);
+  node.setAttributeNS(namespace, name, value);
+  return value;
+}
+
+export function assignClass(
+  node: Element,
+  name: string,
+  value: any,
+  prev?: any
+) {
+  node.classList.toggle(name, !!value);
+  return value;
+}
+
+export function assignStyle(
+  node: Element,
+  name: string,
+  value: any,
+  prev?: any
+) {
+  (node as HTMLElement).style[name] = value ? value : "";
   return value;
 }
 
@@ -111,17 +132,6 @@ export function assignRef(node: Element, name: string, value: any, prev?: any) {
     value(node);
   }
 }
-
-export const defaultRules: AssignmentRules = [
-  { filter: "on:", assign: assignEvent },
-  { filter: "don:", assign: assignDelegatedEvent },
-  { filter: "prop:", assign: assignProperty },
-  { filter: "bool:", assign: assignBooleanAttribute },
-  { filter: "attr:", assign: assignAttribute },
-  { filter: "ref:", assign: assignRef },
-  { filter: "xlink:", assign: (e,n,v,p)=> assignAttributeNS("http://www.w3.org/1999/xlink",e, n, v, p) },
-  { filter: "xml:", assign: (e,n,v,p)=> assignAttributeNS("http://www.w3.org/XML/1998/namespace",e, n, v, p) },
-];
 
 /**
  * Assigns a property, attribute, boolean, or event handler to an element, supporting reactivity.
@@ -135,7 +145,12 @@ export function assign(
   prev?: any
 ) {
   if (value === prev) return value;
-  for (const { filter, assign, isReactive = true } of config.rules) {
+  if (name === "children") {
+    return insert(elem, value);
+  }
+
+  for (const rule of config.rules) {
+    const { filter, assign, isReactive = true } = rule;
     if (isString(filter) && name.startsWith(filter)) {
       name = name.slice(filter.length);
     } else if (isFunction(filter)) {
@@ -145,17 +160,22 @@ export function assign(
     }
     if (name) {
       if (isFunction(value) && isReactive) {
-        effect(() => (prev = assign(elem, name, value, prev)));
+        effect(() => (prev = assign(elem, name, value(), prev)));
       } else {
         assign(elem, name, value, prev);
       }
-
-      return;
+      return prev;
     }
   }
-  // If no syntax matched, default to setting the attribute
-  config.defaultRule(elem, name, value, prev);
+  if (isFunction(value)) {
+    effect(() => (prev = config.defaultRule(elem, name, value(), prev)));
+  } else {
+    prev = config.defaultRule(elem, name, value, prev);
+  }
+  return prev;
 }
+
+
 
 export function spread(
   config: Config,
@@ -163,26 +183,18 @@ export function spread(
   props: any,
   prev: any = {}
 ) {
+
   if (isFunction(props)) {
     effect(() => {
-      prev = spreadProps(config, elem, props(), prev);
+      for (const [name, value] of Object.entries(props())) {
+        prev[name] = assign(config, elem, name, value, prev[name]);
+      }
     });
   } else {
-    prev = spreadProps(config, elem, props, prev);
-  }
-}
-
-function spreadProps(
-  config: Config,
-  elem: Element,
-  props: Record<string, any>,
-  prev: any = {}
-) {
-  for (const [name, value] of Object.entries(props)) {
-    if (name === "children") {
-      prev[name] = insert(elem, value, );
-    } else {
+    for (const [name, value] of Object.entries(props)) {
       prev[name] = assign(config, elem, name, value, prev[name]);
     }
   }
+  return prev;
 }
+

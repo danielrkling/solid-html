@@ -1,30 +1,22 @@
 import { type JSX } from "solid-js";
 import {
-  DelegatedEvents,
-  SVGElements,
-  addEventListener,
-  delegateEvents,
   effect,
   insert,
-  setAttribute,
-  setBoolAttribute,
-  setProperty,
-  style,
+  SVGElements
 } from "solid-js/web";
+import { assign, spread } from "./assign";
+import { Config, defaultConfig } from "./config";
 import {
-  HTML_RESULT,
-  MATHML_RESULT,
-  ResultType,
   boundAttributeSuffix,
   getTemplateHtml,
+  HTML_RESULT,
   marker,
   markerMatch,
+  MATHML_RESULT,
+  ResultType,
   SVG_RESULT,
 } from "./lit-html";
 import { doc, isFunction } from "./util";
-import { markedOnce } from "./h";
-import { assign, AssignmentFunction, AssignmentRules, defaultRules, spread } from "./assign";
-import { Config, defaultConfig } from "./config";
 
 
 

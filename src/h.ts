@@ -4,9 +4,10 @@ import {
   type JSX,
   type ValidComponent,
 } from "solid-js";
+import { spread } from "./assign";
+import { Config, defaultConfig } from "./config";
 import { doc, isFunction, isString } from "./util";
-import { AssignmentRules, defaultRules, spread } from "./assign";
-import { defaultConfig, Config } from "./config";
+import { SVGElements } from "solid-js/web";
 
 /**
  * A value or a function returning a value. Used for reactive or static props.
@@ -40,7 +41,15 @@ export function H(config: Config = defaultConfig) {
     }
 
     if (isString(component)) {
-      const elem = doc.createElement(component);
+      if (/[A-Z]/.test(component)) {
+        const componentFunction = (config.components)[component];
+        if (componentFunction) {
+          return createComponent(componentFunction, wrapProps(props));
+        }
+        console.warn(`Forgot to define ${componentFunction}`);
+      }
+
+      const elem = SVGElements.has(component) ? doc.createElementNS("http://www.w3.org/2000/svg", component) : doc.createElement(component);
       spread(config, elem, props);
       return elem;
     } else if (isFunction(component)) {

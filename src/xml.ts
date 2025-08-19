@@ -1,19 +1,8 @@
-import {
-  ErrorBoundary,
-  For,
-  Index,
-  Match,
-  Show,
-  Suspense,
-  Switch,
-} from "solid-js";
-import { H } from "./h";
-import { Dynamic, NoHydration, Portal } from "solid-js/web";
-import { doc, isFunction } from "./util";
-import { AssignmentRules, defaultRules } from "./assign";
 import { Config, defaultConfig } from "./config";
+import { H } from "./h";
+import { doc, isFunction } from "./util";
 
-const xmlns = ["on", "prop", "bool", "attr", "ref"]
+const xmlns = ["on", "prop", "bool", "attr", "ref", "style", "class", "xlink",]
   .map((ns) => `xmlns:${ns}="/"`)
   .join(" ");
 
@@ -62,6 +51,7 @@ function toH(config: Config = defaultConfig, cached: NodeList, values: any[]) {
       // gather props
       const props = {} as Record<string, any>;
       for (let { name, value } of node.attributes) {
+        
         if (value === marker) {
           value = values[index++];
         } else if (value.includes(marker)) {
@@ -85,14 +75,11 @@ function toH(config: Config = defaultConfig, cached: NodeList, values: any[]) {
                 .filter((n) => n)
             );
           },
+          enumerable: true,
         });
       }
 
-      /[A-Z]/.test(tagName) &&
-        !config.components[tagName] &&
-        console.warn(`xml: Forgot to jsx.define({ ${tagName} })?`);
-
-      return h(config.components[tagName] || tagName, props);
+      return h(tagName, props);
     } else if (node.nodeType === 3) {
       // text
 
@@ -102,8 +89,8 @@ function toH(config: Config = defaultConfig, cached: NodeList, values: any[]) {
       }
       return value.includes(marker)
         ? value
-            .split(markerRX)
-            .map((x: string) => (x === marker ? values[index++] : x))
+          .split(markerRX)
+          .map((x: string) => (x === marker ? values[index++] : x))
         : value;
     } else if (node.nodeType === 8) {
       // comment
