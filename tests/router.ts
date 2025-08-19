@@ -21,18 +21,27 @@ function Routes() {
 `
 }
 
-// function Mustering(){
-//   return html`<button>MUSTERING</button>`
-// }
+function getAsyncData(message) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(message);
+    }, 2000);
+  });
+}
+
+const user = createAsync(() => getAsyncData("User Data: John Doe"), { initialValue: "Loading User..." });
+
+
+
+ const asyncArray = createAsync(()=>getAsyncData([1,2,3,4,5]), { initialValue: [] });
 
 function Layout(props: RouteSectionProps) {
-  // const user = createAsync(()=>currentUser())
-  // const role = createAsync(()=>currentRole())
-  // const [pending,start] = useTransition()
+ 
+
   return xml`
     <div>
       <nav>
-        <span time=${time} class="mx-2 flex-1 px-2">SPAN </span>
+        <span time=${time} class="mx-2 flex-1 px-2">${time} </span>
         <Routes />
       </nav>
     </div>
@@ -43,19 +52,26 @@ function Layout(props: RouteSectionProps) {
 }
 
 function App() {
-  return xml`<HashRouter root=${() => (Layout)}>
-    <Route path="/" component=${() => (Home)} />
-    <Route path="/home" component=${() => (Home)} />
-    <Route path="/about" component=${() => About} />
+  return xml`<HashRouter root=${Layout}>
+    <Route path="/" component=${Home} />
+    <Route path="/home" component=${Home} />
+    <Route path="/about" component=${About} />
   </HashRouter>`
 }
 
-function Home() {
+function Home(props) {
   return xml`Home`
 }
 
-function About() {
-  return "About Us"
+function About(props) {
+  const [selected, setSelected] = createSignal("2");
+
+  return xml`<Suspense><select value=${selected} onChange=${e=>setSelected(e.target.value)}><option value=${"default"}>
+  ${"DEFAULT"}  
+  
+  </option><For each=${()=>asyncArray()} >
+    ${(item) =>xml`<option value=${item} selected=${item == selected()}>Item: ${item}</option>`}
+  </For></select></Suspense>`
 }
 
 render(App, document.getElementById("app")!);

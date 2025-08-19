@@ -4,10 +4,13 @@ import {html, xml, h} from "../src"
 
 const ctx = createContext("Default")
 
+const [time,settime] = createSignal(0)
+setInterval(()=>settime(v=>v+1),1000)
+
 //XML style templating (inspired from Pota)
 xml.define({ Counter, Provider: ctx.Provider })
 function App() {
-    return xml`${h(Div,{color: "red"},)}<For each=${["A","B","C"]}>${(v)=>xml`<Provider value=${v}><Counter></Counter></Provider>`}</For>`
+    return xml`${h(Div,{color: "red"},)}<For each=${["A","B","C"]}>${(v)=>xml`<Provider value=${v}><Counter></Counter></Provider>`}</For>${time}`
 }
 
 //Hyperscript style
