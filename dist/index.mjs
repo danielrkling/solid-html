@@ -1,6 +1,7 @@
 import { ErrorBoundary as ErrorBoundary$1, For as For$1, Index as Index$1, Match as Match$1, Show as Show$1, Suspense as Suspense$1, Switch as Switch$1, createComponent } from "solid-js";
 import { DelegatedEvents, Dynamic, ErrorBoundary as ErrorBoundary$2, For as For$2, Index as Index$2, Match as Match$2, NoHydration, Portal, SVGElements, Show as Show$2, Suspense as Suspense$2, Switch as Switch$2, addEventListener, delegateEvents, effect, insert } from "solid-js/web";
 
+
 //#region src/components.ts
 function getValue(value) {
 	if (typeof value === "function") return value();
@@ -588,6 +589,7 @@ const defaultComponents = {
 	Portal,
 	NoHydration
 };
+
 const h = H();
 const xml = XML();
 const html = HTML(HTML_RESULT);
@@ -610,6 +612,7 @@ function H(components = {}, rules = []) {
 			spread(h$1.rules, elem, props);
 			return elem;
 		} else if (isFunction(component)) return createComponent(component, wrapProps(props));
+
 	}
 	h$1.components = {
 		...defaultComponents,
@@ -622,19 +625,12 @@ function H(components = {}, rules = []) {
 	return h$1;
 }
 const markedOnce = /* @__PURE__ */ new WeakSet();
-/**
-* Marks a function so it is not wrapped as a getter by h().
-* Useful for event handlers or functions that should not be auto-accessed.
-* @example
-* once(() => doSomething())
-*/
+
 function once(fn) {
 	if (isFunction(fn)) markedOnce.add(fn);
 	return fn;
 }
-/**
-* Internal: Replaces accessor props with getters for reactivity, except for refs and event handlers.
-*/
+
 function wrapProps(props = {}) {
 	for (const [key, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(props))) {
 		const value = descriptor.value;

@@ -1,7 +1,9 @@
 
+
 import { H } from "./h";
 import { AssignmentRules, ComponentRegistry } from "./types";
 import { doc, isFunction } from "./util";
+
 
 const xmlns = ["on", "prop", "bool", "attr", "ref", "style", "class", "xlink",]
   .map((ns) => `xmlns:${ns}="/"`)
@@ -35,6 +37,7 @@ function getValue(value: any) {
   return value;
 }
 const toArray = Array.from;
+
 
 
 export function XML(components: ComponentRegistry = {}, rules: AssignmentRules = []) {

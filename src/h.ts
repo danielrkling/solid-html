@@ -4,8 +4,10 @@ import {
   type JSX,
   type ValidComponent,
 } from "solid-js";
+
 import { spread } from "./assign";
 import { defaultComponents, defaultRules } from "./defaults";
+
 import { doc, isFunction, isString } from "./util";
 import { SVGElements } from "solid-js/web";
 import { AssignmentRules, MaybeFunctionProps } from "./types";
@@ -50,7 +52,9 @@ export function H(components: Record<string, any> = {}, rules: AssignmentRules =
   };
   h.rules = [...rules, ...defaultRules];
 
+
   return h;
+
 }
 
 

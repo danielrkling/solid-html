@@ -21,6 +21,7 @@ function Routes() {
 `
 }
 
+
 // function Mustering(){
 //   return html`<button>MUSTERING</button>`
 // }
@@ -33,17 +34,21 @@ function Layout(props: RouteSectionProps) {
     <div>
       <nav>
         <time title=${() => time()} class="mx-2 flex-1 px-2">SPAN </time>
+
         <Routes />
       </nav>
     </div>
     <main class="bg-base-100 w-full overflow-auto grow">
       ${props.children}
+
       EdgeCase=${"Hello"} can be prevented with \${"=" + "Hello"} like Solved${"=" + "Hello"}
+
     </main>
 `;
 }
 
 function App() {
+
   return xml`<HashRouter root=${() => (Layout)}>
     <Route path="/" component=${() => (Home)} />
     <Route path="/home" component=${() => (Home)} />
@@ -78,7 +83,4 @@ function About() {
 }
 
 render(App, document.getElementById("app")!);
-
-
-
 
