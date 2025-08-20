@@ -1,15 +1,38 @@
 # solid-html
 
-This library is an alternative to h and html provided by solid-js for a no-build solution made to work with lit-html tooling.
+This library is an alternative to h and html provided by solid-js for no-build projects.
 
 ## `h` function
 
-`h` will create a component using createElement for strings and createComponent for functions. 
+`h` will either
+ - Create an element with the given tagname and apply it's props reactively.
+ - Create a componenet with the given function or registered Componenent Name. 
+
+### Wrapping Props
 
 It will wrap `()=>value` props in getters under the following conditions:
  - property name !== "ref" or begins with "on"
  - function has length of 0 (no arguments)
  - function is not registered with `once`
+
+### Registering Components
+```ts
+import {H} from "solid-html"
+
+function Counter(props){
+  const [count,setCount] = createSignal()
+
+  return h("button",{
+    "on:click":()=>
+  })
+}
+
+const h = H({
+
+})
+```
+
+
 
 In order to have components render in the right context, `h` may have to be wrapped like `()=>h()` for children of context providers or any component providing context within it. This delays the creation of the element to after the context is set.
 

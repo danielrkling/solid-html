@@ -39,7 +39,7 @@ export const defaultRules: AssignmentRules = [
   { filter: "ref:", assign: assignRef, isReactive: false },
   { filter: "class:", assign: assignClass },
   { filter: "style:", assign: assignStyle },
-  { filter: "@", assign: assignDelegatedEvent },
+  { filter: "@", assign: assignDelegatedEvent, isReactive: false },
   { filter: ".", assign: assignProperty },
   { filter: "?", assign: assignBooleanAttribute },
   { filter: "", assign: assignAttribute }

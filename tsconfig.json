@@ -10,6 +10,10 @@
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "lib": ["dom", "dom.iterable", "esnext"],
+        "baseUrl": ".",
+
+        "jsxFactory": "h",
+        "jsxImportSource": "./src/h.ts",
     },
     "include": ["src"],
     "exclude": ["node_modules", "dist", "test"]
