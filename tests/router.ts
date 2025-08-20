@@ -8,11 +8,11 @@ const [time, setTime] = createSignal(0)
 setInterval(() => setTime(s => s + 1), 1000)
 
 const xml = XML({
-  Routes,
-  Layout,
-  Route,
-  HashRouter,
   A,
+  HashRouter,
+  Route,
+  Suspense,
+  Routes
 });
 
 function Routes() {
@@ -21,57 +21,66 @@ function Routes() {
 `
 }
 
-function getAsyncData(message) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(message);
-    }, 2000);
-  });
-}
 
-const user = createAsync(() => getAsyncData("User Data: John Doe"), { initialValue: "Loading User..." });
-
-
-
- const asyncArray = createAsync(()=>getAsyncData([1,2,3,4,5]), { initialValue: [] });
+// function Mustering(){
+//   return html`<button>MUSTERING</button>`
+// }
 
 function Layout(props: RouteSectionProps) {
- 
-
+  // const user = createAsync(()=>currentUser())
+  // const role = createAsync(()=>currentRole())
+  // const [pending,start] = useTransition()
   return xml`
     <div>
       <nav>
-        <span time=${time} class="mx-2 flex-1 px-2">${time} </span>
+        <time title=${() => time()} class="mx-2 flex-1 px-2">SPAN </time>
+
         <Routes />
       </nav>
     </div>
     <main class="bg-base-100 w-full overflow-auto grow">
       ${props.children}
+
+      EdgeCase=${"Hello"} can be prevented with \${"=" + "Hello"} like Solved${"=" + "Hello"}
+
     </main>
 `;
 }
 
 function App() {
-  return xml`<HashRouter root=${Layout}>
-    <Route path="/" component=${Home} />
-    <Route path="/home" component=${Home} />
-    <Route path="/about" component=${About} />
+
+  return xml`<HashRouter root=${() => (Layout)}>
+    <Route path="/" component=${() => (Home)} />
+    <Route path="/home" component=${() => (Home)} />
+    <Route path="/about" component=${() => About} />
   </HashRouter>`
 }
 
-function Home(props) {
-  return xml`Home`
+function Home() {
+  return xml`<div   class:even=${() => time() % 2} class="base-class" style:width=${() => `${time() * 4}px`} >Home</div>`
 }
 
-function About(props) {
-  const [selected, setSelected] = createSignal("2");
-
-  return xml`<Suspense><select value=${selected} onChange=${e=>setSelected(e.target.value)}><option value=${"default"}>
-  ${"DEFAULT"}  
-  
-  </option><For each=${()=>asyncArray()} >
-    ${(item) =>xml`<option value=${item} selected=${item == selected()}>Item: ${item}</option>`}
-  </For></select></Suspense>`
+function About() {
+  return html`
+<svg version="1.1"
+     baseProfile="full"
+     width="20" height="600"
+>
+     
+   <defs>
+          <path id="testPath" d="M 10 10 L 10 600 z"
+         stroke="black" stroke-width="3" />
+   </defs>
+   
+   <text>
+      <textPath href="#testPath">
+         teeeest
+      </textPath>
+   </text>
+   
+</svg>
+  `
 }
 
 render(App, document.getElementById("app")!);
+

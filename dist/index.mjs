@@ -1,72 +1,28 @@
 import { ErrorBoundary as ErrorBoundary$1, For as For$1, Index as Index$1, Match as Match$1, Show as Show$1, Suspense as Suspense$1, Switch as Switch$1, createComponent } from "solid-js";
-import { DelegatedEvents, Dynamic, NoHydration, Portal, SVGElements, addEventListener, assign, delegateEvents, effect, insert, setAttribute, setBoolAttribute, setProperty, spread } from "solid-js/web";
+import { DelegatedEvents, Dynamic, ErrorBoundary as ErrorBoundary$2, For as For$2, Index as Index$2, Match as Match$2, NoHydration, Portal, SVGElements, Show as Show$2, Suspense as Suspense$2, Switch as Switch$2, addEventListener, delegateEvents, effect, insert } from "solid-js/web";
 
-//#region src/util.ts
-function isString(value) {
-	return typeof value === "string";
-}
-function isFunction(value) {
-	return typeof value === "function";
-}
-const doc = document;
 
-//#endregion
-//#region src/h.ts
-/**
-* Hyperscript function for Solid-compatible components and elements. Accepts a component or tag name, props, and children.
-* Children passed as arguments override `children` in props.
-* @example
-* h("button", { onClick: () => alert("Hi") }, "Click Me")
-* h(MyComponent, { foo: 1 }, html`<span>Child</span>`)
-*/
-function h(component, props, ...children) {
-	if (children.length === 1) props.children = children[0];
-	else if (children.length > 1) props.children = children;
-	if (isString(component)) {
-		const elem = doc.createElement(component);
-		spread(elem, props, SVGElements.has(component));
-		return elem;
-	} else if (isFunction(component)) return createComponent(component, wrapProps(props));
-}
-const markedOnce = /* @__PURE__ */ new WeakSet();
-/**
-* Marks a function so it is not wrapped as a getter by h().
-* Useful for event handlers or functions that should not be auto-accessed.
-* @example
-* once(() => doSomething())
-*/
-function once(fn) {
-	markedOnce.add(fn);
-	return fn;
-}
-/**
-* Internal: Replaces accessor props with getters for reactivity, except for refs and event handlers.
-*/
-function wrapProps(props = {}) {
-	for (const [key, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(props))) {
-		const value = descriptor.value;
-		if (key !== "ref" && key.slice(0, 2) !== "on" && isFunction(value) && value.length === 0 && !markedOnce.has(value)) Object.defineProperty(props, key, {
-			get() {
-				return value();
-			},
-			enumerable: true
-		});
-	}
-	return props;
-}
-
-//#endregion
 //#region src/components.ts
+function getValue(value) {
+	if (typeof value === "function") return value();
+	else return value;
+}
 /**
 * Solid-compatible Show component. Renders children if `when` is truthy, otherwise renders `fallback`.
 * @example
 * Show(() => isVisible(), html`<span>Hello</span>`, "Fallback")
 */
 function Show(when, children, fallback) {
-	return h(Show$1, {
-		when,
-		children,
-		fallback,
+	return createComponent(Show$1, {
+		get when() {
+			return when();
+		},
+		get children() {
+			return getValue(children);
+		},
+		get fallback() {
+			return getValue(fallback);
+		},
 		keyed: false
 	});
 }
@@ -76,10 +32,16 @@ function Show(when, children, fallback) {
 * ShowKeyed(() => user(), user => html`<span>${user.name}</span>`, "No user")
 */
 function ShowKeyed(when, children, fallback) {
-	return h(Show$1, {
-		when,
-		children,
-		fallback,
+	return createComponent(Show$1, {
+		get when() {
+			return when();
+		},
+		get children() {
+			return getValue(children);
+		},
+		get fallback() {
+			return getValue(fallback);
+		},
 		keyed: true
 	});
 }
@@ -89,9 +51,13 @@ function ShowKeyed(when, children, fallback) {
 * Switch("No match", Match(() => cond1(), html`A`), Match(() => cond2(), html`B`))
 */
 function Switch(fallback, ...children) {
-	return h(Switch$1, {
-		children,
-		fallback
+	return createComponent(Switch$1, {
+		get children() {
+			return getValue(children);
+		},
+		get fallback() {
+			return getValue(fallback);
+		}
 	});
 }
 /**
@@ -100,8 +66,10 @@ function Switch(fallback, ...children) {
 * Match(() => value() === 1, html`One`)
 */
 function Match(when, children) {
-	return h(Match$1, {
-		when,
+	return createComponent(Match$1, {
+		get when() {
+			return when();
+		},
 		children,
 		keyed: false
 	});
@@ -112,8 +80,10 @@ function Match(when, children) {
 * MatchKeyed(() => user(), user => html`<span>${user.name}</span>`)
 */
 function MatchKeyed(when, children) {
-	return h(Match$1, {
-		when,
+	return createComponent(Match$1, {
+		get when() {
+			return when();
+		},
 		children,
 		keyed: true
 	});
@@ -124,12 +94,14 @@ function MatchKeyed(when, children) {
 * For(() => items(), (item) => html`<li>${item}</li>`)
 */
 function For(each, children, fallback) {
-	return h(For$1, {
+	return createComponent(For$1, {
 		get each() {
 			return each();
 		},
-		children: once(children),
-		fallback
+		children,
+		get fallback() {
+			return getValue(fallback);
+		}
 	});
 }
 /**
@@ -138,12 +110,14 @@ function For(each, children, fallback) {
 * Index(() => items(), (item, i) => html`<li>${item()}</li>`)
 */
 function Index(each, children, fallback) {
-	return h(Index$1, {
+	return createComponent(Index$1, {
 		get each() {
 			return each();
 		},
-		children: once(children),
-		fallback
+		children,
+		get fallback() {
+			return getValue(fallback);
+		}
 	});
 }
 /**
@@ -152,9 +126,13 @@ function Index(each, children, fallback) {
 * Suspense(html`<div>Loaded</div>`, html`<div>Loading...</div>`)
 */
 function Suspense(children, fallback) {
-	return h(Suspense$1, {
-		children,
-		fallback
+	return createComponent(Suspense$1, {
+		get children() {
+			return getValue(children);
+		},
+		get fallback() {
+			return getValue(fallback);
+		}
 	});
 }
 /**
@@ -163,9 +141,13 @@ function Suspense(children, fallback) {
 * ErrorBoundary(html`<App />`, (err) => html`<div>Error: ${err.message}</div>`)
 */
 function ErrorBoundary(children, fallback) {
-	return h(ErrorBoundary$1, {
-		children,
-		fallback
+	return createComponent(ErrorBoundary$1, {
+		get children() {
+			return getValue(children);
+		},
+		get fallback() {
+			return getValue(fallback);
+		}
 	});
 }
 /**
@@ -174,17 +156,182 @@ function ErrorBoundary(children, fallback) {
 * Context(MyContext, value, () => html`<Child />`)
 */
 function Context(context, value, children) {
-	return h(context.Provider, {
-		value,
-		children
+	return createComponent(context.Provider, {
+		get children() {
+			return getValue(children);
+		},
+		get value() {
+			return getValue(value);
+		}
 	});
+}
+
+//#endregion
+//#region src/util.ts
+function isString(value) {
+	return typeof value === "string";
+}
+function isFunction(value) {
+	return typeof value === "function";
+}
+const doc = document;
+
+//#endregion
+//#region src/assign.ts
+function assignEvent(node, name, value, prev) {
+	prev && node.removeEventListener(name, prev);
+	value && node.addEventListener(name, value);
+	return value;
+}
+function assignDelegatedEvent(node, name, value, prev) {
+	name = name.toLowerCase();
+	let delegate = DelegatedEvents.has(name);
+	addEventListener(node, name, value, delegate);
+	if (delegate) delegateEvents([name]);
+	return value;
+}
+function assignProperty(node, name, value, prev) {
+	node[name] = value;
+	return value;
+}
+function assignBooleanAttribute(node, name, value, prev) {
+	if (value) node.setAttribute(name, "");
+	else node.removeAttribute(name);
+	return value;
+}
+function assignAttribute(node, name, value, prev) {
+	if (value === null || value === void 0) {
+		node.removeAttribute(name);
+		return value;
+	}
+	node.setAttribute(name, value);
+	return value;
+}
+function assignAttributeNS(namespace, node, name, value, prev) {
+	if (value === null || value === void 0) {
+		node.removeAttributeNS(namespace, name);
+		return value;
+	}
+	node.setAttributeNS(namespace, name, value);
+	return value;
+}
+function assignClass(node, name, value, prev) {
+	node.classList.toggle(name, !!value);
+	return value;
+}
+function assignStyle(node, name, value, prev) {
+	node.style[name] = value ? value : "";
+	return value;
+}
+function assignRef(node, name, value, prev) {
+	if (isFunction(value)) value(node);
+}
+function assign(rules, elem, name, value, prev) {
+	if (value === prev) return value;
+	if (name === "children") return insert(elem, value);
+	for (const rule of rules) {
+		const { filter, assign: assign$1, isReactive = true } = rule;
+		if (isString(filter) && name.startsWith(filter)) name = name.slice(filter.length);
+		else if (isFunction(filter)) name = filter(elem, name, value, prev);
+		else continue;
+		if (name) {
+			if (isFunction(value) && isReactive) effect(() => prev = assign$1(elem, name, value(), prev));
+			else assign$1(elem, name, value, prev);
+			return prev;
+		}
+	}
+}
+function spread(rules, elem, props, prev = {}) {
+	if (isFunction(props)) effect(() => {
+		for (const [name, value] of Object.entries(props())) prev[name] = assign(rules, elem, name, value, prev[name]);
+	});
+	else for (const [name, value] of Object.entries(props)) prev[name] = assign(rules, elem, name, value, prev[name]);
+	return prev;
+}
+
+//#endregion
+//#region src/xml.ts
+const xmlns = [
+	"on",
+	"prop",
+	"bool",
+	"attr",
+	"ref",
+	"style",
+	"class",
+	"xlink"
+].map((ns) => `xmlns:${ns}="/"`).join(" ");
+const marker$1 = "MARKER46846";
+const markerRX = new RegExp(`(${marker$1})`, "g");
+const markerAttr = new RegExp(`=${marker$1}`, "g");
+const xmlCache = /* @__PURE__ */ new WeakMap();
+/**
+* Parses a template string as XML and returns the child nodes, using a cache for performance.
+* @internal
+*/
+function getXml(strings) {
+	let xml$1 = xmlCache.get(strings);
+	if (xml$1 === void 0) {
+		const contents = strings.join(marker$1).replace(markerAttr, `="${marker$1}"`);
+		const parser = new DOMParser();
+		xml$1 = parser.parseFromString(`<xml ${xmlns}>${contents}</xml>`, "text/xml").firstChild;
+		xmlCache.set(strings, xml$1);
+	}
+	return xml$1.childNodes;
+}
+const flat = (arr) => arr.length === 1 ? arr[0] : arr;
+function getValue$1(value) {
+	while (isFunction(value)) value = value();
+	return value;
+}
+const toArray = Array.from;
+function XML(components = {}, rules = []) {
+	function xml$1(template, ...values) {
+		const cached = getXml(template);
+		let index = 0;
+		function nodes(node) {
+			if (node.nodeType === 1) {
+				const tagName = node.tagName;
+				const props = {};
+				for (let { name, value } of node.attributes) {
+					if (value === marker$1) value = values[index++];
+					else if (value.includes(marker$1)) {
+						const val = value.split(markerRX).map((x) => x === marker$1 ? values[index++] : x);
+						value = () => val.map(getValue$1).join("");
+					}
+					props[name] = value;
+				}
+				const childNodes = node.childNodes;
+				if (childNodes.length) Object.defineProperty(props, "children", {
+					get() {
+						return flat(toArray(childNodes).map(nodes).filter((n) => n));
+					},
+					enumerable: true
+				});
+				return xml$1.h(tagName, props);
+			} else if (node.nodeType === 3) {
+				const value = node.nodeValue;
+				if (value.trim() === marker$1) return values[index++];
+				return value.includes(marker$1) ? value.split(markerRX).map((x) => x === marker$1 ? values[index++] : x) : value;
+			} else if (node.nodeType === 8) {
+				const value = node.nodeValue;
+				if (value.includes(marker$1)) {
+					const val = value.split(markerRX).map((x) => x === marker$1 ? values[index++] : x);
+					return () => doc.createComment(val.map(getValue$1).join(""));
+				} else return doc.createComment(value);
+			} else console.error(`xml: nodeType not supported ${node.nodeType}`);
+		}
+		return flat(toArray(cached).map(nodes));
+	}
+	xml$1.h = H(components, rules);
+	return xml$1;
 }
 
 //#endregion
 //#region src/lit-html.ts
 const boundAttributeSuffix = "$lit$";
-const marker$1 = `lit$marker$`;
-const markerMatch = "?" + marker$1;
+const marker = `lit$marker$`;
+const markerMatch = "?" + marker;
 const nodeMarker = `<${markerMatch}>`;
 const SPACE_CHAR = `[ \t\n\f\r]`;
 const ATTR_VALUE_CHAR = `[^ \t\n\f\r"'\`<>=]`;
@@ -295,7 +442,7 @@ const getTemplateHtml = (strings, type) => {
 			}
 		}
 		const end = regex === tagEndRegex && strings[i + 1].startsWith("/>") ? " " : "";
-		html$1 += regex === textEndRegex ? s + nodeMarker : attrNameEndIndex >= 0 ? (attrNames.push(attrName), s.slice(0, attrNameEndIndex) + boundAttributeSuffix + s.slice(attrNameEndIndex)) + marker$1 + end : s + marker$1 + (attrNameEndIndex === -2 ? i : end);
+		html$1 += regex === textEndRegex ? s + nodeMarker : attrNameEndIndex >= 0 ? (attrNames.push(attrName), s.slice(0, attrNameEndIndex) + boundAttributeSuffix + s.slice(attrNameEndIndex)) + marker + end : s + marker + (attrNameEndIndex === -2 ? i : end);
 	}
 	const htmlResult = html$1 + (strings[l] || "<?>") + (type === SVG_RESULT ? "</svg>" : type === MATHML_RESULT ? "</math>" : "");
 	return [htmlResult, attrNames];
@@ -321,33 +468,11 @@ function getTemplate(strings, type) {
 	return template;
 }
 /**
-* Assigns a property, attribute, boolean, or event handler to an element, supporting reactivity.
-* @internal
-*/
-function assignAttribute(elem, name, value) {
-	if (name[0] === "@") {
-		const event = name.slice(1);
-		let delegate = DelegatedEvents.has(event);
-		addEventListener(elem, event, value, delegate);
-		if (delegate) delegateEvents([event]);
-		elem.removeAttribute(name);
-	} else if (name[0] === ".") {
-		if (isFunction(value)) effect(() => {
-			setProperty(elem, name.slice(1), value());
-		});
-		else setProperty(elem, name.slice(1), value);
-		elem.removeAttribute(name);
-	} else if (name[0] === "?") if (isFunction(value)) effect(() => setBoolAttribute(elem, name.slice(1), value()));
-	else setBoolAttribute(elem, name.slice(1), value);
-	else if (isFunction(value)) effect(() => setAttribute(elem, name, value()));
-	else setAttribute(elem, name, value);
-}
-/**
 * Creates a tagged template function for html/svg/mathml templates with Solid reactivity.
 * @internal
 */
-function createHtml(type) {
-	return function html$1(strings, ...values) {
+function HTML(type = 1, rules = []) {
+	function html$1(strings, ...values) {
 		function render() {
 			const [element, attributes] = getTemplate(strings, type);
 			const clone = element.content.cloneNode(true);
@@ -358,28 +483,30 @@ function createHtml(type) {
 				const node = walker.currentNode;
 				if (node.nodeType === 1) {
 					for (const attr of [...node.attributes]) if (attr.name.endsWith(boundAttributeSuffix)) {
-						if (attr.value === marker$1) assignAttribute(node, attributes[boundAttributeIndex++], values[valueIndex++]);
+						let value;
+						if (attr.value === marker) value = values[valueIndex++];
 						else {
-							const strings$1 = attr.value.split(marker$1);
+							const strings$1 = attr.value.split(marker);
 							let parts = [strings$1[0]];
 							for (let j = 1; j < strings$1.length; j++) parts.push(values[valueIndex++], strings$1[j]);
-							assignAttribute(node, attributes[boundAttributeIndex++], () => parts.map((v) => isFunction(v) ? v() : v).join(""));
+							value = () => parts.map((v) => isFunction(v) ? v() : v).join("");
 						}
+						assign(rules, node, attributes[boundAttributeIndex++], value);
 						node.removeAttribute(attr.name);
-					} else if (attr.name === `...${marker$1}`) {
-						const isSvg = SVGElements.has(node.tagName);
+					} else if (attr.name === `...${marker}`) {
+						SVGElements.has(node.tagName);
 						const value = values[valueIndex++];
-						if (isFunction(value)) effect(() => assign(node, value(), isSvg, true));
-						else assign(node, value, isSvg, true);
+						if (isFunction(value)) effect(() => spread(rules, node, value()));
+						else spread(rules, node, value);
 						node.removeAttribute(attr.name);
-					} else if (attr.name.startsWith(marker$1)) {
+					} else if (attr.name.startsWith(marker)) {
 						const value = values[valueIndex++];
 						if (isFunction(value)) value(node);
 						node.removeAttribute(attr.name);
 					}
 				} else if (node.nodeType === 8) {
 					if (node.nodeValue === markerMatch) {
-						node.nodeValue = marker$1 + valueIndex;
+						node.nodeValue = marker + valueIndex;
 						const value = values[valueIndex++];
 						const parent = node.parentNode;
 						if (parent) insert(parent, value, node);
@@ -390,150 +517,133 @@ function createHtml(type) {
 			return [...clone.childNodes];
 		}
 		return render;
-	};
+	}
+	html$1.rules = [...rules, ...defaultRules];
+	return html$1;
 }
-/**
-* Tagged template for creating reactive HTML templates with Solid. Use for DOM elements only.
-*
-* @example
-* html`<div class="foo">${bar}</div>`
-* html`<button @click=${onClick}>Click</button>`
-*/
-const html = createHtml(HTML_RESULT);
-/**
-* Tagged template for creating reactive SVG templates with Solid. Use inside <svg> only.
-*
-* @example
-* svg`<circle cx="10" cy="10" r="5" />`
-*/
-const svg = createHtml(SVG_RESULT);
-/**
-* Tagged template for creating reactive MathML templates with Solid. Use inside <math> only.
-*
-* @example
-* mathml`<math><mi>x</mi></math>`
-*/
-const mathml = createHtml(MATHML_RESULT);
 
 //#endregion
-//#region src/xml.ts
-/**
-* Default registry of built-in Solid control flow and utility components for XML templates.
-*/
-const defaultRegistry = {
-	For: For$1,
-	Index: Index$1,
-	Match: Match$1,
-	Suspense: Suspense$1,
-	ErrorBoundary: ErrorBoundary$1,
-	Show: Show$1,
-	Switch: Switch$1,
+//#region src/defaults.ts
+const defaultRules = [
+	{
+		filter: "on:",
+		assign: assignEvent,
+		isReactive: false
+	},
+	{
+		filter: "on",
+		assign: assignDelegatedEvent,
+		isReactive: false
+	},
+	{
+		filter: "prop:",
+		assign: assignProperty
+	},
+	{
+		filter: "bool:",
+		assign: assignBooleanAttribute
+	},
+	{
+		filter: "attr:",
+		assign: assignAttribute
+	},
+	{
+		filter: "ref:",
+		assign: assignRef,
+		isReactive: false
+	},
+	{
+		filter: "class:",
+		assign: assignClass
+	},
+	{
+		filter: "style:",
+		assign: assignStyle
+	},
+	{
+		filter: "@",
+		assign: assignDelegatedEvent
+	},
+	{
+		filter: ".",
+		assign: assignProperty
+	},
+	{
+		filter: "?",
+		assign: assignBooleanAttribute
+	},
+	{
+		filter: "",
+		assign: assignAttribute
+	}
+];
+const defaultComponents = {
+	For: For$2,
+	Index: Index$2,
+	Match: Match$2,
+	Suspense: Suspense$2,
+	ErrorBoundary: ErrorBoundary$2,
+	Show: Show$2,
+	Switch: Switch$2,
 	Dynamic,
 	Portal,
 	NoHydration
 };
-const xmlns = [
-	"on",
-	"prop",
-	"bool",
-	"attr"
-].map((ns) => `xmlns:${ns}="/"`).join(" ");
-const marker = "MARKER46846";
-const markerRX = new RegExp(`(${marker})`, "g");
-const markerAttr = new RegExp(`=${marker}`, "g");
-const xmlCache = /* @__PURE__ */ new WeakMap();
-/**
-* Parses a template string as XML and returns the child nodes, using a cache for performance.
-* @internal
-*/
-function getXml(strings) {
-	let xml$1 = xmlCache.get(strings);
-	if (xml$1 === void 0) {
-		const contents = strings.join(marker).replace(markerAttr, `="${marker}"`);
-		const parser = new DOMParser();
-		xml$1 = parser.parseFromString(`<xml ${xmlns}>${contents}</xml>`, "text/xml").firstChild;
-		xmlCache.set(strings, xml$1);
-	}
-	return xml$1.childNodes;
-}
-const flat = (arr) => arr.length === 1 ? arr[0] : arr;
-function getValue(value) {
-	while (isFunction(value)) value = value();
-	return value;
-}
-const toArray = Array.from;
-/**
-* Converts parsed XML nodes and values into Solid hyperscript calls.
-* @internal
-*/
-function toH(jsx, cached, values) {
-	let index = 0;
-	function nodes(node) {
-		if (node.nodeType === 1) {
-			const tagName = node.tagName;
-			const props = {};
-			for (let { name, value } of node.attributes) {
-				if (value === marker) value = values[index++];
-				else if (value.includes(marker)) {
-					const val = value.split(markerRX).map((x) => x === marker ? values[index++] : x);
-					value = () => val.map(getValue).join("");
-				}
-				props[name] = value;
-			}
-			const childNodes = node.childNodes;
-			if (childNodes.length) Object.defineProperty(props, "children", {
-				get() {
-					return flat(toArray(childNodes).map(nodes).filter((n) => n));
-				},
-				configurable: true
-			});
-			/[A-Z]/.test(tagName) && !jsx.components[tagName] && console.warn(`xml: Forgot to jsx.define({ ${tagName} })?`);
-			return h(jsx.components[tagName] || tagName, props);
-		} else if (node.nodeType === 3) {
-			const value = node.nodeValue;
-			if (value.trim() === marker) return values[index++];
-			return value.includes(marker) ? value.split(markerRX).map((x) => x === marker ? values[index++] : x) : value;
-		} else if (node.nodeType === 8) {
-			const value = node.nodeValue;
-			if (value.includes(marker)) {
-				const val = value.split(markerRX).map((x) => x === marker ? values[index++] : x);
-				return () => doc.createComment(val.map(getValue).join(""));
-			} else return doc.createComment(value);
-		} else console.error(`xml: nodeType not supported ${node.nodeType}`);
-	}
-	return flat(toArray(cached).map(nodes));
-}
-/**
-* Creates an XML template tag function for Solid, supporting custom component registries.
-* Use `xml.define({ ... })` to add or override components.
-*
-* @example
-* const xml = XML({ MyComponent })
-* xml`<MyComponent foo="bar">${child}</MyComponent>`
-*
-* @param userComponents Custom components to add to the registry.
-* @returns An xml template tag function.
-*/
-function XML(userComponents = {}) {
-	function xml$1(template, ...values) {
-		return toH(xml$1, getXml(template), values);
-	}
-	xml$1.components = { ...defaultRegistry };
-	xml$1.define = (userComponents$1) => {
-		for (const name in userComponents$1) xml$1.components[name] = userComponents$1[name];
-		return xml$1;
-	};
-	xml$1.define(userComponents);
-	return xml$1;
-}
-/**
-* Default XML template tag for Solid, with built-in registry. Use `xml.define` to add components.
-*
-* @example
-* xml`<For each=${list}>${item => xml`<div>${item}</div>`}</For>`
-*/
+
+const h = H();
 const xml = XML();
+const html = HTML(HTML_RESULT);
+const svg = HTML(SVG_RESULT);
+const mathml = HTML(MATHML_RESULT);
 
 //#endregion
-export { Context, ErrorBoundary, For, Index, Match, MatchKeyed, Show, ShowKeyed, Suspense, Switch, XML, h, html, mathml, once, svg, xml };
+//#region src/h.ts
+function H(components = {}, rules = []) {
+	function h$1(component, props, ...children) {
+		if (children.length === 1) props.children = children[0];
+		else if (children.length > 1) props.children = children;
+		if (isString(component)) {
+			if (/[A-Z]/.test(component)) {
+				const componentFunction = h$1.components[component];
+				if (componentFunction) return createComponent(componentFunction, wrapProps(props));
+				console.warn(`Forgot to define ${componentFunction}`);
+			}
+			const elem = SVGElements.has(component) ? doc.createElementNS("http://www.w3.org/2000/svg", component) : doc.createElement(component);
+			spread(h$1.rules, elem, props);
+			return elem;
+		} else if (isFunction(component)) return createComponent(component, wrapProps(props));
+
+	}
+	h$1.components = {
+		...defaultComponents,
+		...components
+	};
+	h$1.define = (components$1) => {
+		Object.assign(h$1.components, components$1);
+	};
+	h$1.rules = [...rules, ...defaultRules];
+	return h$1;
+}
+const markedOnce = /* @__PURE__ */ new WeakSet();
+
+function once(fn) {
+	if (isFunction(fn)) markedOnce.add(fn);
+	return fn;
+}
+
+function wrapProps(props = {}) {
+	for (const [key, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(props))) {
+		const value = descriptor.value;
+		if (isFunction(value) && value.length === 0 && !markedOnce.has(value)) Object.defineProperty(props, key, {
+			get() {
+				return value();
+			},
+			enumerable: true
+		});
+	}
+	return props;
+}
+
+//#endregion
+export { Context, ErrorBoundary, For, H, HTML, Index, Match, MatchKeyed, Show, ShowKeyed, Suspense, Switch, XML, assign, assignAttribute, assignAttributeNS, assignBooleanAttribute, assignClass, assignDelegatedEvent, assignEvent, assignProperty, assignRef, assignStyle, defaultComponents, defaultRules, getValue, h, html, markedOnce, mathml, once, spread, svg, xml };
 //# sourceMappingURL=index.mjs.map
