@@ -69,7 +69,9 @@ export function XML(components: ComponentRegistry = {}, rules: AssignmentRules =
 
         // gather children
         const childNodes = node.childNodes;
-        if (childNodes.length) {
+        if (childNodes.lenth===1 && childNodes[0].nodeType === 3 && childNodes[0].nodeValue.trim() === marker) {
+          props.children = values[index++];
+        }else if (childNodes.length) {
           Object.defineProperty(props, "children", {
             get() {
               return flat(

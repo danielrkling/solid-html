@@ -197,4 +197,4 @@ declare const mathml: {
 };
 //#endregion
 export { AssignmentFunction, AssignmentRule, AssignmentRules, ComponentRegistry, Context, ErrorBoundary, For, H, HTML, Index, Match, MatchKeyed, MaybeFunction, MaybeFunctionProps, RuleFilter, Show, ShowKeyed, Suspense, Switch, XML, assign, assignAttribute, assignAttributeNS, assignBooleanAttribute, assignClass, assignDelegatedEvent, assignEvent, assignProperty, assignRef, assignStyle, defaultComponents, defaultRules, getValue, h, html, markedOnce, mathml, once, spread, svg, xml };
-//# sourceMappingURL=index.d.mts.map
+//# sourceMappingURL=index.d.ts.map
