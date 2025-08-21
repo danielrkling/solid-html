@@ -1,16 +1,19 @@
 import { ErrorBoundary as ErrorBoundary$1, For as For$1, Index as Index$1, Match as Match$1, Show as Show$1, Suspense as Suspense$1, Switch as Switch$1, createComponent } from "solid-js";
 import { DelegatedEvents, Dynamic, ErrorBoundary as ErrorBoundary$2, For as For$2, Index as Index$2, Match as Match$2, NoHydration, Portal, SVGElements, Show as Show$2, Suspense as Suspense$2, Switch as Switch$2, addEventListener, delegateEvents, effect, insert } from "solid-js/web";
 
-
 //#region src/components.ts
 function getValue(value) {
 	if (typeof value === "function") return value();
 	else return value;
 }
 /**
+
 * Solid-compatible Show component. Renders children if `when` is truthy, otherwise renders `fallback`.
+
 * @example
+
 * Show(() => isVisible(), html`<span>Hello</span>`, "Fallback")
+
 */
 function Show(when, children, fallback) {
 	return createComponent(Show$1, {
@@ -27,9 +30,13 @@ function Show(when, children, fallback) {
 	});
 }
 /**
+
 * Show component with keyed mode. Renders children with keyed context if `when` is truthy.
+
 * @example
+
 * ShowKeyed(() => user(), user => html`<span>${user.name}</span>`, "No user")
+
 */
 function ShowKeyed(when, children, fallback) {
 	return createComponent(Show$1, {
@@ -46,9 +53,13 @@ function ShowKeyed(when, children, fallback) {
 	});
 }
 /**
+
 * Switch component for conditional rendering. Renders the first matching child, or `fallback` if none match.
+
 * @example
+
 * Switch("No match", Match(() => cond1(), html`A`), Match(() => cond2(), html`B`))
+
 */
 function Switch(fallback, ...children) {
 	return createComponent(Switch$1, {
@@ -61,9 +72,13 @@ function Switch(fallback, ...children) {
 	});
 }
 /**
+
 * Match component for use inside Switch. Renders children if `when` is truthy.
+
 * @example
+
 * Match(() => value() === 1, html`One`)
+
 */
 function Match(when, children) {
 	return createComponent(Match$1, {
@@ -75,9 +90,13 @@ function Match(when, children) {
 	});
 }
 /**
+
 * Keyed Match component for use inside Switch. Renders children with keyed context if `when` is truthy.
+
 * @example
+
 * MatchKeyed(() => user(), user => html`<span>${user.name}</span>`)
+
 */
 function MatchKeyed(when, children) {
 	return createComponent(Match$1, {
@@ -89,9 +108,13 @@ function MatchKeyed(when, children) {
 	});
 }
 /**
+
 * For component for iterating over arrays. Renders children for each item in `each`.
+
 * @example
+
 * For(() => items(), (item) => html`<li>${item}</li>`)
+
 */
 function For(each, children, fallback) {
 	return createComponent(For$1, {
@@ -105,9 +128,13 @@ function For(each, children, fallback) {
 	});
 }
 /**
+
 * Index component for iterating over arrays by index. Renders children for each item in `each`.
+
 * @example
+
 * Index(() => items(), (item, i) => html`<li>${item()}</li>`)
+
 */
 function Index(each, children, fallback) {
 	return createComponent(Index$1, {
@@ -121,9 +148,13 @@ function Index(each, children, fallback) {
 	});
 }
 /**
+
 * Suspense component for async boundaries. Renders `children` or `fallback` while loading.
+
 * @example
+
 * Suspense(html`<div>Loaded</div>`, html`<div>Loading...</div>`)
+
 */
 function Suspense(children, fallback) {
 	return createComponent(Suspense$1, {
@@ -136,9 +167,13 @@ function Suspense(children, fallback) {
 	});
 }
 /**
+
 * ErrorBoundary component. Catches errors in children and renders `fallback` on error.
+
 * @example
+
 * ErrorBoundary(html`<App />`, (err) => html`<div>Error: ${err.message}</div>`)
+
 */
 function ErrorBoundary(children, fallback) {
 	return createComponent(ErrorBoundary$1, {
@@ -151,9 +186,13 @@ function ErrorBoundary(children, fallback) {
 	});
 }
 /**
+
 * Context provider component. Provides a context value to all children.
+
 * @example
+
 * Context(MyContext, value, () => html`<Child />`)
+
 */
 function Context(context, value, children) {
 	return createComponent(context.Provider, {
@@ -266,8 +305,11 @@ const markerRX = new RegExp(`(${marker$1})`, "g");
 const markerAttr = new RegExp(`=${marker$1}`, "g");
 const xmlCache = /* @__PURE__ */ new WeakMap();
 /**
+
 * Parses a template string as XML and returns the child nodes, using a cache for performance.
+
 * @internal
+
 */
 function getXml(strings) {
 	let xml$1 = xmlCache.get(strings);
@@ -337,8 +379,11 @@ const SPACE_CHAR = `[ \t\n\f\r]`;
 const ATTR_VALUE_CHAR = `[^ \t\n\f\r"'\`<>=]`;
 const NAME_CHAR = `[^\\s"'>=/]`;
 /**
+
 * End of text is: `<` followed by:
+
 *   (comment start) or (tag) or (dynamic tag binding)
+
 */
 const textEndRegex = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g;
 const COMMENT_START = 1;
@@ -346,30 +391,53 @@ const TAG_NAME = 2;
 const DYNAMIC_TAG_NAME = 3;
 const commentEndRegex = /-->/g;
 /**
+
 * Comments not started with <!--, like </{, can be ended by a single `>`
+
 */
 const comment2EndRegex = />/g;
 /**
+
 * The tagEnd regex matches the end of the "inside an opening" tag syntax
+
 * position. It either matches a `>`, an attribute-like sequence, or the end
+
 * of the string after a space (attribute-name position ending).
+
 *
+
 * See attributes in the HTML spec:
+
 * https://www.w3.org/TR/html5/syntax.html#elements-attributes
+
 *
+
 * " \t\n\f\r" are HTML space characters:
+
 * https://infra.spec.whatwg.org/#ascii-whitespace
+
 *
+
 * So an attribute is:
+
 *  * The name: any character except a whitespace character, ("), ('), ">",
+
 *    "=", or "/". Note: this is different from the HTML spec which also excludes control characters.
+
 *  * Followed by zero or more space characters
+
 *  * Followed by "="
+
 *  * Followed by zero or more space characters
+
 *  * Followed by:
+
 *    * Any character except space, ('), ("), "<", ">", "=", (`), or
+
 *    * (") then any non-("), or
+
 *    * (') then any non-(')
+
 */
 const tagEndRegex = new RegExp(`>|${SPACE_CHAR}(?:(${NAME_CHAR}+)(${SPACE_CHAR}*=${SPACE_CHAR}*(?:${ATTR_VALUE_CHAR}|("|')|))|$)`, "g");
 const ENTIRE_MATCH = 0;
@@ -379,10 +447,15 @@ const QUOTE_CHAR = 3;
 const singleQuoteAttrEndRegex = /'/g;
 const doubleQuoteAttrEndRegex = /"/g;
 /**
+
 * Matches the raw text elements.
+
 *
+
 * Comments are not parsed within raw text elements, so we need to search their
+
 * text content for marker strings.
+
 */
 const rawTextElement = /^(?:script|style|textarea|title)$/i;
 /** TemplateResult types */
@@ -390,16 +463,27 @@ const HTML_RESULT = 1;
 const SVG_RESULT = 2;
 const MATHML_RESULT = 3;
 /**
+
 * Returns an HTML string for the given TemplateStringsArray and result type
+
 * (HTML or SVG), along with the case-sensitive bound attribute names in
+
 * template order. The HTML contains comment markers denoting the `ChildPart`s
+
 * and suffixes on bound attributes denoting the `AttributeParts`.
+
 *
+
 * @param strings template strings array
+
 * @param type HTML or SVG
+
 * @return Array containing `[html, attrNames]` (array returned for terseness,
+
 *     to avoid object fields since this code is shared with non-minified SSR
+
 *     code)
+
 */
 const getTemplateHtml = (strings, type) => {
 	const l = strings.length - 1;
@@ -453,8 +537,11 @@ const getTemplateHtml = (strings, type) => {
 const walker = doc.createTreeWalker(doc, 129);
 const templateCache = /* @__PURE__ */ new WeakMap();
 /**
+
 * Returns a parsed template and its bound attributes for a given template string and type.
+
 * @internal
+
 */
 function getTemplate(strings, type) {
 	let template = templateCache.get(strings);
@@ -468,55 +555,55 @@ function getTemplate(strings, type) {
 	return template;
 }
 /**
+
 * Creates a tagged template function for html/svg/mathml templates with Solid reactivity.
+
 * @internal
+
 */
 function HTML(type = 1, rules = []) {
 	function html$1(strings, ...values) {
-		function render() {
-			const [element, attributes] = getTemplate(strings, type);
-			const clone = element.content.cloneNode(true);
-			let valueIndex = 0;
-			let boundAttributeIndex = 0;
-			walker.currentNode = clone;
-			while (walker.nextNode()) {
-				const node = walker.currentNode;
-				if (node.nodeType === 1) {
-					for (const attr of [...node.attributes]) if (attr.name.endsWith(boundAttributeSuffix)) {
-						let value;
-						if (attr.value === marker) value = values[valueIndex++];
-						else {
-							const strings$1 = attr.value.split(marker);
-							let parts = [strings$1[0]];
-							for (let j = 1; j < strings$1.length; j++) parts.push(values[valueIndex++], strings$1[j]);
-							value = () => parts.map((v) => isFunction(v) ? v() : v).join("");
-						}
-						assign(rules, node, attributes[boundAttributeIndex++], value);
-						node.removeAttribute(attr.name);
-					} else if (attr.name === `...${marker}`) {
-						SVGElements.has(node.tagName);
-						const value = values[valueIndex++];
-						if (isFunction(value)) effect(() => spread(rules, node, value()));
-						else spread(rules, node, value);
-						node.removeAttribute(attr.name);
-					} else if (attr.name.startsWith(marker)) {
-						const value = values[valueIndex++];
-						if (isFunction(value)) value(node);
-						node.removeAttribute(attr.name);
+		const [element, attributes] = getTemplate(strings, type);
+		const clone = element.content.cloneNode(true);
+		let valueIndex = 0;
+		let boundAttributeIndex = 0;
+		walker.currentNode = clone;
+		while (walker.nextNode()) {
+			const node = walker.currentNode;
+			if (node.nodeType === 1) {
+				for (const attr of [...node.attributes]) if (attr.name.endsWith(boundAttributeSuffix)) {
+					let value;
+					if (attr.value === marker) value = values[valueIndex++];
+					else {
+						const strings$1 = attr.value.split(marker);
+						let parts = [strings$1[0]];
+						for (let j = 1; j < strings$1.length; j++) parts.push(values[valueIndex++], strings$1[j]);
+						value = () => parts.map((v) => isFunction(v) ? v() : v).join("");
 					}
-				} else if (node.nodeType === 8) {
-					if (node.nodeValue === markerMatch) {
-						node.nodeValue = marker + valueIndex;
-						const value = values[valueIndex++];
-						const parent = node.parentNode;
-						if (parent) insert(parent, value, node);
-					}
+					assign(html$1.rules, node, attributes[boundAttributeIndex++], value);
+					node.removeAttribute(attr.name);
+				} else if (attr.name === `...${marker}`) {
+					SVGElements.has(node.tagName);
+					const value = values[valueIndex++];
+					if (isFunction(value)) effect(() => spread(html$1.rules, node, value()));
+					else spread(html$1.rules, node, value);
+					node.removeAttribute(attr.name);
+				} else if (attr.name.startsWith(marker)) {
+					const value = values[valueIndex++];
+					if (isFunction(value)) value(node);
+					node.removeAttribute(attr.name);
+				}
+			} else if (node.nodeType === 8) {
+				if (node.nodeValue === markerMatch) {
+					node.nodeValue = marker + valueIndex;
+					const value = values[valueIndex++];
+					const parent = node.parentNode;
+					if (parent) insert(parent, value, node);
 				}
 			}
-			if (type === SVG_RESULT || type === MATHML_RESULT) return [...clone.firstChild.childNodes];
-			return [...clone.childNodes];
 		}
-		return render;
+		if (type === SVG_RESULT || type === MATHML_RESULT) return [...clone.firstChild.childNodes];
+		return [...clone.childNodes];
 	}
 	html$1.rules = [...rules, ...defaultRules];
 	return html$1;
@@ -562,7 +649,8 @@ const defaultRules = [
 	},
 	{
 		filter: "@",
-		assign: assignDelegatedEvent
+		assign: assignDelegatedEvent,
+		isReactive: false
 	},
 	{
 		filter: ".",
@@ -589,7 +677,6 @@ const defaultComponents = {
 	Portal,
 	NoHydration
 };
-
 const h = H();
 const xml = XML();
 const html = HTML(HTML_RESULT);
@@ -612,7 +699,6 @@ function H(components = {}, rules = []) {
 			spread(h$1.rules, elem, props);
 			return elem;
 		} else if (isFunction(component)) return createComponent(component, wrapProps(props));
-
 	}
 	h$1.components = {
 		...defaultComponents,
@@ -625,12 +711,26 @@ function H(components = {}, rules = []) {
 	return h$1;
 }
 const markedOnce = /* @__PURE__ */ new WeakSet();
+/**
 
+* Marks a function so it is not wrapped as a getter by h().
+
+* Useful for event handlers or functions that should not be auto-accessed.
+
+* @example
+
+* once(() => doSomething())
+
+*/
 function once(fn) {
 	if (isFunction(fn)) markedOnce.add(fn);
 	return fn;
 }
+/**
 
+* Internal: Replaces accessor props with getters for reactivity, except for refs and event handlers.
+
+*/
 function wrapProps(props = {}) {
 	for (const [key, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(props))) {
 		const value = descriptor.value;
