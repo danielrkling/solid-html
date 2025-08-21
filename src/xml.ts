@@ -38,7 +38,10 @@ function getValue(value: any) {
 }
 const toArray = Array.from;
 
-
+function makeCallback(children) {
+  return () => (q, u, a, c, k) =>
+    [children].flat(Infinity).map(x => (typeof x === "function" ? x(q, u, a, c, k) : x));
+}
 
 export function XML(components: ComponentRegistry = {}, rules: AssignmentRules = []) {
   function xml(template: TemplateStringsArray, ...values: any[]) {
@@ -49,11 +52,11 @@ export function XML(components: ComponentRegistry = {}, rules: AssignmentRules =
       // console.log(node)
       if (node.nodeType === 1) {
         // element
-        const tagName = node.tagName;
+        const { tagName, childNodes, attributes } = node;
 
         // gather props
         const props = {} as Record<string, any>;
-        for (let { name, value } of node.attributes) {
+        for (let { name, value } of attributes) {
 
           if (value === marker) {
             value = values[index++];
@@ -67,21 +70,9 @@ export function XML(components: ComponentRegistry = {}, rules: AssignmentRules =
           props[name] = value;
         }
 
-        // gather children
-        const childNodes = node.childNodes;
-        if (childNodes.lenth===1 && childNodes[0].nodeType === 3 && childNodes[0].nodeValue.trim() === marker) {
-          props.children = values[index++];
-        }else if (childNodes.length) {
-          Object.defineProperty(props, "children", {
-            get() {
-              return flat(
-                toArray(childNodes)
-                  .map(nodes)
-                  .filter((n) => n)
-              );
-            },
-            enumerable: true,
-          });
+        // children - childNodes overwrites any props.children
+        if (childNodes.length) {
+          props.children = makeCallback(Array.from(childNodes).map(nodes));
         }
 
         return xml.h(tagName, props);

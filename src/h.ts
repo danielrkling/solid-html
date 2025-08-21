@@ -12,7 +12,10 @@ import { doc, isFunction, isString } from "./util";
 import { SVGElements } from "solid-js/web";
 import { AssignmentRules, MaybeFunctionProps } from "./types";
 
-
+function makeCallback(children) {
+  return () => (q, u, a, c, k) =>
+    [children].flat(Infinity).map(x => (typeof x === "function" ? x(q, u, a, c, k) : x));
+}
 
 export function H(components: Record<string, any> = {}, rules: AssignmentRules = []) {
 
