@@ -8,7 +8,8 @@ import {
   Suspense as _Suspense,
   Switch as _Switch,
   createComponent,
-  type JSX,
+  JSX,
+  Accessor,
 } from "solid-js";
 import { MaybeFunction } from "./types";
 
@@ -26,25 +27,26 @@ export function getValue<T>(value: MaybeFunction<T>): T {
  * @example
  * Show(() => isVisible(), html`<span>Hello</span>`, "Fallback")
  */
-export function Show(
-  when: () => boolean,
-  children: MaybeFunction<JSX.Element>,
-  fallback?: MaybeFunction<JSX.Element>
+export function Show<T>(
+  when: () => T,
+  children: (item: Accessor<NonNullable<T>>)=>JSX.Element,
+  fallback?: ()=>JSX.Element
 ): JSX.Element {
   return createComponent(_Show, {
     get when() {
       return when();
     },
-    get children() {
-      return getValue(children);
-    },
-    get fallback() {
-      return getValue(fallback);
+    //@ts-expect-error
+    children,
+    get fallback(){
+      return fallback?.()
     },
     //@ts-expect-error
     keyed: false,
   });
 }
+
+
 
 /**
  * Show component with keyed mode. Renders children with keyed context if `when` is truthy.
@@ -53,19 +55,17 @@ export function Show(
  */
 export function ShowKeyed<T>(
   when: () => T,
-  children: JSX.Element | ((item: NonNullable<T>) => JSX.Element),
-  fallback?: MaybeFunction<JSX.Element>
+  children: ((item: NonNullable<T>) => JSX.Element),
+  fallback?: ()=>JSX.Element
 ): JSX.Element {
   return createComponent(_Show, {
     get when() {
       return when();
     },
-    get children() {
-      //@ts-expect-error
-      return getValue(children);
-    },
-    get fallback() {
-      return getValue(fallback);
+    //@ts-expect-error
+    children,
+    get fallback(){
+      return fallback?.()
     },
     keyed: true,
   });
@@ -77,16 +77,16 @@ export function ShowKeyed<T>(
  * Switch("No match", Match(() => cond1(), html`A`), Match(() => cond2(), html`B`))
  */
 export function Switch(
-  fallback: MaybeFunction<JSX.Element>,
-  ...children: JSX.Element[]
+  children: ()=>JSX.Element[],
+  fallback: ()=>JSX.Element,  
 ): JSX.Element {
   return createComponent(_Switch, {
-    get children() {
-      return getValue(children);
-    },
     get fallback() {
-      return getValue(fallback);
+      return fallback();
     },
+    get children(){
+      return children()
+    }
   });
 }
 
@@ -96,8 +96,8 @@ export function Switch(
  * Match(() => value() === 1, html`One`)
  */
 export function Match<T>(
-  when: () => T | undefined | null | false,
-  children: JSX.Element | ((item: T) => JSX.Element)
+  when: () => T,
+  children: ((item: Accessor<NonNullable<T>>) => JSX.Element)
 ): JSX.Element {
   return createComponent(_Match, {
     get when() {
@@ -105,8 +105,6 @@ export function Match<T>(
     },
     //@ts-expect-error
     children,
-    //@ts-expect-error
-    keyed: false
   });
 }
 
@@ -116,8 +114,8 @@ export function Match<T>(
  * MatchKeyed(() => user(), user => html`<span>${user.name}</span>`)
  */
 export function MatchKeyed<T>(
-  when: () => T | undefined | null | false,
-  children: JSX.Element | ((item: T) => JSX.Element)
+  when: () => T,
+  children: ((item: NonNullable<T>) => JSX.Element)
 ): JSX.Element {
   return createComponent(_Match, {
     get when() {
@@ -137,7 +135,7 @@ export function MatchKeyed<T>(
 export function For<T extends readonly any[]>(
   each: () => T | false | null | undefined,
   children: (item: T[number], index: () => number) => JSX.Element,
-  fallback?: MaybeFunction<JSX.Element>
+  fallback?: ()=>JSX.Element
 ): JSX.Element {
   return createComponent(_For, {
     get each() {
@@ -145,7 +143,7 @@ export function For<T extends readonly any[]>(
     },
     children,
     get fallback() {
-      return getValue(fallback);
+      return fallback?.();
     }
   });
 }
@@ -158,7 +156,7 @@ export function For<T extends readonly any[]>(
 export function Index<T extends readonly any[]>(
   each: () => T | false | null | undefined,
   children: (item: () => T[number], index: number) => JSX.Element,
-  fallback?: MaybeFunction<JSX.Element>
+  fallback?: ()=>JSX.Element
 ): JSX.Element {
   return createComponent(_Index, {
     get each() {
@@ -166,7 +164,7 @@ export function Index<T extends readonly any[]>(
     },
     children,
     get fallback() {
-      return getValue(fallback);
+      return fallback?.()
     }
   });
 }
@@ -177,15 +175,15 @@ export function Index<T extends readonly any[]>(
  * Suspense(html`<div>Loaded</div>`, html`<div>Loading...</div>`)
  */
 export function Suspense(
-  children: MaybeFunction<JSX.Element>,
-  fallback?: MaybeFunction<JSX.Element>
+  children: ()=>JSX.Element,
+  fallback?: ()=>JSX.Element
 ): JSX.Element {
   return createComponent(_Suspense, {
     get children() {
-      return getValue(children);
+      return children()
     },
     get fallback() {
-      return getValue(fallback);
+      return fallback?.()
     },
   });
 }
@@ -196,18 +194,14 @@ export function Suspense(
  * ErrorBoundary(html`<App />`, (err) => html`<div>Error: ${err.message}</div>`)
  */
 export function ErrorBoundary(
-  children: MaybeFunction<JSX.Element>,
-  fallback:
-    | MaybeFunction<JSX.Element>
-    | ((err: any, reset: () => void) => JSX.Element)
+  children: ()=>JSX.Element,
+  fallback: ((err: any, reset: () => void) => JSX.Element)
 ): JSX.Element {
   return createComponent(_ErrorBoundary, {
     get children() {
-      return getValue(children);
+      return children()
     },
-    get fallback() {
-      return getValue(fallback);
-    },
+    fallback
   });
 }
 
@@ -218,15 +212,13 @@ export function ErrorBoundary(
  */
 export function Context<T>(
   context: _Context<T>,
-  value: T | (() => T),
+  value: T,
   children: () => JSX.Element
 ): JSX.Element {
   return createComponent(context.Provider, {
     get children() {
-      return getValue(children);
+      return children()
     },
-    get value() {
-      return getValue(value);
-    },
+    value
   });
 }

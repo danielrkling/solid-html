@@ -12,8 +12,8 @@ import { doc, isFunction, isString } from "./util";
 import { SVGElements } from "solid-js/web";
 import { AssignmentRules, MaybeFunctionProps } from "./types";
 
-function makeCallback(children) {
-  return () => (q, u, a, c, k) =>
+function makeCallback(children: any) {
+  return () => (q: any, u: any, a: any, c: any, k: any) =>
     [children].flat(Infinity).map(x => (typeof x === "function" ? x(q, u, a, c, k) : x));
 }
 
@@ -77,7 +77,7 @@ export function once<T extends (...args: any[]) => any>(fn: T): T {
 /**
  * Internal: Replaces accessor props with getters for reactivity, except for refs and event handlers.
  */
-function wrapProps<
+export function wrapProps<
   TComponent extends ValidComponent,
   TProps extends MaybeFunctionProps<ComponentProps<TComponent>>
 >(props: TProps = {} as TProps): ComponentProps<TComponent> {

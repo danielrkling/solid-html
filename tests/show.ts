@@ -1,37 +1,28 @@
-import { createEffect, createSignal } from "solid-js";
-import { h, H, html, XML } from "../src"
 import { render } from "solid-js/web";
-
-const xml = XML({
-    Counter
-})
-
-const [timer, setTimer] = createSignal(0)
-setInterval(() => setTimer(v => v + 1), 1000)
+import { createContext, createSignal, useContext } from "solid-js";
+import { html, Show, h } from "../src";
 
 
-function Counter(props) {
-    const [count, setCount] = createSignal(0);
-    return xml`<button on:click="${() => setCount(v => v + 1)}">${()=>props.name}: ${()=>count()}</button>` 
+const ctx = createContext("A")
+
+function Counter() {
+    const [count, setCount] = createSignal(1);
+    const increment = () => setCount(count => count + 1);
+
+    return (
+        h(ctx.Provider, {
+            value: "B", children:
+                html`<button type="button" onClick=${increment}>
+      ${() => count()}
+        ${Show(() => count() % 2 === 0, ()=>Read())}
+    </button>`
+        }))
 }
 
+function Read() {
+    const context = (useContext(ctx))
 
-
-
-function App() {
-    const [show, setShow] = createSignal(0);
-
-    return xml`
-    <div>${()=>timer()}<button on:click="${()=>setShow(v=>v+1)}">Showing: ${()=>String(show())}</button></div>
-    
-    <div><Show when="${show}" children="${s=>xml`A<Counter name="${"a"}" />`}" /></div>
-    <div><Show when="${show}" >B<Counter name="${"b"}" /></Show></div>
-
-    <div><Show when="${show}" keyed="${true}" children="${s=>xml`C<Counter name="${"c"}" />`}" /></div>
-    <div><Show when="${show}" keyed="${true}" >${s=>xml`D<Counter name="${"d"}" />`}</Show></div>
-    `
+    return html`<span>${context}</span>`
 }
 
-
-
-render(App, document.getElementById("app")!)
+render(Counter, document.getElementById("app")!);
