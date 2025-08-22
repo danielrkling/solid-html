@@ -1,28 +1,29 @@
+import { createContext, useContext } from "solid-js";
 import { render } from "solid-js/web";
-import { createContext, createSignal, useContext } from "solid-js";
-import { html, Show, h } from "../src";
+import { XML } from "../src";
 
 
-const ctx = createContext("A")
+const ctx = createContext("Wrong Context")
 
-function Counter() {
-    const [count, setCount] = createSignal(1);
-    const increment = () => setCount(count => count + 1);
+const xml = XML({ Provider: ctx.Provider, ReadContext, ShowChildren })
 
-    return (
-        h(ctx.Provider, {
-            value: "B", children:
-                html`<button type="button" onClick=${increment}>
-      ${() => count()}
-        ${Show(() => count() % 2 === 0, ()=>Read())}
-    </button>`
-        }))
-}
-
-function Read() {
+function ReadContext() {
     const context = (useContext(ctx))
 
-    return html`<span>${context}</span>`
+    return xml`<div>${context}</div>`
 }
 
-render(Counter, document.getElementById("app")!);
+function ShowChildren(props) {
+    return props.children
+}
+
+function App() {
+    return xml`
+    <Provider value=${"Correct Context"}><ReadContext /></Provider>
+    <Show when=${false} >${"B"}</Show>
+    <Show when=${false} children=${"C"} />
+    <ShowChildren >This Should be A: ${"A"}</ShowChildren>
+    `
+}
+
+render(App, document.getElementById("app")!);

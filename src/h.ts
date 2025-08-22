@@ -12,11 +12,6 @@ import { doc, isFunction, isString } from "./util";
 import { SVGElements } from "solid-js/web";
 import { AssignmentRules, MaybeFunctionProps } from "./types";
 
-function makeCallback(children: any) {
-  return () => (q: any, u: any, a: any, c: any, k: any) =>
-    [children].flat(Infinity).map(x => (typeof x === "function" ? x(q, u, a, c, k) : x));
-}
-
 export function H(components: Record<string, any> = {}, rules: AssignmentRules = []) {
 
   function h<T extends ValidComponent>(
@@ -34,11 +29,12 @@ export function H(components: Record<string, any> = {}, rules: AssignmentRules =
     }
 
     if (isString(component)) {
+      const componentFunction = (h.components)[component];
+      if (componentFunction) {
+        return createComponent(componentFunction, wrapProps(props));
+      }
+      
       if (/[A-Z]/.test(component)) {
-        const componentFunction = (h.components)[component];
-        if (componentFunction) {
-          return createComponent(componentFunction, wrapProps(props));
-        }
         console.warn(`Forgot to define ${componentFunction}`);
       }
 
