@@ -13,6 +13,10 @@ const marker = "MARKER46846";
 const markerRX = new RegExp(`(${marker})`, "g");
 const markerAttr = new RegExp(`=${marker}`, "g");
 
+const start = `$START$`
+const end = `$END$`
+const match = /\$START\$(\d+)\$END\$/g
+
 const xmlCache = new WeakMap<TemplateStringsArray, Node>();
 
 /**
@@ -22,7 +26,19 @@ const xmlCache = new WeakMap<TemplateStringsArray, Node>();
 function getXml(strings: TemplateStringsArray) {
   let xml = xmlCache.get(strings);
   if (xml === undefined) {
-    const contents = strings.join(marker).replace(markerAttr, `="${marker}"`);
+    let contents = "", i = 0
+    const l = strings.length
+    for (i; i < l - 1; i++) {
+      const part = strings[i]
+      if (part.endsWith("=")) {
+        contents += `${part}"${start}${i}${end}"`
+      } else {
+        contents += `${part}${start}${i}${end}`
+      }
+    }
+    contents += strings.at(-1)
+    // const contents = strings.join(marker).replace(markerAttr, `="${marker}"`);
+
     const parser = new DOMParser();
     xml = parser.parseFromString(`<xml ${xmlns}>${contents}</xml>`, "text/xml")
       .firstChild!;
@@ -48,23 +64,23 @@ export function XML(components: ComponentRegistry = {}, rules: AssignmentRules =
     const cached = getXml(template);
     let index = 0;
 
-    function nodes(node: any) {
-      // console.log(node)
+    function nodes(node: Node) {
       if (node.nodeType === 1) {
         // element
-        const { tagName, childNodes, attributes } = node;
+        const { tagName, childNodes, attributes } = (node as Element);
 
         // gather props
         const props = {} as Record<string, any>;
         for (let { name, value } of attributes) {
 
-          if (value === marker) {
-            value = values[index++];
-          } else if (value.includes(marker)) {
-            const val = value
-              .split(markerRX)
-              .map((x: string) => (x === marker ? values[index++] : x));
-
+          const m = [...value.matchAll(match)]
+          if (m.length === 1) {
+            value = values[Number(m[0][1])];
+          } else if (m.length > 1) {
+            const parts = value.split(match)
+            let j = 0
+            const val = parts.map((x, i) => (i % 2 === 1 ? values[Number(m[j++][1])] : x));
+            //@ts-expect-error 
             value = () => val.map(getValue).join("");
           }
           props[name] = value;
@@ -72,29 +88,34 @@ export function XML(components: ComponentRegistry = {}, rules: AssignmentRules =
 
         // children - childNodes overwrites any props.children
         if (childNodes.length) {
-          props.children = makeCallback(Array.from(childNodes).map(nodes));
+          props.children = ()=> (Array.from(childNodes).map(nodes));
         }
 
         return xml.h(tagName, props);
       } else if (node.nodeType === 3) {
         // text
 
-        const value = node.nodeValue;
-        if (value.trim() === marker) {
-          return values[index++];
+        const value = node.nodeValue || "";
+        const m = [...value.matchAll(match)]
+        if (m.length) {
+          if (m[0][0] === m[0].input.trim()) {
+            return values[index++];
+          } else {
+            const parts = value.split(match)
+            let j = 0
+            const v = parts.map((x, i) => (i % 2 === 1 ? values[Number(m[j++][1])] : x));
+            return v
+          }
         }
-        return value.includes(marker)
-          ? value
-            .split(markerRX)
-            .map((x: string) => (x === marker ? values[index++] : x))
-          : value;
+        return value
       } else if (node.nodeType === 8) {
         // comment
-        const value = node.nodeValue;
-        if (value.includes(marker)) {
-          const val = value
-            .split(markerRX)
-            .map((x: string) => (x === marker ? values[index++] : x));
+        const value = node.nodeValue || "";
+        const m = [...value.matchAll(match)]
+        if (m.length) {
+          let j = 0
+          const val = value.split(match)
+            .map((x, i) => (i % 2 === 1 ? values[Number(m[j++][1])] : x));
           return () => doc.createComment(val.map(getValue).join(""));
         } else {
           return doc.createComment(value);

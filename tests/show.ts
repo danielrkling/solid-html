@@ -20,9 +20,9 @@ function ShowChildren(props) {
 function App() {
     return xml`
     <Provider value=${"Correct Context"}><ReadContext /></Provider>
-    <Show when=${false} >${"B"}</Show>
+    <Show fallback="${"A"}${"B"}" when=${false} >${"B"}</Show>
     <Show when=${false} children=${"C"} />
-    <ShowChildren >This Should be A: ${"A"}</ShowChildren>
+    <ShowChildren attr.="2" >This Should be A: ${"A"}</ShowChildren>
     `
 }
 
