@@ -16,11 +16,9 @@ function Show(when, children, fallback) {
 		get when() {
 			return when();
 		},
-		get children() {
-			return getValue(children);
-		},
+		children,
 		get fallback() {
-			return getValue(fallback);
+			return fallback?.();
 		},
 		keyed: false
 	});
@@ -35,11 +33,9 @@ function ShowKeyed(when, children, fallback) {
 		get when() {
 			return when();
 		},
-		get children() {
-			return getValue(children);
-		},
+		children,
 		get fallback() {
-			return getValue(fallback);
+			return fallback?.();
 		},
 		keyed: true
 	});
@@ -49,13 +45,13 @@ function ShowKeyed(when, children, fallback) {
 * @example
 * Switch("No match", Match(() => cond1(), html`A`), Match(() => cond2(), html`B`))
 */
-function Switch(fallback, ...children) {
+function Switch(children, fallback) {
 	return createComponent(Switch$1, {
-		get children() {
-			return getValue(children);
-		},
 		get fallback() {
-			return getValue(fallback);
+			return fallback();
+		},
+		get children() {
+			return children();
 		}
 	});
 }
@@ -69,8 +65,7 @@ function Match(when, children) {
 		get when() {
 			return when();
 		},
-		children,
-		keyed: false
+		children
 	});
 }
 /**
@@ -99,7 +94,7 @@ function For(each, children, fallback) {
 		},
 		children,
 		get fallback() {
-			return getValue(fallback);
+			return fallback?.();
 		}
 	});
 }
@@ -115,7 +110,7 @@ function Index(each, children, fallback) {
 		},
 		children,
 		get fallback() {
-			return getValue(fallback);
+			return fallback?.();
 		}
 	});
 }
@@ -127,10 +122,10 @@ function Index(each, children, fallback) {
 function Suspense(children, fallback) {
 	return createComponent(Suspense$1, {
 		get children() {
-			return getValue(children);
+			return children();
 		},
 		get fallback() {
-			return getValue(fallback);
+			return fallback?.();
 		}
 	});
 }
@@ -142,11 +137,9 @@ function Suspense(children, fallback) {
 function ErrorBoundary(children, fallback) {
 	return createComponent(ErrorBoundary$1, {
 		get children() {
-			return getValue(children);
+			return children();
 		},
-		get fallback() {
-			return getValue(fallback);
-		}
+		fallback
 	});
 }
 /**
@@ -157,11 +150,9 @@ function ErrorBoundary(children, fallback) {
 function Context(context, value, children) {
 	return createComponent(context.Provider, {
 		get children() {
-			return getValue(children);
+			return children();
 		},
-		get value() {
-			return getValue(value);
-		}
+		value
 	});
 }
 
@@ -261,8 +252,11 @@ const xmlns = [
 	"xlink"
 ].map((ns) => `xmlns:${ns}="/"`).join(" ");
 const marker$1 = "MARKER46846";
-const markerRX = new RegExp(`(${marker$1})`, "g");
-const markerAttr = new RegExp(`=${marker$1}`, "g");
+new RegExp(`(${marker$1})`, "g");
+new RegExp(`=${marker$1}`, "g");
+const start = `$START$`;
+const end = `$END$`;
+const match = /\$START\$(\d+)\$END\$/g;
 const xmlCache = /* @__PURE__ */ new WeakMap();
 /**
 * Parses a template string as XML and returns the child nodes, using a cache for performance.
@@ -271,7 +265,14 @@ const xmlCache = /* @__PURE__ */ new WeakMap();
 function getXml(strings) {
 	let xml$1 = xmlCache.get(strings);
 	if (xml$1 === void 0) {
-		const contents = strings.join(marker$1).replace(markerAttr, `="${marker$1}"`);
+		let contents = "", i = 0;
+		const l = strings.length;
+		for (; i < l - 1; i++) {
+			const part = strings[i];
+			if (part.endsWith("=")) contents += `${part}"${start}${i}${end}"`;
+			else contents += `${part}${start}${i}${end}`;
+		}
+		contents += strings.at(-1);
 		const parser = new DOMParser();
 		xml$1 = parser.parseFromString(`<xml ${xmlns}>${contents}</xml>`, "text/xml").firstChild;
 		xmlCache.set(strings, xml$1);
@@ -284,42 +285,30 @@ function getValue$1(value) {
 	return value;
 }
 const toArray = Array.from;
+function extractValues(values, value, convertMultiPartToString = false) {
+	if (value === null) return null;
+	const m = [...value.matchAll(match)];
+	if (m.length) if (m[0][0] === m[0].input.trim()) return values[Number(m[0][1])];
+	else {
+		let index = 0;
+		const parts = value.split(match).map((x, i) => i % 2 === 1 ? values[Number(m[index++][1])] : x);
+		return convertMultiPartToString ? () => parts.map(getValue$1).join("") : parts;
+	}
+	return value;
+}
 function XML(components = {}, rules = []) {
 	function xml$1(template, ...values) {
 		const cached = getXml(template);
-		let index = 0;
 		function nodes(node) {
 			if (node.nodeType === 1) {
-				const tagName = node.tagName;
+				const { tagName, childNodes, attributes } = node;
 				const props = {};
-				for (let { name, value } of node.attributes) {
-					if (value === marker$1) value = values[index++];
-					else if (value.includes(marker$1)) {
-						const val = value.split(markerRX).map((x) => x === marker$1 ? values[index++] : x);
-						value = () => val.map(getValue$1).join("");
-					}
-					props[name] = value;
-				}
-				const childNodes = node.childNodes;
-				if (childNodes.lenth === 1 && childNodes[0].nodeType === 3 && childNodes[0].nodeValue.trim() === marker$1) props.children = values[index++];
-				else if (childNodes.length) Object.defineProperty(props, "children", {
-					get() {
-						return flat(toArray(childNodes).map(nodes).filter((n) => n));
-					},
-					enumerable: true
-				});
+				for (let { name, value } of attributes) props[name] = extractValues(values, value, true);
+				if (childNodes.length) props.children = () => toArray(childNodes).map(nodes);
 				return xml$1.h(tagName, props);
-			} else if (node.nodeType === 3) {
-				const value = node.nodeValue;
-				if (value.trim() === marker$1) return values[index++];
-				return value.includes(marker$1) ? value.split(markerRX).map((x) => x === marker$1 ? values[index++] : x) : value;
-			} else if (node.nodeType === 8) {
-				const value = node.nodeValue;
-				if (value.includes(marker$1)) {
-					const val = value.split(markerRX).map((x) => x === marker$1 ? values[index++] : x);
-					return () => doc.createComment(val.map(getValue$1).join(""));
-				} else return doc.createComment(value);
-			} else console.error(`xml: nodeType not supported ${node.nodeType}`);
+			} else if (node.nodeType === 3) return extractValues(values, node.nodeValue);
+			else if (node.nodeType === 8) return doc.createComment(extractValues(values, node.nodeValue, true));
+			else console.error(`xml: nodeType not supported ${node.nodeType}`);
 		}
 		return flat(toArray(cached).map(nodes));
 	}
@@ -412,27 +401,27 @@ const getTemplateHtml = (strings, type) => {
 		let attrNameEndIndex = -1;
 		let attrName;
 		let lastIndex = 0;
-		let match;
+		let match$1;
 		while (lastIndex < s.length) {
 			regex.lastIndex = lastIndex;
-			match = regex.exec(s);
-			if (match === null) break;
+			match$1 = regex.exec(s);
+			if (match$1 === null) break;
 			lastIndex = regex.lastIndex;
 			if (regex === textEndRegex) {
-				if (match[COMMENT_START] === "!--") regex = commentEndRegex;
-				else if (match[COMMENT_START] !== void 0) regex = comment2EndRegex;
-				else if (match[TAG_NAME] !== void 0) {
-					if (rawTextElement.test(match[TAG_NAME])) rawTextEndRegex = new RegExp(`</${match[TAG_NAME]}`, "g");
+				if (match$1[COMMENT_START] === "!--") regex = commentEndRegex;
+				else if (match$1[COMMENT_START] !== void 0) regex = comment2EndRegex;
+				else if (match$1[TAG_NAME] !== void 0) {
+					if (rawTextElement.test(match$1[TAG_NAME])) rawTextEndRegex = new RegExp(`</${match$1[TAG_NAME]}`, "g");
 					regex = tagEndRegex;
-				} else if (match[DYNAMIC_TAG_NAME] !== void 0) regex = tagEndRegex;
-			} else if (regex === tagEndRegex) if (match[ENTIRE_MATCH] === ">") {
+				} else if (match$1[DYNAMIC_TAG_NAME] !== void 0) regex = tagEndRegex;
+			} else if (regex === tagEndRegex) if (match$1[ENTIRE_MATCH] === ">") {
 				regex = rawTextEndRegex ?? textEndRegex;
 				attrNameEndIndex = -1;
-			} else if (match[ATTRIBUTE_NAME] === void 0) attrNameEndIndex = -2;
+			} else if (match$1[ATTRIBUTE_NAME] === void 0) attrNameEndIndex = -2;
 			else {
-				attrNameEndIndex = regex.lastIndex - match[SPACES_AND_EQUALS].length;
-				attrName = match[ATTRIBUTE_NAME];
-				regex = match[QUOTE_CHAR] === void 0 ? tagEndRegex : match[QUOTE_CHAR] === "\"" ? doubleQuoteAttrEndRegex : singleQuoteAttrEndRegex;
+				attrNameEndIndex = regex.lastIndex - match$1[SPACES_AND_EQUALS].length;
+				attrName = match$1[ATTRIBUTE_NAME];
+				regex = match$1[QUOTE_CHAR] === void 0 ? tagEndRegex : match$1[QUOTE_CHAR] === "\"" ? doubleQuoteAttrEndRegex : singleQuoteAttrEndRegex;
 			}
 			else if (regex === doubleQuoteAttrEndRegex || regex === singleQuoteAttrEndRegex) regex = tagEndRegex;
 			else if (regex === commentEndRegex || regex === comment2EndRegex) regex = textEndRegex;
@@ -441,8 +430,8 @@ const getTemplateHtml = (strings, type) => {
 				rawTextEndRegex = void 0;
 			}
 		}
-		const end = regex === tagEndRegex && strings[i + 1].startsWith("/>") ? " " : "";
-		html$1 += regex === textEndRegex ? s + nodeMarker : attrNameEndIndex >= 0 ? (attrNames.push(attrName), s.slice(0, attrNameEndIndex) + boundAttributeSuffix + s.slice(attrNameEndIndex)) + marker + end : s + marker + (attrNameEndIndex === -2 ? i : end);
+		const end$1 = regex === tagEndRegex && strings[i + 1].startsWith("/>") ? " " : "";
+		html$1 += regex === textEndRegex ? s + nodeMarker : attrNameEndIndex >= 0 ? (attrNames.push(attrName), s.slice(0, attrNameEndIndex) + boundAttributeSuffix + s.slice(attrNameEndIndex)) + marker + end$1 : s + marker + (attrNameEndIndex === -2 ? i : end$1);
 	}
 	const htmlResult = html$1 + (strings[l] || "<?>") + (type === SVG_RESULT ? "</svg>" : type === MATHML_RESULT ? "</math>" : "");
 	return [htmlResult, attrNames];
@@ -600,11 +589,9 @@ function H(components = {}, rules = []) {
 		if (children.length === 1) props.children = children[0];
 		else if (children.length > 1) props.children = children;
 		if (isString(component)) {
-			if (/[A-Z]/.test(component)) {
-				const componentFunction = h$1.components[component];
-				if (componentFunction) return createComponent(componentFunction, wrapProps(props));
-				console.warn(`Forgot to define ${componentFunction}`);
-			}
+			const componentFunction = h$1.components[component];
+			if (componentFunction) return createComponent(componentFunction, wrapProps(props));
+			if (/[A-Z]/.test(component)) console.warn(`Forgot to define ${componentFunction}`);
 			const elem = SVGElements.has(component) ? doc.createElementNS("http://www.w3.org/2000/svg", component) : doc.createElement(component);
 			spread(h$1.rules, elem, props);
 			return elem;
@@ -648,5 +635,5 @@ function wrapProps(props = {}) {
 }
 
 //#endregion
-export { Context, ErrorBoundary, For, H, HTML, Index, Match, MatchKeyed, Show, ShowKeyed, Suspense, Switch, XML, assign, assignAttribute, assignAttributeNS, assignBooleanAttribute, assignClass, assignDelegatedEvent, assignEvent, assignProperty, assignRef, assignStyle, defaultComponents, defaultRules, getValue, h, html, markedOnce, mathml, once, spread, svg, xml };
+export { Context, ErrorBoundary, For, H, HTML, Index, Match, MatchKeyed, Show, ShowKeyed, Suspense, Switch, XML, assign, assignAttribute, assignAttributeNS, assignBooleanAttribute, assignClass, assignDelegatedEvent, assignEvent, assignProperty, assignRef, assignStyle, defaultComponents, defaultRules, getValue, h, html, markedOnce, mathml, once, spread, svg, wrapProps, xml };
 //# sourceMappingURL=index.mjs.map
