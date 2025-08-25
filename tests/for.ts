@@ -29,7 +29,7 @@ function CounterA() {
     const [list, setList] = createSignal([0, 1, 2]);
   
     return xml`<div>
-    <For each=${list}>${(i)=>xml`<div>${i}-${demo}</div>`}</For>
+    <For each=${list}>${()=>xml`<div>${"A"}-${demo}</div>`}</For>
     <button on:click=${() => setList([...list(), Math.random()])}>add</button>
     <button on:click=${() => setDemo(demo() + 1)}>add</button>
     </div>
@@ -40,9 +40,11 @@ function CounterA() {
     const [demo, setDemo] = createSignal(1);
     const [list, setList] = createSignal([0, 1, 2]);
   
-    return html`<div>${ForWrapper(list,(i)=>html`<div>${i}-${demo}</div>`)}
+    return html`<div>
+    ${ForWrapper(list,(i)=>html`<div>${i}-${demo}</div>`)}
     <button on:click=${() => setList([...list(), Math.random()])}>add</button>
-    <button on:click=${() => setDemo(demo() + 1)}>add</button></div>
+    <button on:click=${() => setDemo(demo() + 1)}>add</button>
+    </div>
     `
   }
 

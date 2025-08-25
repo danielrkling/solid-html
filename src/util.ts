@@ -12,6 +12,8 @@ export function isArray(value: any): value is any[] {
   return Array.isArray(value);
 }
 
+export const toArray = Array.from;
+
 
 export const doc = document
 

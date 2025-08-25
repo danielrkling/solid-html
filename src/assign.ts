@@ -6,7 +6,7 @@ import {
   insert,
 } from "solid-js/web";
 import { isFunction, isString } from "./util";
-import { AssignmentRules } from "./types";
+import { AssignmentRule } from "./types";
 
 
 
@@ -116,7 +116,7 @@ export function assignRef(node: Element, name: string, value: any, prev?: any) {
 }
 
 export function assign(
-  rules: AssignmentRules,
+  rules: AssignmentRule[],
   elem: Element,
   name: string,
   value: any,
@@ -150,7 +150,7 @@ export function assign(
 
 
 export function spread(
-  rules: AssignmentRules,
+  rules: AssignmentRule[],
   elem: Element,
   props: any,
   prev: any = {}

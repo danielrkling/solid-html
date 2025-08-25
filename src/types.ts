@@ -35,6 +35,6 @@ export type AssignmentRule = {
   assign: AssignmentFunction;
   isReactive?: boolean;
 };
-export type AssignmentRules = Array<AssignmentRule>;
+
 
 export type ComponentRegistry = Record<string, ValidComponent>;

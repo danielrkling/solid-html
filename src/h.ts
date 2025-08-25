@@ -10,9 +10,9 @@ import { defaultComponents, defaultRules } from "./defaults";
 
 import { doc, isFunction, isString } from "./util";
 import { SVGElements } from "solid-js/web";
-import { AssignmentRules, MaybeFunctionProps } from "./types";
+import { AssignmentRule, MaybeFunctionProps } from "./types";
 
-export function H(components: Record<string, any> = {}, rules: AssignmentRules = []) {
+export function H(components: Record<string, any> = {}, rules: AssignmentRule[] = []) {
 
   function h<T extends ValidComponent>(
     component: T,

@@ -12,25 +12,22 @@ import {
 } from "solid-js/web";
 import {
   assignAttribute,
-  assignAttributeNS,
   assignBooleanAttribute,
   assignClass,
   assignDelegatedEvent,
   assignEvent,
-
   assignProperty,
   assignRef,
-  assignStyle,
+  assignStyle
 } from "./assign";
 import { H } from "./h";
-import { XML } from "./xml";
 import { HTML } from "./html";
-import { HTML_RESULT, SVG_RESULT, MATHML_RESULT } from "./lit-html";
-import { ValidComponent } from "solid-js";
-import { AssignmentRules, ComponentRegistry } from "./types";
+import { HTML_RESULT, MATHML_RESULT, SVG_RESULT } from "./lit-html";
+import { AssignmentRule, ComponentRegistry } from "./types";
+import { XML } from "./xml";
 
 
-export const defaultRules: AssignmentRules = [
+export const defaultRules: AssignmentRule[] = [
   { filter: "on:", assign: assignEvent, isReactive: false },
   { filter: "on", assign: assignDelegatedEvent, isReactive: false },
   { filter: "prop:", assign: assignProperty },
@@ -42,7 +39,7 @@ export const defaultRules: AssignmentRules = [
   { filter: "@", assign: assignDelegatedEvent, isReactive: false },
   { filter: ".", assign: assignProperty },
   { filter: "?", assign: assignBooleanAttribute },
-  { filter: "", assign: assignAttribute }
+  { filter: "", assign: assignAttribute } //default
 ]
 
 
@@ -60,10 +57,14 @@ export const defaultComponents: ComponentRegistry = {
   NoHydration,
 }
 
+export const xmlNamespaces = ["on", "prop", "bool", "attr", "ref", "style", "class", "xlink"]
+
 
 export const h = H();
 
 export const xml = XML()
+//link global xml with global h
+xml.h = h
 
 export const html = HTML(HTML_RESULT);
 

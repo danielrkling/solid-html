@@ -16,7 +16,7 @@ import {
   SVG_RESULT,
 } from "./lit-html";
 import { doc, isFunction } from "./util";
-import { AssignmentRules } from "./types";
+import { AssignmentRule } from "./types";
 import { assign, spread } from "./assign";
 import { defaultRules } from "./defaults";
 
@@ -53,7 +53,7 @@ function getTemplate(
  * Creates a tagged template function for html/svg/mathml templates with Solid reactivity.
  * @internal
  */
-export function HTML(type: ResultType = 1, rules: AssignmentRules = []) {
+export function HTML(type: ResultType = 1, rules: AssignmentRule[] = []) {
   function html(
     strings: TemplateStringsArray,
     ...values: any[]
