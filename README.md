@@ -3,7 +3,7 @@
 This library is an alternative to h and html provided by solid-js for no-build or no-jsx projects.
 
 It provides 3 functions for templating. 
-- `h` - Use for minimally nested components and elements ( < 2 Layers)
+- `h` - Use for minimally nested components and elements ( < 2 Layers) or when type checking is desired
 - `xml` - Use for heavily nested components and elements ( > 2 Layers) (Adapted from https://pota.quack.uy/XML)
 - `html` - Use for plain html/svg elements
 

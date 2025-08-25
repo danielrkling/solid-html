@@ -164,6 +164,7 @@ function isString(value) {
 function isFunction(value) {
 	return typeof value === "function";
 }
+const toArray = Array.from;
 const doc = document;
 
 //#endregion
@@ -237,80 +238,6 @@ function spread(rules, elem, props, prev = {}) {
 	});
 	else for (const [name, value] of Object.entries(props)) prev[name] = assign(rules, elem, name, value, prev[name]);
 	return prev;
-}
-
-//#endregion
-//#region src/xml.ts
-const xmlns = [
-	"on",
-	"prop",
-	"bool",
-	"attr",
-	"ref",
-	"style",
-	"class",
-	"xlink"
-].map((ns) => `xmlns:${ns}="/"`).join(" ");
-const start = `$START$`;
-const end = `$END$`;
-const match = /\$START\$(\d+)\$END\$/g;
-const xmlCache = /* @__PURE__ */ new WeakMap();
-/**
-* Parses a template string as XML and returns the child nodes, using a cache for performance.
-* @internal
-*/
-function getXml(strings) {
-	let xml$1 = xmlCache.get(strings);
-	if (xml$1 === void 0) {
-		let contents = "", i = 0;
-		const l = strings.length;
-		for (; i < l - 1; i++) {
-			const part = strings[i];
-			if (part.endsWith("=")) contents += `${part}"${start}${i}${end}"`;
-			else contents += `${part}${start}${i}${end}`;
-		}
-		contents += strings.at(-1);
-		const parser = new DOMParser();
-		xml$1 = parser.parseFromString(`<xml ${xmlns}>${contents}</xml>`, "text/xml").firstChild;
-		xmlCache.set(strings, xml$1);
-	}
-	return xml$1.childNodes;
-}
-const flat = (arr) => arr.length === 1 ? arr[0] : arr;
-function getValue$1(value) {
-	while (isFunction(value)) value = value();
-	return value;
-}
-const toArray = Array.from;
-function extractValues(values, value, convertMultiPartToString = false) {
-	if (value === null) return null;
-	const m = toArray(value.matchAll(match));
-	if (m.length) if (m[0][0] === m[0].input.trim()) return values[Number(m[0][1])];
-	else {
-		let index = 0;
-		const parts = value.split(match).map((x, i) => i % 2 === 1 ? values[Number(m[index++][1])] : x);
-		return convertMultiPartToString ? () => parts.map(getValue$1).join("") : parts;
-	}
-	return value;
-}
-function XML(components = {}, rules = []) {
-	function xml$1(template, ...values) {
-		const cached = getXml(template);
-		function nodes(node) {
-			if (node.nodeType === 1) {
-				const { tagName, childNodes, attributes } = node;
-				const props = {};
-				for (let { name, value } of attributes) props[name] = extractValues(values, value, true);
-				if (childNodes.length) props.children = () => flat(toArray(childNodes).map(nodes));
-				return xml$1.h(tagName, props);
-			} else if (node.nodeType === 3) return extractValues(values, node.nodeValue);
-			else if (node.nodeType === 8) return doc.createComment(extractValues(values, node.nodeValue, true));
-			else console.error(`xml: nodeType not supported ${node.nodeType}`);
-		}
-		return flat(toArray(cached).map(nodes));
-	}
-	xml$1.h = H(components, rules);
-	return xml$1;
 }
 
 //#endregion
@@ -506,6 +433,71 @@ function HTML(type = 1, rules = []) {
 }
 
 //#endregion
+//#region src/xml.ts
+const start = `$START$`;
+const end = `$END$`;
+const match = /\$START\$(\d+)\$END\$/g;
+const xmlCache = /* @__PURE__ */ new WeakMap();
+/**
+* Parses a template string as XML and returns the child nodes, using a cache for performance.
+* @internal
+*/
+function getXml(strings, xmlns) {
+	let xml$1 = xmlCache.get(strings);
+	if (xml$1 === void 0) {
+		let contents = "", i = 0;
+		const l = strings.length;
+		for (; i < l - 1; i++) {
+			const part = strings[i];
+			if (part.endsWith("=")) contents += `${part}"${start}${i}${end}"`;
+			else contents += `${part}${start}${i}${end}`;
+		}
+		contents += strings.at(-1);
+		const namespaces = xmlns.map((ns) => `xmlns:${ns}="/"`).join(" ");
+		const parser = new DOMParser();
+		xml$1 = parser.parseFromString(`<xml ${namespaces}>${contents}</xml>`, "text/xml").firstChild;
+		xmlCache.set(strings, xml$1);
+	}
+	return xml$1.childNodes;
+}
+const flat = (arr) => arr.length === 1 ? arr[0] : arr;
+function getValue$1(value) {
+	while (isFunction(value)) value = value();
+	return value;
+}
+function extractValues(values, value, convertMultiPartToString = false) {
+	if (value === null) return null;
+	const matches = toArray(value.matchAll(match));
+	if (matches.length) if (matches[0][0] === matches[0].input.trim()) return values[Number(matches[0][1])];
+	else {
+		let index = 0;
+		const parts = value.split(match).map((x, i) => i % 2 === 1 ? values[Number(matches[index++][1])] : x);
+		return convertMultiPartToString ? () => parts.map(getValue$1).join("") : parts;
+	}
+	return value;
+}
+function XML(components = {}, rules = [], xmlns = []) {
+	function xml$1(template, ...values) {
+		const cached = getXml(template, xml$1.xlmns);
+		function nodes(node) {
+			if (node.nodeType === 1) {
+				const { tagName, childNodes, attributes } = node;
+				const props = {};
+				for (let { name, value } of attributes) props[name] = extractValues(values, value, true);
+				if (childNodes.length) props.children = () => flat(toArray(childNodes).map(nodes));
+				return xml$1.h(tagName, props);
+			} else if (node.nodeType === 3) return extractValues(values, node.nodeValue);
+			else if (node.nodeType === 8) return doc.createComment(extractValues(values, node.nodeValue, true));
+			else console.error(`xml: nodeType not supported ${node.nodeType}`);
+		}
+		return flat(toArray(cached).map(nodes));
+	}
+	xml$1.xlmns = [...xmlNamespaces, ...xmlns];
+	xml$1.h = H(components, rules);
+	return xml$1;
+}
+
+//#endregion
 //#region src/defaults.ts
 const defaultRules = [
 	{
@@ -573,8 +565,19 @@ const defaultComponents = {
 	Portal,
 	NoHydration
 };
+const xmlNamespaces = [
+	"on",
+	"prop",
+	"bool",
+	"attr",
+	"ref",
+	"style",
+	"class",
+	"xlink"
+];
 const h = H();
 const xml = XML();
+xml.h = h;
 const html = HTML(HTML_RESULT);
 const svg = HTML(SVG_RESULT);
 const mathml = HTML(MATHML_RESULT);
@@ -632,5 +635,5 @@ function wrapProps(props = {}) {
 }
 
 //#endregion
-export { Context, ErrorBoundary, For, H, HTML, Index, Match, MatchKeyed, Show, ShowKeyed, Suspense, Switch, XML, assign, assignAttribute, assignAttributeNS, assignBooleanAttribute, assignClass, assignDelegatedEvent, assignEvent, assignProperty, assignRef, assignStyle, defaultComponents, defaultRules, getValue, h, html, markedOnce, mathml, once, spread, svg, wrapProps, xml };
+export { Context, ErrorBoundary, For, H, HTML, Index, Match, MatchKeyed, Show, ShowKeyed, Suspense, Switch, XML, assign, assignAttribute, assignAttributeNS, assignBooleanAttribute, assignClass, assignDelegatedEvent, assignEvent, assignProperty, assignRef, assignStyle, defaultComponents, defaultRules, getValue, h, html, markedOnce, mathml, once, spread, svg, wrapProps, xml, xmlNamespaces };
 //# sourceMappingURL=index.mjs.map
