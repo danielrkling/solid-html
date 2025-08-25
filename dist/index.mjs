@@ -251,9 +251,6 @@ const xmlns = [
 	"class",
 	"xlink"
 ].map((ns) => `xmlns:${ns}="/"`).join(" ");
-const marker$1 = "MARKER46846";
-new RegExp(`(${marker$1})`, "g");
-new RegExp(`=${marker$1}`, "g");
 const start = `$START$`;
 const end = `$END$`;
 const match = /\$START\$(\d+)\$END\$/g;
@@ -287,7 +284,7 @@ function getValue$1(value) {
 const toArray = Array.from;
 function extractValues(values, value, convertMultiPartToString = false) {
 	if (value === null) return null;
-	const m = [...value.matchAll(match)];
+	const m = toArray(value.matchAll(match));
 	if (m.length) if (m[0][0] === m[0].input.trim()) return values[Number(m[0][1])];
 	else {
 		let index = 0;
@@ -304,7 +301,7 @@ function XML(components = {}, rules = []) {
 				const { tagName, childNodes, attributes } = node;
 				const props = {};
 				for (let { name, value } of attributes) props[name] = extractValues(values, value, true);
-				if (childNodes.length) props.children = () => toArray(childNodes).map(nodes);
+				if (childNodes.length) props.children = () => flat(toArray(childNodes).map(nodes));
 				return xml$1.h(tagName, props);
 			} else if (node.nodeType === 3) return extractValues(values, node.nodeValue);
 			else if (node.nodeType === 8) return doc.createComment(extractValues(values, node.nodeValue, true));

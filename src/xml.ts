@@ -56,7 +56,7 @@ const toArray = Array.from;
 
 function extractValues(values: any[], value: string | null, convertMultiPartToString = false) {
   if (value === null) return null
-  const m = [...value.matchAll(match)]
+  const m = toArray(value.matchAll(match))
   if (m.length) {
     if (m[0][0] === m[0].input.trim()) {
       return values[Number(m[0][1])];
@@ -86,7 +86,7 @@ export function XML(components: ComponentRegistry = {}, rules: AssignmentRules =
 
         // children - childNodes overwrites any props.children
         if (childNodes.length) {
-          props.children = () => (toArray(childNodes).map(nodes));
+          props.children = () => flat(toArray(childNodes).map(nodes));
         }
 
         return xml.h(tagName, props);
