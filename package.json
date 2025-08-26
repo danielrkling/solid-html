@@ -1,6 +1,6 @@
 {
   "name": "solid-html",
-  "version": "1.5.3",
+  "version": "1.6.0",
   "description": "A package for using SolidJS with HTML.",
   "main": "dist/index.mjs",
   "types": "dist/index.d.ts",
