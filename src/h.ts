@@ -38,7 +38,7 @@ export function H(components: Record<string, any> = {}, rules: AssignmentRule[] 
         console.warn(`Forgot to define ${componentFunction}`);
       }
 
-      const elem = SVGElements.has(component) ? doc.createElementNS("http://www.w3.org/2000/svg", component) : doc.createElement(component);
+      const elem = createElement(component)
       spread(h.rules, elem, props);
       return elem;
     } else if (isFunction(component)) {
@@ -56,6 +56,18 @@ export function H(components: Record<string, any> = {}, rules: AssignmentRule[] 
 
 }
 
+const elementCache = new Map<string,Element>()
+function createElement(tag: string){
+  return SVGElements.has(tag) ? doc.createElementNS("http://www.w3.org/2000/svg", tag) : doc.createElement(tag)
+  let elem = elementCache.get(tag)
+  if (elem){
+    return elem.cloneNode()
+  }else{
+    elem = SVGElements.has(tag) ? doc.createElementNS("http://www.w3.org/2000/svg", tag) : doc.createElement(tag)
+    elementCache.set(tag,elem)
+    return elem
+  }
+}
 
 export const markedOnce = new WeakSet();
 

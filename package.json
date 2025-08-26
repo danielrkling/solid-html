@@ -25,6 +25,7 @@
   "author": "Daniel Kling danielrkling@gmail.com",
   "license": "MIT",
   "dependencies": {
+    "html5parser": "^2.0.2",
     "solid-js": "^1.9.6"
   },
   "devDependencies": {

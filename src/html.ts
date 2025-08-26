@@ -20,6 +20,7 @@ import { AssignmentRule } from "./types";
 import { assign, spread } from "./assign";
 import { defaultRules } from "./defaults";
 
+import { parse } from "html5parser";
 
 
 type Template = [element: HTMLTemplateElement, attributes: string[]];
@@ -58,7 +59,7 @@ export function HTML(type: ResultType = 1, rules: AssignmentRule[] = []) {
     strings: TemplateStringsArray,
     ...values: any[]
   ): JSX.Element {
-
+    
     const [element, attributes] = getTemplate(strings, type);
     const clone = element.content.cloneNode(true);
 
