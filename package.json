@@ -1,9 +1,11 @@
 {
   "name": "solid-html",
-  "version": "1.6.0",
-  "description": "A package for using SolidJS with HTML.",
+  "version": "1.6.1",
+  "description": "A package for using SolidJS with tagged template literals.",
   "main": "dist/index.mjs",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "typings": "dist/index.d.ts",
   "scripts": {
     "build": "tsdown",
     "dev": "vite",
@@ -16,7 +18,9 @@
   "keywords": [
     "solidjs",
     "html",
-    "template"
+    "template",
+    "xml",
+    "h"
   ],
   "author": "Daniel Kling danielrkling@gmail.com",
   "license": "MIT",
@@ -31,8 +35,8 @@
   },
   "exports": {
     ".": {
-      "import": "./index.mjs",
-      "types": "./index.d.ts"
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
     }
   }
 }
