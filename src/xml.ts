@@ -1,104 +1,75 @@
 import { xmlNamespaces } from "./defaults";
 import { H } from "./h";
 import { AssignmentRule, ComponentRegistry } from "./types";
-import { doc, isFunction, toArray } from "./util";
+import { doc, isFunction, isString, toArray } from "./util";
+import { INode, SyntaxKind, parse } from "html5parser";
 
-const start = `$START$`
-const end = `$END$`
-const match = /\$START\$(\d+)\$END\$/g
+//Should be unique character that would never be in the template literal
+const markerStart = '⧙⧙';
+const markerEnd = '⧘⧘';
 
-const xmlCache = new WeakMap<TemplateStringsArray, Node>();
+//Captures index of hole
+const match = new RegExp(`${markerStart}(\\d+)${markerEnd}`, "g")
 
-/**
- * Parses a template string as XML and returns the child nodes, using a cache for performance.
- * @internal
- */
-function getXml(strings: TemplateStringsArray, xmlns: string[]) {
-  let xml = xmlCache.get(strings);
-  if (xml === undefined) {
-    let contents = "", i = 0
-    const l = strings.length
-    //Join XML with index so proper value can be extracted later independent of when it's executed
-    for (i; i < l - 1; i++) {
-      const part = strings[i]
-      // Allows no quotes for single attribute. Causes edge case for =${} in text nodes or within attribute values. Can be fixed with ${'=' + var}
-      if (part.endsWith("=")) {
-        contents += `${part}"${start}${i}${end}"`
-      } else {
-        contents += `${part}${start}${i}${end}`
-      }
-    }
-    contents += strings.at(-1)
+const cachedAST = new WeakMap<TemplateStringsArray, INode[]>();
 
-    const namespaces = xmlns
-      .map((ns) => `xmlns:${ns}="/"`)
-      .join(" ");
 
-    const parser = new DOMParser();
-    xml = parser.parseFromString(`<xml ${namespaces}>${contents}</xml>`, "text/xml")
-      .firstChild!;
-    xmlCache.set(strings, xml);
+function getAST(strings: TemplateStringsArray) {
+  let ast = cachedAST.get(strings);
+  if (ast === undefined) {
+    //join string with markers and index
+    ast = parse(strings.slice(1).reduce((prev, current, index) => prev + markerStart + index + markerEnd + current, strings[0]))
+    cachedAST.set(strings, ast);
   }
-  return xml.childNodes;
+  return ast;
 }
 
 const flat = (arr: any) => (arr.length === 1 ? arr[0] : arr);
+
 function getValue(value: any) {
   while (isFunction(value)) value = value();
   return value;
 }
 
-function extractValues(values: any[], value: string | null, convertMultiPartToString = false) {
-  if (value === null) return null
-  const matches = toArray(value.matchAll(match))
-  if (matches.length) {
-    if (matches[0][0] === matches[0].input.trim()) {
-      return values[Number(matches[0][1])];
-    } else {
-      let index = 0
-      const parts = value.split(match).map((x, i) => (i % 2 === 1 ? values[Number(matches[index++][1])] : x));
-      return convertMultiPartToString ? () => parts.map(getValue).join("") : parts
-    }
-  }
-  return value
+
+function insertValuesAtMarkers(values: any[], value: string = "", convertMultiPartToString = false) {
+  const parts = value.split(match).map((v, i) => (i % 2 === 1 ? values[Number(v)] : v)).filter(v => !isString(v) || v.trim())
+  return parts.length === 1 ? parts[0] : convertMultiPartToString ? () => parts.map(getValue).join("") : parts
 }
 
-export function XML(components: ComponentRegistry = {}, rules: AssignmentRule[] = [], xmlns: string[] = []) {
+export function XML(components: ComponentRegistry = {}, rules: AssignmentRule[] = []) {
   function xml(template: TemplateStringsArray, ...values: any[]) {
-    const cached = getXml(template, xml.xlmns);
+    const cached = getAST(template);
 
-    function nodes(node: Node) {
-      if (node.nodeType === 1) {
-        // Element Node
-        const { tagName, childNodes, attributes } = (node as Element);
+    function nodes(node: INode): any {
+      if (node.type === SyntaxKind.Tag) {
+        //Comment Node
+        if (node.name.startsWith("!") || node.name.startsWith("?")) {
+          //Comment nodes will not be reactive.
+          return doc.createComment(insertValuesAtMarkers(values, node.body?.map(v => v.type === SyntaxKind.Text && v.value).join(""), true)());
+        }
 
         // gather props
         const props = {} as Record<string, any>;
-        for (let { name, value } of attributes) {
-          props[name] = extractValues(values, value, true);
+        for (let { name, value } of node.attributes) {
+          props[name.value] = insertValuesAtMarkers(values, value?.value, true);
         }
 
         // children - childNodes overwrites any props.children
-        if (childNodes.length) {
-          props.children = () => flat(toArray(childNodes).map(nodes));
+        if (node.body?.length) {
+          props.children = () => flat(node.body!.map(nodes));
         }
 
-        return xml.h(tagName, props);
-      } else if (node.nodeType === 3) {
-        // Text Node
-        return extractValues(values, node.nodeValue);
-      } else if (node.nodeType === 8) {
-        // Comment Node
-        return doc.createComment(extractValues(values, node.nodeValue, true));
+        return xml.h(node.rawName, props);
       } else {
-        console.error(`xml: nodeType not supported ${node.nodeType}`);
+        // Text Node
+        return insertValuesAtMarkers(values, node.value);
       }
     }
 
     return flat(toArray(cached).map(nodes));
   }
 
-  xml.xlmns = [...xmlNamespaces, ...xmlns]
   xml.h = H(components, rules);
 
   return xml;
