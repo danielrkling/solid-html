@@ -1,4 +1,4 @@
-import { insert } from "solid-js/web";
+import { insert, template } from "solid-js/web";
 import { assign } from "./assign";
 import { xmlNamespaces } from "./defaults";
 import { H } from "./h";
@@ -12,19 +12,13 @@ const marker = '⧙⧘';
 
 //Captures index of hole
 const match = new RegExp(`${marker}(\\d+)${marker}`, "g")
-const nodeMatch = new RegExp(`${marker}(?<name>\\w+)?${marker}(?<index>\\d+)${marker}`, "g")
+const pathMatch = new RegExp(`${marker}(\\d+(?:,\\d+)*)${marker}`, "g")
 
 const cache = new WeakMap<TemplateStringsArray, Cached>();
 const walker = doc.createTreeWalker(doc, 133);
 
 
-type Cached = {
-  nodes: MyNode[]
-  components: CommentNode[]
-  elements: ElementNode[]
-  allProperties: Property[][]
-  element?: HTMLTemplateElement
-}
+type Cached = RootNode
 
 
 function getCached(strings: TemplateStringsArray): Cached {
@@ -32,19 +26,20 @@ function getCached(strings: TemplateStringsArray): Cached {
   if (cached === undefined) {
     //join string with markers and index
     const ast = parse(strings.slice(1).reduce((prev, current, index) => prev + marker + index + marker + current, strings[0]))
-    const elements = []
-    const components = []
-    const nodes = ast.map(n => parseNode(n, elements, components))
-    const element = doc.createElement("template")
-    const allProperties = []
-    buildTemplate(nodes, element.content, allProperties)
+    const children = ast.map(n => parseNode(n))
+
+    const template = children.some(n => n.type === "element") ? buildTemplate(children) : null
+
+
+
     cached = {
-      nodes,
-      elements,
-      components
+      type: "root",
+      children,
+      template
     }
 
-    console.log(cached)
+
+    console.log(cached, template)
 
 
     cache.set(strings, cached);
@@ -67,34 +62,43 @@ function insertValuesAtMarkers(values: any[], value: string = "", convertMultiPa
   return parts.length === 1 ? parts[0] : convertMultiPartToString ? () => parts.map(getValue).join("") : parts
 }
 
+function getNode(node: ComponentNode, id: string) {
+
+  let current = node as ComponentNode | ElementNode
+  id.split(",").forEach(i => {
+    current = current.children[Number(i)] as ElementNode
+  })
+  return current as ElementNode
+}
+
 export function XML(components: ComponentRegistry = {}, rules: AssignmentRule[] = [], clone = false) {
   function xml(strings: TemplateStringsArray, ...values: any[]) {
     const cached = getCached(strings);
 
-    function renderTemplate(template: HTMLTemplateElement) {
+    function renderTemplate(template: HTMLTemplateElement, componentNode: ComponentNode) {
       const clone = template.content.cloneNode(true)
       walker.currentNode = clone;
+
+      // console.log(componentNode.name || componentNode.type,template.innerHTML)
 
       let index = 0
       while (walker.nextNode()) {
         const node = walker.currentNode;
         if (node.nodeType === 1) {
-          const attributes = cached.allProperties[index++]
-          for (const [name, parts] of attributes) {
+          const _node = getNode(componentNode, (node as Element).id)
+          // console.log(componentNode,node,_node)
+          for (const [name, parts] of _node.props) {
             const value = substituteValues(parts, values);
             assign(xml.h.rules, node as Element, name, value.length === 1 ? value[0] : () => value.map(getValue))
           }
         } else if (node.nodeType === 8) {
-          const m = nodeMatch.exec(node.nodeValue ?? "")
-          if (m?.groups?.type === "text") {
+          const m = pathMatch.exec(node.nodeValue ?? "")
+          console.log(node.nodeValue,m)
+          if (m) {
+            const _node = getNode(componentNode, m[1])
+            insert(node.parentNode!, renderNode(_node), node)
+          }
 
-          }
-          if (m?.groups?.type === "name") {
-            const comp = h(m.groups.type,)
-            insert(node.parentNode!, values[Number(m[1])], node)
-          } else {
-            insert(node.parentNode!, values[Number(m[1])], node)
-          }
         }
       }
 
@@ -102,6 +106,8 @@ export function XML(components: ComponentRegistry = {}, rules: AssignmentRule[] 
     }
 
     function renderNode(node: MyNode): any {
+      // console.log(node.type,node.value, values)
+
       if (node.type === "text") {
         return substituteValues(node.parts, values)
       } else if (node.type === "comment") {
@@ -118,22 +124,26 @@ export function XML(components: ComponentRegistry = {}, rules: AssignmentRule[] 
 
       // children - childNodes overwrites any props.children
       if (node.children.length) {
-        // if (node.hasComponents) {
-        props.children = () => flat(node.children.map(renderNode));
-        // } else {
-        //   const template = doc.createElement("template")
-        //   buildTemplate(node.children, template.content, cached.allProperties)
-        //   props.childen = () => renderTemplate(template)
-
-        // }
+        if (node.type === "component" && node.template) {
+          props.children = ()=>renderTemplate(node.template, node)
+        } else {
+          props.children = () => flat(node.children.map(renderNode));
+        }
       }
+
+      // console.log(props)
 
       return xml.h(node.name, props);
 
     }
 
 
-    return flat(toArray(cached.nodes).map(renderNode));
+    if (cached.template) {
+      return renderTemplate(cached.template, cached)
+    }
+
+
+    return flat(toArray(cached.children).map(renderNode));
   }
 
   xml.h = H(components, rules);
@@ -172,8 +182,14 @@ type ElementNode = {
   name: string
   props: Property[]
   children: MyNode[],
+}
+
+type RootNode = {
+  type: "root"
+  children: MyNode[]
   template: HTMLTemplateElement | null
 }
+
 
 function substituteValues(parts: ValueParts, values: any[]) {
   return parts.map(v => isString(v) ? v : values[v])
@@ -184,7 +200,7 @@ function parseValue(value: string = ""): ValueParts {
   return value.split(match).map((v, i) => (i % 2 === 1 ? Number(v) : v)).filter(v => !isString(v) || v.trim())
 }
 
-function parseNode(node: INode, buildTemplate = false): MyNode {
+function parseNode(node: INode): MyNode {
   if (node.type === SyntaxKind.Text) {
     return {
       type: "text",
@@ -205,18 +221,21 @@ function parseNode(node: INode, buildTemplate = false): MyNode {
   }
 
   const children = node.body?.map((n) => parseNode(n)) ?? []
-  const hasElementChilden = children.some(v => v.type === "element")
+
 
   const props = node.attributes.map(v => [v.name.value, parseValue(v.value?.value)]) as Property[]
 
 
   if (/^[A-Z]/.test(node.rawName)) {
+    const hasElementChilden = children.some(v => v.type === "element")
+    const template = hasElementChilden ? buildTemplate(children) : null
+
     const component = {
       type: "component",
       name: node.rawName,
       props,
       children,
-      template: null
+      template
     } as ComponentNode
 
     return component
@@ -227,7 +246,6 @@ function parseNode(node: INode, buildTemplate = false): MyNode {
     name: node.name,
     props,
     children,
-    template: null
   } as ElementNode
 
   return element
@@ -238,36 +256,34 @@ function parseNode(node: INode, buildTemplate = false): MyNode {
 
 function buildTemplate(nodes: MyNode[]): HTMLTemplateElement {
   const template = doc.createElement("template")
+  buildNodes(nodes, template.content, [])
 
-
-  function buildNodes(nodes: MyNode[], parent: Node){
-    for (const node of nodes) {
+  function buildNodes(nodes: MyNode[], parent: Node, path: number[]) {
+    nodes.forEach((node, i) => {
+      const newPath = [...path, i]
       if (node.type === "text") {
         node.parts.forEach((part, i) => {
           if (isString(part)) {
             parent.appendChild(doc.createTextNode(part))
           } else {
-            parent.appendChild(doc.createComment(marker + marker + part + marker))
+            parent.appendChild(doc.createComment(marker + newPath + marker))
           }
         })
       } else if (node.type === "comment") {
-  
+
       } else if (node.type === "component") {
-        parent.appendChild(doc.createComment(marker + node.name + marker + length + marker))
-        node.template = doc.createElement("template")
-        buildTemplate()
+        parent.appendChild(doc.createComment(marker + newPath + marker))
+        // node.template = buildTemplate(node.children)
       } else if (node.type === "element") {
         const elem = doc.createElement(node.name)
+        elem.id = newPath.toString()
         parent.appendChild(elem)
         //Apply static attributes here?
-        allProps.push(node.props)
-        buildTemplate(node.children, elem, allProps)
+        buildNodes(node.children, elem, newPath)
       }
-  
-    }
-  }
+    })
 
-  
+  }
 
   return template
 }
