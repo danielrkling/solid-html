@@ -28,6 +28,10 @@ export function H(components: Record<string, any> = {}, rules: AssignmentRule[] 
       props.children = children;
     }
 
+    if (isFunction(component)) {
+      return createComponent(component, wrapProps(props));
+    }
+
     if (isString(component)) {
       const componentFunction = (h.components)[component];
       if (componentFunction) {
@@ -38,13 +42,18 @@ export function H(components: Record<string, any> = {}, rules: AssignmentRule[] 
         console.warn(`Forgot to define ${componentFunction}`);
       }
 
+      if (component==="!" || component === "?"){
+        const comment = doc.createComment("")
+        spread(h.rules,comment,props)
+        return comment
+      }
+
       const elem = createElement(component)
       spread(h.rules, elem, props);
       return elem;
-    } else if (isFunction(component)) {
-      return createComponent(component, wrapProps(props));
-    }
+    } 
   }
+  
   h.components = {...defaultComponents, ...components};
   h.define = (components: Record<string, ValidComponent>) => {
     Object.assign(h.components, components);

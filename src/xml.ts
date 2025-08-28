@@ -1,3 +1,4 @@
+import { insert } from "solid-js/web";
 import { assign } from "./assign";
 import { xmlNamespaces } from "./defaults";
 import { H } from "./h";
@@ -6,42 +7,54 @@ import { doc, isFunction, isString, toArray } from "./util";
 import { IAttribute, INode, SyntaxKind, parse } from "html5parser";
 
 //Should be unique character that would never be in the template literal
-const markerStart = '⧙⧙';
-const markerEnd = '⧘⧘';
+const marker = '⧙⧘';
+
 
 //Captures index of hole
-const match = new RegExp(`${markerStart}(\\d+)${markerEnd}`, "g")
+const match = new RegExp(`${marker}(\\d+)${marker}`, "g")
+const nodeMatch = new RegExp(`${marker}(?<name>\\w+)?${marker}(?<index>\\d+)${marker}`, "g")
 
-const cache = new WeakMap<TemplateStringsArray, Template>();
+const cache = new WeakMap<TemplateStringsArray, Cached>();
 const walker = doc.createTreeWalker(doc, 133);
 
 
-type Template = {
-  ast: INode[]
-  attributes?: IAttribute[][]
+type Cached = {
+  nodes: MyNode[]
+  components: CommentNode[]
+  elements: ElementNode[]
+  allProperties: Property[][]
   element?: HTMLTemplateElement
 }
 
 
-function getAST(strings: TemplateStringsArray): Template {
-  let template = cache.get(strings);
-  if (template === undefined) {
+function getCached(strings: TemplateStringsArray): Cached {
+  let cached = cache.get(strings);
+  if (cached === undefined) {
     //join string with markers and index
-    const ast = parse(strings.slice(1).reduce((prev, current, index) => prev + markerStart + index + markerEnd + current, strings[0]))
-    template = {
-      ast      
+    const ast = parse(strings.slice(1).reduce((prev, current, index) => prev + marker + index + marker + current, strings[0]))
+    const elements = []
+    const components = []
+    const nodes = ast.map(n => parseNode(n, elements, components))
+    const element = doc.createElement("template")
+    const allProperties = []
+    buildTemplate(nodes, element.content, allProperties)
+    cached = {
+      nodes,
+      elements,
+      components
     }
-    if (!ast.some(hasComponents)){
-      template.element = document.createElement("template");
-      template.attributes = [];
-      buildTemplate(ast,template.element.content, template.attributes!);      
-    }
-    cache.set(strings, template);
+
+    console.log(cached)
+
+
+    cache.set(strings, cached);
   }
-  return template;
+  return cached;
 }
 
-const flat = (arr: any) => (arr.length === 1 ? arr[0] : arr);
+function flat(arr: any[]) {
+  return (arr.length === 1 ? arr[0] : arr);
+}
 
 function getValue(value: any) {
   while (isFunction(value)) value = value();
@@ -54,56 +67,73 @@ function insertValuesAtMarkers(values: any[], value: string = "", convertMultiPa
   return parts.length === 1 ? parts[0] : convertMultiPartToString ? () => parts.map(getValue).join("") : parts
 }
 
-export function XML(components: ComponentRegistry = {}, rules: AssignmentRule[] = []) {
-  function xml(template: TemplateStringsArray, ...values: any[]) {
-    const cached = getAST(template);
+export function XML(components: ComponentRegistry = {}, rules: AssignmentRule[] = [], clone = false) {
+  function xml(strings: TemplateStringsArray, ...values: any[]) {
+    const cached = getCached(strings);
 
-    if(cached.element && cached.attributes){
-      const clone = cached.element.content.cloneNode(true)
+    function renderTemplate(template: HTMLTemplateElement) {
+      const clone = template.content.cloneNode(true)
       walker.currentNode = clone;
 
-      let elemIndex = 0
+      let index = 0
       while (walker.nextNode()) {
         const node = walker.currentNode;
-        if (node.nodeType===1){
-          const attributes = cached.attributes[elemIndex++]
-          for (const attribute of attributes){
-            assign(xml.h.rules,node as Element,attribute.name.value,attribute.value?.value)
+        if (node.nodeType === 1) {
+          const attributes = cached.allProperties[index++]
+          for (const [name, parts] of attributes) {
+            const value = substituteValues(parts, values);
+            assign(xml.h.rules, node as Element, name, value.length === 1 ? value[0] : () => value.map(getValue))
+          }
+        } else if (node.nodeType === 8) {
+          const m = nodeMatch.exec(node.nodeValue ?? "")
+          if (m?.groups?.type === "text") {
+
+          }
+          if (m?.groups?.type === "name") {
+            const comp = h(m.groups.type,)
+            insert(node.parentNode!, values[Number(m[1])], node)
+          } else {
+            insert(node.parentNode!, values[Number(m[1])], node)
           }
         }
       }
 
+      return toArray(clone.childNodes)
     }
 
-    function nodes(node: INode): any {
-      if (node.type === SyntaxKind.Tag) {
-        //Comment Node
-        if (node.name.startsWith("!") || node.name.startsWith("?")) {
-          //Comment nodes will not be reactive.
-          return doc.createComment(insertValuesAtMarkers(values, node.body?.map(v => v.type === SyntaxKind.Text && v.value).join(""), true)());
-        }
-
-        // gather props
-        const props = {} as Record<string, any>;
-        for (let { name, value } of node.attributes) {
-          props[name.value] = insertValuesAtMarkers(values, value?.value, true);
-        }
-
-        // children - childNodes overwrites any props.children
-        if (node.body?.length) {
-          props.children = () => flat(node.body!.map(nodes));
-        }
-
-        return xml.h(node.rawName, props);
-      } else {
-        // Text Node
-        return insertValuesAtMarkers(values, node.value);
+    function renderNode(node: MyNode): any {
+      if (node.type === "text") {
+        return substituteValues(node.parts, values)
+      } else if (node.type === "comment") {
+        const value = substituteValues(node.parts, values);
+        return xml.h("!", { "prop:textContent": value.length === 1 ? value[0] : () => value.map(getValue) })
       }
+
+      // gather props
+      const props = {} as Record<string, any>;
+      for (let [name, parts] of node.props) {
+        const value = substituteValues(parts, values);
+        props[name] = value.length === 1 ? value[0] : () => value.map(getValue)
+      }
+
+      // children - childNodes overwrites any props.children
+      if (node.children.length) {
+        // if (node.hasComponents) {
+        props.children = () => flat(node.children.map(renderNode));
+        // } else {
+        //   const template = doc.createElement("template")
+        //   buildTemplate(node.children, template.content, cached.allProperties)
+        //   props.childen = () => renderTemplate(template)
+
+        // }
+      }
+
+      return xml.h(node.name, props);
+
     }
 
 
-
-    return flat(toArray(cached).map(nodes));
+    return flat(toArray(cached.nodes).map(renderNode));
   }
 
   xml.h = H(components, rules);
@@ -111,38 +141,134 @@ export function XML(components: ComponentRegistry = {}, rules: AssignmentRule[] 
   return xml;
 }
 
+type MyNode = TextNode | CommentNode | ComponentNode | ElementNode
 
-function hasComponents(node: INode): boolean | undefined {
-  if (node.type===SyntaxKind.Tag){
-    if (/^[A-Z]/.test(node.rawName)) return  true
-    return node.body?.some(hasComponents)
-  }
+type ValueParts = Array<string | number>
+
+type Property = [name: string, value: ValueParts]
+
+type TextNode = {
+  type: "text"
+  value: string
+  parts: ValueParts
 }
 
-function buildTemplate(nodes: INode[], parent: Node, attributes: IAttribute[][]) {
-  for (const node of nodes) {
-    if (node.type === SyntaxKind.Tag) {
-      if (node.name.startsWith("!") || node.name.startsWith("?")) {
+type CommentNode = {
+  type: "comment"
+  value: string
+  parts: ValueParts
+}
 
-      } else {
-        const element = doc.createElement(node.name)
-        attributes.push(node.attributes)
-        buildTemplate(node.body ?? [], element, attributes)
-        parent.appendChild(element)
+type ComponentNode = {
+  type: "component"
+  name: string
+  props: Property[]
+  children: MyNode[]
+  template: HTMLTemplateElement | null
+}
+
+type ElementNode = {
+  type: "element"
+  name: string
+  props: Property[]
+  children: MyNode[],
+  template: HTMLTemplateElement | null
+}
+
+function substituteValues(parts: ValueParts, values: any[]) {
+  return parts.map(v => isString(v) ? v : values[v])
+}
+
+
+function parseValue(value: string = ""): ValueParts {
+  return value.split(match).map((v, i) => (i % 2 === 1 ? Number(v) : v)).filter(v => !isString(v) || v.trim())
+}
+
+function parseNode(node: INode, buildTemplate = false): MyNode {
+  if (node.type === SyntaxKind.Text) {
+    return {
+      type: "text",
+      value: node.value,
+      parts: parseValue(node.value)
+    } as TextNode
+  }
+
+  if (node.name.startsWith("!") || node.name.startsWith("?")) {
+    const value = node.body?.map(n => n.type === SyntaxKind.Text ? n.value : "").join("") ?? ""
+    const parts = parseValue(value)
+
+    return {
+      type: "comment",
+      value,
+      parts
+    } as CommentNode
+  }
+
+  const children = node.body?.map((n) => parseNode(n)) ?? []
+  const hasElementChilden = children.some(v => v.type === "element")
+
+  const props = node.attributes.map(v => [v.name.value, parseValue(v.value?.value)]) as Property[]
+
+
+  if (/^[A-Z]/.test(node.rawName)) {
+    const component = {
+      type: "component",
+      name: node.rawName,
+      props,
+      children,
+      template: null
+    } as ComponentNode
+
+    return component
+  }
+
+  const element = {
+    type: "element",
+    name: node.name,
+    props,
+    children,
+    template: null
+  } as ElementNode
+
+  return element
+}
+
+
+
+
+function buildTemplate(nodes: MyNode[]): HTMLTemplateElement {
+  const template = doc.createElement("template")
+
+
+  function buildNodes(nodes: MyNode[], parent: Node){
+    for (const node of nodes) {
+      if (node.type === "text") {
+        node.parts.forEach((part, i) => {
+          if (isString(part)) {
+            parent.appendChild(doc.createTextNode(part))
+          } else {
+            parent.appendChild(doc.createComment(marker + marker + part + marker))
+          }
+        })
+      } else if (node.type === "comment") {
+  
+      } else if (node.type === "component") {
+        parent.appendChild(doc.createComment(marker + node.name + marker + length + marker))
+        node.template = doc.createElement("template")
+        buildTemplate()
+      } else if (node.type === "element") {
+        const elem = doc.createElement(node.name)
+        parent.appendChild(elem)
+        //Apply static attributes here?
+        allProps.push(node.props)
+        buildTemplate(node.children, elem, allProps)
       }
-    }
-    if (node.type === SyntaxKind.Text) {
-      const parts = node.value.split(match)
-      parts.forEach((part,i)=>{
-        if (i % 2 ===1){
-          const comment = doc.createComment(markerStart+part+markerEnd)
-          parent.appendChild(comment)
-        } else if (part.trim() !== "") {
-          const text = doc.createTextNode(part)
-          parent.appendChild(text)
-        }
-      })
+  
     }
   }
+
+  
+
+  return template
 }
 

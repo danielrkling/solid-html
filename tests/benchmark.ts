@@ -1,7 +1,7 @@
 import { render } from "solid-js/web";
 import {  xml } from "../src";
 import { createSignal } from "solid-js";
-import {XML} from "../src/xml copy"
+import {XML} from "../src/xml"
 // Number of components to render in batch
 const COUNT = 1000;
 
@@ -13,7 +13,7 @@ function benchmark(label, fn) {
   console.log(`${label}: ${(end - start).toFixed(2)}ms`);
 }
 
-const newXML = XML()
+const clone = XML({},[],true)
 
 // Counter using `xml`
 function CounterXML() {
@@ -42,9 +42,9 @@ function CounterXML() {
 }
 
 // Counter using `html`
-function CounteParse() {
+function CounterClone() {
   const [count, setCount] = createSignal(0);
-  return newXML`
+  return clone`
     <div class="counter-html">
       <section>
         <header>
@@ -73,13 +73,12 @@ const root1 = document.createElement("div");
 const root2 = document.createElement("div");
 document.body.append(root1, root2);
 
-
-
-benchmark("Render HTML counters", () => {
-  render(() => Array.from({ length: COUNT }, () => CounteParse()), root2);
-});
-
 // Benchmark render performance
 benchmark("Render XML counters", () => {
   render(() => Array.from({ length: COUNT }, () => CounterXML()), root1);
 });
+
+benchmark("Render cloned nodes", () => {
+  render(() => Array.from({ length: COUNT }, () => CounterClone()), root2);
+});
+
