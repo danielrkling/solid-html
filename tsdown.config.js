@@ -1,7 +1,7 @@
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
-  entry: ['./src/index.ts'],
+  entry: ['./src/index.ts','./src/components.ts'],
   sourcemap: true,
   outExtensions: () => ({ js: '.mjs', dts: '.d.ts' }),
   minify: true,

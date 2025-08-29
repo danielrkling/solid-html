@@ -1,6 +1,4 @@
-export * from "./components"
 export * from "./h"
-export * from "./html"
 export * from "./html"
 export * from "./assign"
 export * from "./defaults"

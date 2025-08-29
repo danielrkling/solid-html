@@ -1,5 +1,5 @@
 import * as solid_js0 from "solid-js";
-import { Accessor, ComponentProps, Context as Context$1, JSX, ValidComponent } from "solid-js";
+import { ComponentProps, JSX, ValidComponent } from "solid-js";
 
 //#region src/types.d.ts
 
@@ -24,69 +24,6 @@ type AssignmentRule = {
 };
 type ComponentRegistry = Record<string, ValidComponent>;
 //#endregion
-//#region src/components.d.ts
-declare function getValue<T>(value: MaybeFunction<T>): T;
-/**
- * Solid-compatible Show component. Renders children if `when` is truthy, otherwise renders `fallback`.
- * @example
- * Show(() => isVisible(), html`<span>Hello</span>`, "Fallback")
- */
-declare function Show<T>(when: () => T, children: (item: Accessor<NonNullable<T>>) => JSX.Element, fallback?: () => JSX.Element): JSX.Element;
-/**
- * Show component with keyed mode. Renders children with keyed context if `when` is truthy.
- * @example
- * ShowKeyed(() => user(), user => html`<span>${user.name}</span>`, "No user")
- */
-declare function ShowKeyed<T>(when: () => T, children: ((item: NonNullable<T>) => JSX.Element), fallback?: () => JSX.Element): JSX.Element;
-/**
- * Switch component for conditional rendering. Renders the first matching child, or `fallback` if none match.
- * @example
- * Switch("No match", Match(() => cond1(), html`A`), Match(() => cond2(), html`B`))
- */
-declare function Switch(children: () => JSX.Element[], fallback: () => JSX.Element): JSX.Element;
-/**
- * Match component for use inside Switch. Renders children if `when` is truthy.
- * @example
- * Match(() => value() === 1, html`One`)
- */
-declare function Match<T>(when: () => T, children: ((item: Accessor<NonNullable<T>>) => JSX.Element)): JSX.Element;
-/**
- * Keyed Match component for use inside Switch. Renders children with keyed context if `when` is truthy.
- * @example
- * MatchKeyed(() => user(), user => html`<span>${user.name}</span>`)
- */
-declare function MatchKeyed<T>(when: () => T, children: ((item: NonNullable<T>) => JSX.Element)): JSX.Element;
-/**
- * For component for iterating over arrays. Renders children for each item in `each`.
- * @example
- * For(() => items(), (item) => html`<li>${item}</li>`)
- */
-declare function For<T extends readonly any[]>(each: () => T | false | null | undefined, children: (item: T[number], index: () => number) => JSX.Element, fallback?: () => JSX.Element): JSX.Element;
-/**
- * Index component for iterating over arrays by index. Renders children for each item in `each`.
- * @example
- * Index(() => items(), (item, i) => html`<li>${item()}</li>`)
- */
-declare function Index<T extends readonly any[]>(each: () => T | false | null | undefined, children: (item: () => T[number], index: number) => JSX.Element, fallback?: () => JSX.Element): JSX.Element;
-/**
- * Suspense component for async boundaries. Renders `children` or `fallback` while loading.
- * @example
- * Suspense(html`<div>Loaded</div>`, html`<div>Loading...</div>`)
- */
-declare function Suspense(children: () => JSX.Element, fallback?: () => JSX.Element): JSX.Element;
-/**
- * ErrorBoundary component. Catches errors in children and renders `fallback` on error.
- * @example
- * ErrorBoundary(html`<App />`, (err) => html`<div>Error: ${err.message}</div>`)
- */
-declare function ErrorBoundary(children: () => JSX.Element, fallback: ((err: any, reset: () => void) => JSX.Element)): JSX.Element;
-/**
- * Context provider component. Provides a context value to all children.
- * @example
- * Context(MyContext, value, () => html`<Child />`)
- */
-declare function Context<T>(context: Context$1<T>, value: T, children: () => JSX.Element): JSX.Element;
-//#endregion
 //#region src/h.d.ts
 declare function H(components?: Record<string, any>, rules?: AssignmentRule[]): {
   <T extends ValidComponent>(component: T, props: MaybeFunctionProps<ComponentProps<T>>, ...children: JSX.Element[]): JSX.Element;
@@ -96,7 +33,6 @@ declare function H(components?: Record<string, any>, rules?: AssignmentRule[]): 
   define(components: Record<string, ValidComponent>): void;
   rules: AssignmentRule[];
 };
-declare function createElement(tag: string): SVGElement | HTMLElement;
 declare const markedOnce: WeakSet<WeakKey>;
 /**
  * Marks a function so it is not wrapped as a getter by h().
@@ -111,7 +47,7 @@ declare function once<T extends (...args: any[]) => any>(fn: T): T;
 declare function wrapProps<TComponent extends ValidComponent, TProps extends MaybeFunctionProps<ComponentProps<TComponent>>>(props?: TProps): ComponentProps<TComponent>;
 //#endregion
 //#region src/html.d.ts
-declare function HTML(components?: ComponentRegistry, rules?: AssignmentRule[], clone?: boolean): {
+declare function HTML(components?: ComponentRegistry, rules?: AssignmentRule[]): {
   (strings: TemplateStringsArray, ...values: any[]): any;
   h: {
     <T extends solid_js0.ValidComponent>(component: T, props: MaybeFunctionProps<solid_js0.ComponentProps<T>>, ...children: solid_js0.JSX.Element[]): solid_js0.JSX.Element;
@@ -139,7 +75,6 @@ declare function spread(rules: AssignmentRule[], elem: Element, props: any, prev
 //#region src/defaults.d.ts
 declare const defaultRules: AssignmentRule[];
 declare const defaultComponents: ComponentRegistry;
-declare const xmlNamespaces: string[];
 declare const h: {
   <T extends solid_js0.ValidComponent>(component: T, props: MaybeFunctionProps<solid_js0.ComponentProps<T>>, ...children: solid_js0.JSX.Element[]): solid_js0.JSX.Element;
   components: {
@@ -160,5 +95,5 @@ declare const html: {
   };
 };
 //#endregion
-export { AssignmentFunction, AssignmentRule, ComponentRegistry, Context, ErrorBoundary, For, H, HTML, Index, Match, MatchKeyed, MaybeFunction, MaybeFunctionProps, RuleFilter, Show, ShowKeyed, Suspense, Switch, assign, assignAttribute, assignAttributeNS, assignBooleanAttribute, assignClass, assignDelegatedEvent, assignEvent, assignProperty, assignRef, assignStyle, createElement, defaultComponents, defaultRules, getValue, h, html, markedOnce, once, spread, wrapProps, xmlNamespaces };
+export { AssignmentFunction, AssignmentRule, ComponentRegistry, H, HTML, MaybeFunction, MaybeFunctionProps, RuleFilter, assign, assignAttribute, assignAttributeNS, assignBooleanAttribute, assignClass, assignDelegatedEvent, assignEvent, assignProperty, assignRef, assignStyle, defaultComponents, defaultRules, h, html, markedOnce, once, spread, wrapProps };
 //# sourceMappingURL=index.d.ts.map

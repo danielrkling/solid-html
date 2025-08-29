@@ -8,7 +8,7 @@ import {
 import { spread } from "./assign";
 import { defaultComponents, defaultRules } from "./defaults";
 
-import { doc, isFunction, isString } from "./util";
+import { createElement, doc, flat, isFunction, isString } from "./util";
 import { SVGElements } from "solid-js/web";
 import { AssignmentRule, MaybeFunctionProps } from "./types";
 
@@ -20,12 +20,9 @@ export function H(components: Record<string, any> = {}, rules: AssignmentRule[] 
     ...children: JSX.Element[]
   ): JSX.Element {
     //children in spread syntax override children in props
-    if (children.length === 1) {
+    if (children.length) {
       //@ts-expect-error
-      props.children = children[0];
-    } else if (children.length > 1) {
-      //@ts-expect-error
-      props.children = children;
+      props.children = flat(children)
     }
 
     if (isFunction(component)) {
@@ -37,18 +34,18 @@ export function H(components: Record<string, any> = {}, rules: AssignmentRule[] 
       if (componentFunction) {
         return createComponent(componentFunction, wrapProps(props));
       }
-      
-      if (/[A-Z]/.test(component)) {
+
+      if (/^[A-Z]/.test(component)) {
         console.warn(`Forgot to define ${componentFunction}`);
       }
 
       const elem = createElement(component)
       spread(h.rules, elem, props);
       return elem;
-    } 
+    }
   }
-  
-  h.components = {...defaultComponents, ...components};
+
+  h.components = { ...defaultComponents, ...components };
   h.define = (components: Record<string, ValidComponent>) => {
     Object.assign(h.components, components);
   };
@@ -59,12 +56,8 @@ export function H(components: Record<string, any> = {}, rules: AssignmentRule[] 
 
 }
 
-const elementCache = new Map<string,Element>()
-const CommentNode = Symbol("CommentNode")
 
-export function createElement(tag: string){
-  return SVGElements.has(tag) ? doc.createElementNS("http://www.w3.org/2000/svg", tag) : doc.createElement(tag)
-}
+
 
 export const markedOnce = new WeakSet();
 
@@ -86,10 +79,9 @@ export function wrapProps<
   TComponent extends ValidComponent,
   TProps extends MaybeFunctionProps<ComponentProps<TComponent>>
 >(props: TProps = {} as TProps): ComponentProps<TComponent> {
-  for (const [key, descriptor] of Object.entries(
+  for (const [key, { value }] of Object.entries(
     Object.getOwnPropertyDescriptors(props)
   )) {
-    const value = descriptor.value;
     if (isFunction(value) && value.length === 0 && !markedOnce.has(value)) {
       Object.defineProperty(props, key, {
         get() {

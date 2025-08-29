@@ -11,16 +11,6 @@ import {
   JSX,
   Accessor,
 } from "solid-js";
-import { MaybeFunction } from "./types";
-
-export function getValue<T>(value: MaybeFunction<T>): T {
-  if (typeof value === "function") {
-    //@ts-expect-error
-    return value();
-  }else{
-    return value;
-  }
-}
 
 /**
  * Solid-compatible Show component. Renders children if `when` is truthy, otherwise renders `fallback`.

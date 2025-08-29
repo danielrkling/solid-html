@@ -18,11 +18,11 @@ function ShowChildren(props) {
 }
 
 function App() {
-    return html`
-    <${ctx.Provider} value=${"Correct Context"}><${ReadContext} /></>
-    <${Show} when=${false} >${"B"}<//>
-    <${ShowChildren}>This Should be A: ${"A"}<//>
-    `
+    // return html`
+    // <${ctx.Provider} value=${"Correct Context"}><${ReadContext} /></>
+    // <${Show} when=${false} >${"B"}<//>
+    // <${ShowChildren}>This Should be A: ${"A"}<//>
+    // `
 
     return html`
     <Provider value=${"Correct Context"}><ReadContext /></Provider>

@@ -38,6 +38,10 @@
     ".": {
       "import": "./dist/index.mjs",
       "types": "./dist/index.d.ts"
+    },
+    "./components": {
+      "import": "./dist/components.mjs",
+      "types": "./dist/components.d.ts"
     }
   }
 }

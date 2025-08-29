@@ -1,9 +1,9 @@
 import { INode, IText, SyntaxKind, parse } from "html5parser";
 import { insert, setAttribute } from "solid-js/web";
 import { assign } from "./assign";
-import { H, createElement } from "./h";
+import { H } from "./h";
 import { AssignmentRule, ComponentRegistry } from "./types";
-import { doc, isFunction, isString, toArray } from "./util";
+import { createComment, doc, isFunction, isString, toArray, createElement, flat, getValue } from "./util";
 
 type TreeNode = TextNode | ComponentNode | ElementNode | InsertNode | CommentNode
 
@@ -53,7 +53,7 @@ type RootNode = {
 }
 
 //Should be unique character that would never be in the template literal
-const marker = 'MARKER';
+const marker = '⧙⧘';
 
 
 
@@ -69,7 +69,6 @@ function getCachedRoot(strings: TemplateStringsArray): RootNode {
   if (!root) {
     //join string with markers and index    
     const ast = parse(strings.slice(1).reduce((prev, current, index) => prev + marker + index + marker + current, strings[0]))
-    console.log(ast)
     const children = ast.flatMap(n => parseNode(n))
 
     const template = buildTemplate(children)
@@ -77,24 +76,15 @@ function getCachedRoot(strings: TemplateStringsArray): RootNode {
       children,
       template
     }
-    console.log(children,template) 
 
     cache.set(strings, root);
   }
   return root;
 }
 
-function flat(arr: any[]) {
-  return (arr.length === 1 ? arr[0] : arr);
-}
-
-function getValue(value: any) {
-  while (isFunction(value)) value = value();
-  return value;
-}
 
 
-export function HTML(components: ComponentRegistry = {}, rules: AssignmentRule[] = [], clone = true) {
+export function HTML(components: ComponentRegistry = {}, rules: AssignmentRule[] = []) {
   function html(strings: TemplateStringsArray, ...values: any[]) {
     const cached = getCachedRoot(strings);
 
@@ -104,10 +94,11 @@ export function HTML(components: ComponentRegistry = {}, rules: AssignmentRule[]
       walkNodes(componentNode.children)
 
       function walkNodes(nodes: TreeNode[]) {
-        nodes.forEach(node => {
+        for (const node of nodes) {
           const domNode = walker.nextNode()!;
           if (node.type === ELEMENT_NODE) {
             for (const [name, parts] of node.props) {
+              // If static props appplied template, they can be skipped here
               // if (parts.length===1 && isString(parts[0])) continue
               const value = substituteValues(parts, values);
               assign(html.h.rules, domNode as Element, name, value.length === 1 ? value[0] : () => value.map(getValue).join(""))
@@ -117,19 +108,21 @@ export function HTML(components: ComponentRegistry = {}, rules: AssignmentRule[]
             insert(domNode.parentNode!, renderNode(node), domNode)
             walker.currentNode = domNode
           }
-        })
+        }
       }
       return toArray(clone.childNodes)
     }
 
     function renderNode(node: TreeNode): any {
-      if (node.type === TEXT_NODE) {
-        return node.value
-      } else if (node.type === INSERT_NODE) {
-        return values[node.value]
-      } else if (node.type === COMMENT_NODE) {
-        return doc.createComment(node.value)
+      switch (node.type) {
+        case TEXT_NODE:
+          return node.value;
+        case INSERT_NODE:
+          return values[node.value];
+        case COMMENT_NODE:
+          return createComment(node.value);
       }
+      const template = node.type === COMPONENT_NODE && node.template
 
       // gather props
       const props = {} as Record<string, any>;
@@ -140,30 +133,13 @@ export function HTML(components: ComponentRegistry = {}, rules: AssignmentRule[]
 
       // children - childNodes overwrites any props.children
       if (node.children.length) {
-        if (node.type === COMPONENT_NODE && node.template && clone) {
-          props.children = () => renderTemplate(node.template!, node)
-        } else {
-          props.children = () => flat(node.children.map(renderNode));
-        }
-      }
-      if (!isString(node.name)){
-        return html.h(values[node.name], props);
+        props.children = template ? () => renderTemplate(template, node) : () => flat(node.children.map(renderNode))
       }
 
       return html.h(node.name, props);
     }
 
-    if (cached.template && clone) {
-      // const r = renderTemplate(cached.template, cached)
-      // performance.mark("render-template")
-      // return r
-      return renderTemplate(cached.template, cached)
-    }
-
-    // const r = flat(cached.children.map(renderNode));
-    // performance.mark("render-node")
-    // return r
-    return flat(cached.children.map(renderNode));
+    return cached.template ? renderTemplate(cached.template, cached) : flat(cached.children.map(renderNode));
   }
 
   html.h = H(components, rules);
@@ -209,12 +185,11 @@ function parseNode(node: INode): TreeNode | TreeNode[] {
 
   const props = node.attributes.map(v => [v.name.value, parseValue(v.value?.value)]) as Property[]
   const children = node.body?.flatMap((n) => parseNode(n)) ?? []
-  const name = parseValue(node.rawName)[0]
 
   if (/^[A-Z]/.test(node.rawName)) {
     return {
       type: COMPONENT_NODE,
-      name,
+      name: node.rawName,
       props,
       children,
       template: buildTemplate(children)
@@ -223,7 +198,7 @@ function parseNode(node: INode): TreeNode | TreeNode[] {
 
   return {
     type: ELEMENT_NODE,
-    name,
+    name: node.name,
     props,
     children,
   } as ElementNode
@@ -242,41 +217,26 @@ function buildTemplate(nodes: TreeNode[]): HTMLTemplateElement | undefined {
 
 
 function buildNodes(nodes: TreeNode[], parent: Node,) {
-  nodes.forEach((node, i) => {
-    if (node.type === TEXT_NODE) {
-      parent.appendChild(doc.createTextNode(node.value))
-    } else if (node.type === COMMENT_NODE) {
-      parent.appendChild(doc.createComment(node.value))
-    } else if (node.type === INSERT_NODE) {
-      parent.appendChild(doc.createComment("+"))
-    } else if (node.type === COMPONENT_NODE) {
-      parent.appendChild(doc.createComment(node.name))
-    } else if (node.type === ELEMENT_NODE) {
-      const elem = createElement(node.name)
-      parent.appendChild(elem)
-      // node.props.forEach((([name,value])=>{
-      //   if (value.length===1 &&  isString(value[0])){
-      //     setAttribute(elem,name,value[0])
-      //   }
-      // }))
-      buildNodes(node.children, elem)
+  for (const node of nodes) {
+    switch (node.type) {
+      case TEXT_NODE:
+        parent.appendChild(doc.createTextNode(node.value));
+        break;
+      case COMMENT_NODE:
+        parent.appendChild(createComment(node.value));
+        break;
+      case INSERT_NODE:
+        parent.appendChild(createComment('+'));
+        break;
+      case COMPONENT_NODE:
+        parent.appendChild(createComment(node.name));
+        break;
+      case ELEMENT_NODE:
+        const elem = createElement(node.name);
+        parent.appendChild(elem);
+        //Apply static properties here?
+        buildNodes(node.children, elem);
+        break;
     }
-  })
+  }
 }
-
-function writeNodes(nodes: TreeNode[]): string {
-  return nodes.map((node, i) => {
-    if (node.type === TEXT_NODE) {
-      return node.value
-    } else if (node.type === COMMENT_NODE) {
-      return `<!--${node.value}-->`
-    } else if (node.type ===INSERT_NODE) {
-      return `<!--${node.type}-->`
-    } else if (node.type === COMPONENT_NODE) {
-      return `<!--${node.name}-->`
-    } else if (node.type === ELEMENT_NODE) {
-      return `<${node.name}>${writeNodes(node.children)}</${node.name}>`
-    }
-  }).join("")
-}
-

@@ -56,8 +56,6 @@ export const defaultComponents: ComponentRegistry = {
   NoHydration,
 }
 
-export const xmlNamespaces = ["on", "prop", "bool", "attr", "ref", "style", "class", "xlink"]
-
 
 export const h = H();
 
