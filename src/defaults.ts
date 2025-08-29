@@ -22,9 +22,8 @@ import {
 } from "./assign";
 import { H } from "./h";
 import { HTML } from "./html";
-import { HTML_RESULT, MATHML_RESULT, SVG_RESULT } from "./lit-html";
 import { AssignmentRule, ComponentRegistry } from "./types";
-import { XML } from "./xml";
+
 
 
 export const defaultRules: AssignmentRule[] = [
@@ -62,12 +61,7 @@ export const xmlNamespaces = ["on", "prop", "bool", "attr", "ref", "style", "cla
 
 export const h = H();
 
-export const xml = XML()
+export const html = HTML()
 //link global xml with global h
-xml.h = h
+html.h = h
 
-export const html = HTML(HTML_RESULT);
-
-export const svg = HTML(SVG_RESULT);
-
-export const mathml = HTML(MATHML_RESULT);

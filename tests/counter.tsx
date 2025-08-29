@@ -1,84 +1,28 @@
-import { createEffect, createSignal } from "solid-js";
-import { h, H, html, xml } from "../src"
+import { template as _$template } from "solid-js/web";
+import { delegateEvents as _$delegateEvents } from "solid-js/web";
+import { createComponent as _$createComponent } from "solid-js/web";
+import { insert as _$insert } from "solid-js/web";
+var _tmpl$ = /*#__PURE__*/_$template(`<div class=counter-xml><section><header><h2>XML Counter</h2></header><main><article><p>You have clicked the button:</p><button><span>Click me</span><strong> → <!> times</strong></button></article></main><footer><small>Rendered using <code>xml</code> template`);
 import { render } from "solid-js/web";
-
-const [timer, setTimer] = createSignal(0)
-setInterval(() => setTimer(v => v + 1), 1000)
-
-
-function Counter_H_1() {
-    const [count, setCount] = createSignal(0);
-    return h("button", { onClick: () => setCount(v => v + 1), children: () => `Count: ${count()}` });
+import { createSignal } from "solid-js";
+export function CounterJSX() {
+  const [count, setCount] = createSignal(1);
+  const increment = () => setCount(count => count + 1);
+  return (() => {
+    var _el$ = _tmpl$(),
+      _el$2 = _el$.firstChild,
+      _el$3 = _el$2.firstChild,
+      _el$4 = _el$3.nextSibling,
+      _el$5 = _el$4.firstChild,
+      _el$6 = _el$5.firstChild,
+      _el$7 = _el$6.nextSibling,
+      _el$8 = _el$7.firstChild,
+      _el$9 = _el$8.nextSibling,
+      _el$0 = _el$9.firstChild,
+      _el$10 = _el$0.nextSibling,
+      _el$1 = _el$10.nextSibling;
+    _el$7.$$click = () => setCount(v => v + 1);
+    _$insert(_el$9, count, _el$10);
+    return _el$;
+  })();
 }
-
-function Counter_H_2() {
-    const [count, setCount] = createSignal(0);
-    return h("button", { "on:click": () => setCount(v => v + 1), "prop:innerText": () => `Count: ${count()}` });
-}
-
-function Counter_H_3() {
-    const [count, setCount] = createSignal(0);
-    return h("button", { "@click": () => setCount(v => v + 1), ".innerText": () => `Count: ${count()}` });
-}
-
-function Counter_HTML_1() {
-    const [count, setCount] = createSignal(0);
-    return html`<button onClick=${() => setCount(v => v + 1)}>Count: ${() => count()}</button>`;
-}
-
-function Counter_HTML_2() {
-    const [count, setCount] = createSignal(0);
-    return html`<button on:click=${() => setCount(v => v + 1)}>Count: ${() => count()}</button>`;
-}
-
-function Counter_HTML_3() {
-    const [count, setCount] = createSignal(0);
-    return html`<button @click=${() => setCount(v => v + 1)}>Count: ${() => count()}</button>`;
-}
-
-function Counter_XML_1() {
-    const [count, setCount] = createSignal(0);
-    return xml`<button onClick=${() => setCount(v => v + 1)}>Count: ${() => count()}</button>`;
-}
-
-function Counter_XML_2() {
-    const [count, setCount] = createSignal(0);
-    return xml`<button on:click=${() => setCount(v => v + 1)} prop:innerText=${() => `Count: ${count()}`} />`;
-}
-
-// function Counter_JSX_1() {
-//     const [count, setCount] = createSignal(0);
-//     return <button onClick={() => setCount(v => v + 1)}>Count: {() => count()}</button>;
-// }
-
-// function Counter_JSX_2() {
-//     const [count, setCount] = createSignal(0);
-//     return <button on:click={() => setCount(v => v + 1)}>Count: {() => count()}</button>;
-// }
-
-
-
-
-
-function App() {
-    return [
-        () => timer(),
-        h(Counter_H_1, {}),
-        h(Counter_H_2, {}),
-        h(Counter_H_2, {}),
-        h(Counter_H_3, {}),
-        h(Counter_HTML_1, {}),
-        h(Counter_HTML_2, {}),
-        h(Counter_HTML_2, {}),
-        h(Counter_HTML_3, {}),
-        h(Counter_XML_1, {}),
-        h(Counter_XML_2, {}),
-        h(Counter_XML_2, {}),
-        // h(Counter_JSX_1, {}),
-        // h(Counter_JSX_2, {}),
-    ]
-}
-
-
-
-render(App, document.getElementById("app")!)

@@ -42,12 +42,6 @@ export function H(components: Record<string, any> = {}, rules: AssignmentRule[] 
         console.warn(`Forgot to define ${componentFunction}`);
       }
 
-      if (component==="!" || component === "?"){
-        const comment = doc.createComment("")
-        spread(h.rules,comment,props)
-        return comment
-      }
-
       const elem = createElement(component)
       spread(h.rules, elem, props);
       return elem;
@@ -68,7 +62,7 @@ export function H(components: Record<string, any> = {}, rules: AssignmentRule[] 
 const elementCache = new Map<string,Element>()
 const CommentNode = Symbol("CommentNode")
 
-function createElement(tag: string){
+export function createElement(tag: string){
   return SVGElements.has(tag) ? doc.createElementNS("http://www.w3.org/2000/svg", tag) : doc.createElement(tag)
 }
 

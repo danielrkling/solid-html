@@ -1,7 +1,8 @@
 import { render } from "solid-js/web";
-import {  xml } from "../src";
+import {  html } from "../src";
 import { createSignal } from "solid-js";
-import {XML} from "../src/xml"
+import {HTML} from "../src/html"
+import { CounterJSX } from "./counter";
 // Number of components to render in batch
 const COUNT = 1000;
 
@@ -13,12 +14,12 @@ function benchmark(label, fn) {
   console.log(`${label}: ${(end - start).toFixed(2)}ms`);
 }
 
-const clone = XML({},[],true)
+const clone = HTML({},[],true)
 
 // Counter using `xml`
 function CounterXML() {
   const [count, setCount] = createSignal(0);
-  return xml`
+  return html`
     <div class="counter-xml">
       <section>
         <header>
@@ -41,44 +42,28 @@ function CounterXML() {
   `;
 }
 
-// Counter using `html`
-function CounterClone() {
-  const [count, setCount] = createSignal(0);
-  return clone`
-    <div class="counter-html">
-      <section>
-        <header>
-          <h2>HTML Counter</h2>
-        </header>
-        <main>
-          <article>
-            <p>You have clicked the button:</p>
-            <button onClick=${() => setCount(v => v + 1)}>
-              <span>Click me</span>
-              <strong> → ${() => count()} times</strong>
-            </button>
-          </article>
-        </main>
-        <footer>
-          <small>Rendered using <code>html</code> template</small>
-        </footer>
-      </section>
-    </div>
-  `;
-}
+
+
 
 
 // Create root containers
 const root1 = document.createElement("div");
 const root2 = document.createElement("div");
+const root3 = document.createElement("div");
 document.body.append(root1, root2);
 
-// Benchmark render performance
-benchmark("Render XML counters", () => {
-  render(() => Array.from({ length: COUNT }, () => CounterXML()), root1);
+benchmark("Render JSX", () => {
+  render(() => Array.from({ length: COUNT }, () => CounterJSX()), root1);
 });
 
-benchmark("Render cloned nodes", () => {
-  render(() => Array.from({ length: COUNT }, () => CounterClone()), root2);
+
+
+
+window.build = false
+
+// Benchmark render performance
+benchmark("Render HTML - build", () => {
+  render(() => Array.from({ length: COUNT }, () => CounterXML()), root3);
 });
+
 
