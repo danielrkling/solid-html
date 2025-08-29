@@ -28,7 +28,7 @@ function CounterHTM() {
         <main>
           <article>
             <p>You have clicked the button:</p>
-            <button onClick=${() => setCount(v => v + 1)}>
+            <button on:click=${() => setCount(v => v + 1)}>
               <span>Click me</span>
               <strong> → ${() => count()} times</strong>
             </button>
@@ -56,7 +56,7 @@ function CounterHTML() {
         <main>
           <article>
             <p>You have clicked the button:</p>
-            <button onClick=${() => setCount(v => v + 1)}>
+            <button @click=${() => setCount(v => v + 1)}>
               <span>Click me</span>
               <strong> → ${() => count()} times</strong>
             </button>
