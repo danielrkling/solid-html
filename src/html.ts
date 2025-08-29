@@ -11,44 +11,50 @@ type ValueParts = Array<string | number>
 
 type Property = [name: string, value: ValueParts]
 
+
+const TEXT_NODE = 1
 type TextNode = {
-  type: "text"
+  type: 1
   value: string
 }
 
+const COMMENT_NODE = 2
 type CommentNode = {
-  type: "comment"
+  type: 2
   value: string
 }
 
+const INSERT_NODE = 3
 type InsertNode = {
-  type: "insert"
+  type: 3
   value: number
 }
 
+const COMPONENT_NODE = 4
 type ComponentNode = {
-  type: "component"
+  type: 4
   name: string
   props: Property[]
   children: TreeNode[]
   template?: HTMLTemplateElement
 }
 
+const ELEMENT_NODE = 5
 type ElementNode = {
-  type: "element"
+  type: 5
   name: string
   props: Property[]
   children: TreeNode[],
 }
 
 type RootNode = {
-  type: "root"
   children: TreeNode[]
   template?: HTMLTemplateElement
 }
 
 //Should be unique character that would never be in the template literal
-const marker = '⧙⧘';
+const marker = 'MARKER';
+
 
 
 //Captures index of hole
@@ -63,14 +69,15 @@ function getCachedRoot(strings: TemplateStringsArray): RootNode {
   if (!root) {
     //join string with markers and index    
     const ast = parse(strings.slice(1).reduce((prev, current, index) => prev + marker + index + marker + current, strings[0]))
+    console.log(ast)
     const children = ast.flatMap(n => parseNode(n))
 
     const template = buildTemplate(children)
     root = {
-      type: "root",
       children,
       template
     }
+    console.log(children,template) 
 
     cache.set(strings, root);
   }
@@ -99,14 +106,14 @@ export function HTML(components: ComponentRegistry = {}, rules: AssignmentRule[]
       function walkNodes(nodes: TreeNode[]) {
         nodes.forEach(node => {
           const domNode = walker.nextNode()!;
-          if (node.type === "element") {
+          if (node.type === ELEMENT_NODE) {
             for (const [name, parts] of node.props) {
               // if (parts.length===1 && isString(parts[0])) continue
               const value = substituteValues(parts, values);
               assign(html.h.rules, domNode as Element, name, value.length === 1 ? value[0] : () => value.map(getValue).join(""))
             }
             walkNodes(node.children)
-          } else if (node.type === "insert" || node.type === "component") {
+          } else if (node.type === INSERT_NODE || node.type === COMPONENT_NODE) {
             insert(domNode.parentNode!, renderNode(node), domNode)
             walker.currentNode = domNode
           }
@@ -116,11 +123,11 @@ export function HTML(components: ComponentRegistry = {}, rules: AssignmentRule[]
     }
 
     function renderNode(node: TreeNode): any {
-      if (node.type === "text") {
+      if (node.type === TEXT_NODE) {
         return node.value
-      } else if (node.type === "insert") {
+      } else if (node.type === INSERT_NODE) {
         return values[node.value]
-      } else if (node.type === "comment") {
+      } else if (node.type === COMMENT_NODE) {
         return doc.createComment(node.value)
       }
 
@@ -133,11 +140,14 @@ export function HTML(components: ComponentRegistry = {}, rules: AssignmentRule[]
 
       // children - childNodes overwrites any props.children
       if (node.children.length) {
-        if (node.type === "component" && node.template && clone) {
+        if (node.type === COMPONENT_NODE && node.template && clone) {
           props.children = () => renderTemplate(node.template!, node)
         } else {
           props.children = () => flat(node.children.map(renderNode));
         }
+      }
+      if (!isString(node.name)){
+        return html.h(values[node.name], props);
       }
 
       return html.h(node.name, props);
@@ -181,7 +191,7 @@ function parseNode(node: INode): TreeNode | TreeNode[] {
   if (node.type === SyntaxKind.Text) {
     const parts = parseValue(node.value)
     return parts.map(value => {
-      const type = isString(value) ? "text" : "insert"
+      const type = isString(value) ? TEXT_NODE : INSERT_NODE
       return {
         type,
         value,
@@ -192,18 +202,19 @@ function parseNode(node: INode): TreeNode | TreeNode[] {
 
   if (node.name[0] === "!" || node.name === "") {
     return {
-      type: "comment",
+      type: COMMENT_NODE,
       value: (node.body as IText[])[0].value
     } as CommentNode
   }
 
   const props = node.attributes.map(v => [v.name.value, parseValue(v.value?.value)]) as Property[]
   const children = node.body?.flatMap((n) => parseNode(n)) ?? []
+  const name = parseValue(node.rawName)[0]
 
   if (/^[A-Z]/.test(node.rawName)) {
     return {
-      type: "component",
-      name: node.rawName,
+      type: COMPONENT_NODE,
+      name,
       props,
       children,
       template: buildTemplate(children)
@@ -211,8 +222,8 @@ function parseNode(node: INode): TreeNode | TreeNode[] {
   }
 
   return {
-    type: "element",
-    name: node.name,
+    type: ELEMENT_NODE,
+    name,
     props,
     children,
   } as ElementNode
@@ -222,7 +233,7 @@ function parseNode(node: INode): TreeNode | TreeNode[] {
 //build template element with same exact shape as tree so they can be walked through in sync
 function buildTemplate(nodes: TreeNode[]): HTMLTemplateElement | undefined {
   //Criteria for using template is component or root has at least 1 element. May be be a more optimal condition.
-  if (nodes.some((v) => v.type === "element")) {
+  if (nodes.some((v) => v.type === ELEMENT_NODE)) {
     const template = doc.createElement("template")
     buildNodes(nodes, template.content)
     return template
@@ -232,15 +243,15 @@ function buildTemplate(nodes: TreeNode[]): HTMLTemplateElement | undefined {
 
 function buildNodes(nodes: TreeNode[], parent: Node,) {
   nodes.forEach((node, i) => {
-    if (node.type === "text") {
+    if (node.type === TEXT_NODE) {
       parent.appendChild(doc.createTextNode(node.value))
-    } else if (node.type === "comment") {
+    } else if (node.type === COMMENT_NODE) {
       parent.appendChild(doc.createComment(node.value))
-    } else if (node.type === "insert") {
-      parent.appendChild(doc.createComment(node.type))
-    } else if (node.type === "component") {
+    } else if (node.type === INSERT_NODE) {
+      parent.appendChild(doc.createComment("+"))
+    } else if (node.type === COMPONENT_NODE) {
       parent.appendChild(doc.createComment(node.name))
-    } else if (node.type === "element") {
+    } else if (node.type === ELEMENT_NODE) {
       const elem = createElement(node.name)
       parent.appendChild(elem)
       // node.props.forEach((([name,value])=>{
@@ -255,15 +266,15 @@ function buildNodes(nodes: TreeNode[], parent: Node,) {
 
 function writeNodes(nodes: TreeNode[]): string {
   return nodes.map((node, i) => {
-    if (node.type === "text") {
+    if (node.type === TEXT_NODE) {
       return node.value
-    } else if (node.type === "comment") {
+    } else if (node.type === COMMENT_NODE) {
       return `<!--${node.value}-->`
-    } else if (node.type === "insert") {
+    } else if (node.type ===INSERT_NODE) {
       return `<!--${node.type}-->`
-    } else if (node.type === "component") {
+    } else if (node.type === COMPONENT_NODE) {
       return `<!--${node.name}-->`
-    } else if (node.type === "element") {
+    } else if (node.type === ELEMENT_NODE) {
       return `<${node.name}>${writeNodes(node.children)}</${node.name}>`
     }
   }).join("")

@@ -96,6 +96,7 @@ declare function H(components?: Record<string, any>, rules?: AssignmentRule[]): 
   define(components: Record<string, ValidComponent>): void;
   rules: AssignmentRule[];
 };
+declare function createElement(tag: string): SVGElement | HTMLElement;
 declare const markedOnce: WeakSet<WeakKey>;
 /**
  * Marks a function so it is not wrapped as a getter by h().
@@ -109,39 +110,9 @@ declare function once<T extends (...args: any[]) => any>(fn: T): T;
  */
 declare function wrapProps<TComponent extends ValidComponent, TProps extends MaybeFunctionProps<ComponentProps<TComponent>>>(props?: TProps): ComponentProps<TComponent>;
 //#endregion
-//#region src/lit-html.d.ts
-/** TemplateResult types */
-declare const HTML_RESULT = 1;
-declare const SVG_RESULT = 2;
-declare const MATHML_RESULT = 3;
-type ResultType = typeof HTML_RESULT | typeof SVG_RESULT | typeof MATHML_RESULT;
-/**
- * Returns an HTML string for the given TemplateStringsArray and result type
- * (HTML or SVG), along with the case-sensitive bound attribute names in
- * template order. The HTML contains comment markers denoting the `ChildPart`s
- * and suffixes on bound attributes denoting the `AttributeParts`.
- *
- * @param strings template strings array
- * @param type HTML or SVG
- * @return Array containing `[html, attrNames]` (array returned for terseness,
- *     to avoid object fields since this code is shared with non-minified SSR
- *     code)
- */
-//#endregion
 //#region src/html.d.ts
-/**
- * Creates a tagged template function for html/svg/mathml templates with Solid reactivity.
- * @internal
- */
-declare function HTML(type?: ResultType, rules?: AssignmentRule[]): {
-  (strings: TemplateStringsArray, ...values: any[]): JSX.Element;
-  rules: AssignmentRule[];
-};
-//#endregion
-//#region src/xml.d.ts
-declare function XML(components?: ComponentRegistry, rules?: AssignmentRule[], xmlns?: string[]): {
-  (template: TemplateStringsArray, ...values: any[]): any;
-  xlmns: string[];
+declare function HTML(components?: ComponentRegistry, rules?: AssignmentRule[], clone?: boolean): {
+  (strings: TemplateStringsArray, ...values: any[]): any;
   h: {
     <T extends solid_js0.ValidComponent>(component: T, props: MaybeFunctionProps<solid_js0.ComponentProps<T>>, ...children: solid_js0.JSX.Element[]): solid_js0.JSX.Element;
     components: {
@@ -177,9 +148,8 @@ declare const h: {
   define(components: Record<string, solid_js0.ValidComponent>): void;
   rules: AssignmentRule[];
 };
-declare const xml: {
-  (template: TemplateStringsArray, ...values: any[]): any;
-  xlmns: string[];
+declare const html: {
+  (strings: TemplateStringsArray, ...values: any[]): any;
   h: {
     <T extends solid_js0.ValidComponent>(component: T, props: MaybeFunctionProps<solid_js0.ComponentProps<T>>, ...children: solid_js0.JSX.Element[]): solid_js0.JSX.Element;
     components: {
@@ -189,18 +159,6 @@ declare const xml: {
     rules: AssignmentRule[];
   };
 };
-declare const html: {
-  (strings: TemplateStringsArray, ...values: any[]): solid_js0.JSX.Element;
-  rules: AssignmentRule[];
-};
-declare const svg: {
-  (strings: TemplateStringsArray, ...values: any[]): solid_js0.JSX.Element;
-  rules: AssignmentRule[];
-};
-declare const mathml: {
-  (strings: TemplateStringsArray, ...values: any[]): solid_js0.JSX.Element;
-  rules: AssignmentRule[];
-};
 //#endregion
-export { AssignmentFunction, AssignmentRule, ComponentRegistry, Context, ErrorBoundary, For, H, HTML, Index, Match, MatchKeyed, MaybeFunction, MaybeFunctionProps, RuleFilter, Show, ShowKeyed, Suspense, Switch, XML, assign, assignAttribute, assignAttributeNS, assignBooleanAttribute, assignClass, assignDelegatedEvent, assignEvent, assignProperty, assignRef, assignStyle, defaultComponents, defaultRules, getValue, h, html, markedOnce, mathml, once, spread, svg, wrapProps, xml, xmlNamespaces };
+export { AssignmentFunction, AssignmentRule, ComponentRegistry, Context, ErrorBoundary, For, H, HTML, Index, Match, MatchKeyed, MaybeFunction, MaybeFunctionProps, RuleFilter, Show, ShowKeyed, Suspense, Switch, assign, assignAttribute, assignAttributeNS, assignBooleanAttribute, assignClass, assignDelegatedEvent, assignEvent, assignProperty, assignRef, assignStyle, createElement, defaultComponents, defaultRules, getValue, h, html, markedOnce, once, spread, wrapProps, xmlNamespaces };
 //# sourceMappingURL=index.d.ts.map

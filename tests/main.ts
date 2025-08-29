@@ -9,6 +9,7 @@ function Counter() {
       <section>
         <header>
           <h2>XML Counter</h2>
+          
           <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
           ${Circle}
           <text x="50" y="55" font-size="12" text-anchor="middle" fill="white">

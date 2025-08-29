@@ -1,16 +1,16 @@
-import { createContext, useContext } from "solid-js";
+import { Show, createContext, useContext } from "solid-js";
 import { render } from "solid-js/web";
-import { XML } from "../src";
-
+import { html } from "../src";
+import htm from "solid-js/html"
 
 const ctx = createContext("Wrong Context")
 
-const xml = XML({ Provider: ctx.Provider, ReadContext, ShowChildren })
+html.h.define({ Provider: ctx.Provider, ReadContext, ShowChildren })
 
 function ReadContext() {
     const context = (useContext(ctx))
 
-    return xml`<div>${context}</div>`
+    return html`<div>${context}</div>`
 }
 
 function ShowChildren(props) {
@@ -18,7 +18,13 @@ function ShowChildren(props) {
 }
 
 function App() {
-    return xml`
+    return html`
+    <${ctx.Provider} value=${"Correct Context"}><${ReadContext} /></>
+    <${Show} when=${false} >${"B"}<//>
+    <${ShowChildren}>This Should be A: ${"A"}<//>
+    `
+
+    return html`
     <Provider value=${"Correct Context"}><ReadContext /></Provider>
     <Show when=${false} >${"B"}</Show>
     <ShowChildren>This Should be A: ${"A"}</ShowChildren>

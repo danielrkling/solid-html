@@ -6,7 +6,7 @@ var _tmpl$ = /*#__PURE__*/_$template(`<div class=counter-xml><section><header><h
 import { render } from "solid-js/web";
 import { createSignal } from "solid-js";
 export function CounterJSX() {
-  const [count, setCount] = createSignal(1);
+  const [count, setCount] = createSignal(0);
   const increment = () => setCount(count => count + 1);
   return (() => {
     var _el$ = _tmpl$(),

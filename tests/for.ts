@@ -1,7 +1,7 @@
 import { createContext, useContext, createSignal, For } from "solid-js";
 import { render } from "solid-js/web";
-import { XML, h, xml, For as ForWrapper, html } from "../src";
-
+import {  h, For as ForWrapper, html } from "../src";
+import htm from "solid-js/html"
 
 
 function CounterA() {
@@ -29,8 +29,8 @@ function CounterA() {
     const [demo, setDemo] = createSignal(1);
     const [list, setList] = createSignal([0, 1, 2]);
   
-    return xml`<div>
-    <For each=${list}>${()=>xml`<div>${"A"}-${demo}</div>`}</For>
+    return html`<div>
+    <For each=${list}>${()=>html`<div>${"A"}-${demo}</div>`}</For>
     <button on:click=${() => setList([...list(), Math.random()])}>add</button>
     <button on:click=${() => setDemo(demo() + 1)}>add</button>
     </div>
@@ -41,8 +41,8 @@ function CounterA() {
     const [demo, setDemo] = createSignal(1);
     const [list, setList] = createSignal([0, 1, 2]);
   
-    return html`<div>
-    ${ForWrapper(list,(i)=>html`<div>${i}-${demo}</div>`)}
+    return htm`<div>
+    <${For} each=${list}>${()=>html`<div>${"A"}-${demo}</div>`}<//>
     <button on:click=${() => setList([...list(), Math.random()])}>add</button>
     <button on:click=${() => setDemo(demo() + 1)}>add</button>
     </div>
