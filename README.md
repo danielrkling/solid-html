@@ -3,7 +3,7 @@
 This library is an alternative to h and html provided by solid-js for no-build or no-jsx projects. The main difference is it allows custom syntax rules for applying properties/attributes. It's performance is a little slower but comparable to solid-js/html.
 
 It provides 2 functions for templating. 
-- `h` - Use for minimally nested components and elements when type checking is desired
+- `h` - Use when type checking is desired
 - `html` - Use most of the time
 
 ## `h` and `H` function
@@ -178,7 +178,7 @@ export type RuleFilter = (
 export type AssignmentRule = {
   filter: string | RuleFilter;
   assign: AssignmentFunction;
-  isReactive?: boolean; //defaults true
+  isReactive?: boolean; //default = true
 };
 
 export const defaultRules: AssignmentRules = [
