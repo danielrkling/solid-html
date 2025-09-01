@@ -96,7 +96,6 @@ function getCachedRoot(strings: TemplateStringsArray): RootNode {
       children,
       template,
     };
-    console.log(children, template);
 
     cache.set(strings, root);
   }
