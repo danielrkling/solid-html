@@ -109,6 +109,8 @@ function App(){
 - Elements and Components must be closed with matching tag or be self closing.
 - Tag names and attributes are case sensitive
 - Tag names and attribute names cannot be dynamic
+- `<div ${(e)=>console.log(e)} />` Holes in element apply ref
+- `<div ...${{class:"red"}} />` or `<div ...${{class:"red"}} />` Spread can be applied to elements and components. Components spread cannot be dynamic though.
 
 ```ts
 function Counter(){

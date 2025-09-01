@@ -123,8 +123,13 @@ export function assign(
   prev?: any
 ) {
   if (value === prev) return value;
+  //special cases
   if (name === "children") {
     return insert(elem, value);
+  } else   if (name === "ref"){
+    return assignRef(elem, name, value, prev);
+  } else if (name === "..."){
+    return spread(rules, elem, value, prev);
   }
 
   for (const rule of rules) {

@@ -1,6 +1,6 @@
 {
   "name": "solid-html",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "A package for using SolidJS with tagged template literals.",
   "main": "dist/index.mjs",
   "module": "dist/index.mjs",
