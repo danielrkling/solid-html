@@ -5,7 +5,7 @@ import { createSignal } from "solid-js";
 function Counter(props) {
   const [count, setCount] = createSignal(0);
   return html`
-    <button ...${{class:count}} ...${{style:"color:red;"}} on:click=${() => setCount(count() + 1)}>
+    <button ...${{class:count}} ...${{style:"color:red;"}} disabled on:click=${() => setCount(count() + 1)}>
       ${props.boolean}${count}
     </button>
   `;

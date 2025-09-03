@@ -310,6 +310,8 @@ function buildNodes(nodes: TreeNode[], parent: Node) {
         node.props.forEach(([name, value]) => {
           if (isString(value)) {
             elem.setAttribute(name, value);
+          }else if(value === true){
+            elem.setAttribute(name, ""); //boolean attribute
           }
         });
         buildNodes(node.children, elem);
