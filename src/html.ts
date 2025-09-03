@@ -14,6 +14,7 @@ import {
   getValue,
   isNumber,
   isArray,
+  isBoolean,
 } from "./util";
 
 type TreeNode =
@@ -23,7 +24,7 @@ type TreeNode =
   | InsertNode
   | CommentNode;
 
-type ValueParts = string | number | Array<string | number>;
+type ValueParts = string | number | boolean | Array<string | number>;
 
 type Property = [name: string, value: ValueParts];
 
@@ -123,7 +124,7 @@ export function HTML(
           if (node.type === ELEMENT_NODE) {
             for (const [name, parts] of node.props) {
               // If static props were appplied to template, they can be skipped here
-              if (isString(parts)) continue;
+              if (isString(parts) || isBoolean(parts)) continue;
               assign(
                 html.h.rules,
                 domNode as Element,
@@ -167,7 +168,7 @@ export function HTML(
           //only static spread supported on components
           Object.assign(props, values[parts as number]);
         } else {
-          props[name] = isString(parts)
+          props[name] = isString(parts) || isBoolean(parts)
             ? parts
             : isNumber(parts)
             ? values[parts]
@@ -198,29 +199,19 @@ export function HTML(
   return html;
 }
 
-function getValueParts(value: string = ""): Array<string | number> {
+function getParts(value: string = ""): Array<string | number> {
   return value
     .split(match)
     .map((v, i) => (i % 2 === 1 ? Number(v) : v))
-    .filter((v) => !isString(v) || v.trim());
+    .filter((v) => isNumber(v) || v.trim());
 }
 
-// Split by marker and extract index of hole. Remove empty strings and flatten
-// static: "static text" => "static text"
-// dynamic: "${1}" => 1
-// mixed: "static ${0} text ${1}px" => ["static ",0," text ",1,"px"]
-function parseValue(value: string = ""): ValueParts {
-  const parts = getValueParts(value);
-  if (parts.length === 0) return "";
-  if (parts.length === 1) return parts[0];
-  return parts;
-}
 
 //Parse html5parser result for what we care about
 function parseNode(node: INode): TreeNode | TreeNode[] {
   //Text nodes are either static text or holes to insert in
   if (node.type === SyntaxKind.Text) {
-    const parts = getValueParts(node.value);
+    const parts = getParts(node.value);
     return parts.map((value) => {
       const type = isString(value) ? TEXT_NODE : INSERT_NODE;
       return {
@@ -239,15 +230,31 @@ function parseNode(node: INode): TreeNode | TreeNode[] {
   }
 
   const props = node.attributes.map((v) => {
-    const name = parseValue(v.name.value);
-    if (isString(name)) {
-      return [name, parseValue(v.value?.value)] as Property;
-    } else if (isNumber(name)) {
-      //name is hole.
-      return ["ref", name] as Property;
-    }
-    //name is mixed static and dynamic. We assume something like ...${} but could also be class${} or style${}. Value gets ignored in this case.
-    return [name[0], name[1]];
+    const nameParts = getParts(v.name.value);
+    
+    if (nameParts.length === 1) {
+      const part = nameParts[0];
+      if (isString(part)) {
+        const valueParts = getParts(v.value?.value);
+        if (valueParts.length === 0) {
+          //boolean attribute <input disabled>
+          return [part, true] as Property;
+        } else if (valueParts.length === 1) {
+          //static or dynamic attribute <input value="text"> or <input value=${}>
+          return [part, valueParts[0]] as Property;
+        } else {
+          //mixed static and dynamic attribute <input value="text ${} text ${} px">
+          return [part, valueParts] as Property;
+        }
+      } else {
+        //name is hole <input ${}> or <input ${}="anything">. No dynamic names, treat as ref
+        return ["ref", part] as Property;
+      }
+    } else {
+      //name is mixed static and dynamic. We assume something like ...${} but could also be class${} or style${}. Value gets ignored in this case.
+      return [nameParts[0], nameParts[1]];
+    }   
+    
   }) as Property[];
 
   const children = node.body?.flatMap((n) => parseNode(n)) ?? [];
