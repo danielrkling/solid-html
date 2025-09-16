@@ -1,16 +1,16 @@
 import { Show, createContext, useContext } from "solid-js";
 import { render } from "solid-js/web";
-import { html } from "../src";
+import { sld } from "../src";
 import htm from "solid-js/html"
 
 const ctx = createContext("Wrong Context")
 
-html.h.define({ Provider: ctx.Provider, ReadContext, ShowChildren })
+const mySld = sld.define({ Provider: ctx.Provider, ReadContext, ShowChildren })
 
 function ReadContext() {
     const context = (useContext(ctx))
 
-    return html`<div>${context}</div>`
+    return mySld`<div>${context}</div>`
 }
 
 function ShowChildren(props) {
@@ -24,7 +24,7 @@ function App() {
     // <${ShowChildren}>This Should be A: ${"A"}<//>
     // `
 
-    return html`
+    return mySld`
     <Provider value=${"Correct Context"}><ReadContext /></Provider>
     <Show when=${false} >${"B"}</Show>
     <ShowChildren>This Should be A: ${"A"}</ShowChildren>

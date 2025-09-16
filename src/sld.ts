@@ -4,6 +4,7 @@ import { ComponentRegistry } from "./types";
 import { createComment, createElement, flat, toArray, isNumber, isString, isBoolean, getValue, isFunction, isObject } from "./util";
 import { SVGElements, insert, spread } from "solid-js/web";
 import { buildTemplate } from "./template";
+import { assignElementProperty } from "./assign";
 
 const cache = new WeakMap<TemplateStringsArray, RootNode>();
 
@@ -23,7 +24,7 @@ export function SLD<T extends ComponentRegistry>(
 ): SLD<T> {
     function sld(strings: TemplateStringsArray, ...values: any[]) {
         const root = getCachedRoot(strings);
-        
+
 
         return renderChildren(root, values, components);
     }
@@ -54,6 +55,7 @@ function getCachedRoot(
         root = parse(strings)
         buildTemplate(root)
         cache.set(strings, root);
+        // console.log(root)
     }
     return root;
 }
@@ -101,8 +103,25 @@ function renderChildren(
         for (const node of nodes) {
             const domNode = walker.nextNode()!;
             if (node.type === ELEMENT_NODE) {
-                const props = gatherProps(node, values, components);
-                spread(domNode as Element, props, SVGElements.has(node.name), true);
+
+                if (node.props.length) {
+                    // for (const [name, parts] of node.props) {
+                    //     const value =
+                    //         isString(parts) || isBoolean(parts)
+                    //             ? parts
+                    //             : isNumber(parts)
+                    //                 ? values[parts]
+                    //                 : () =>
+                    //                     parts
+                    //                         .map((v) => (isNumber(v) ? getValue(values[v]) : v))
+                    //                         .join("");
+                    //     assignElementProperty(domNode as Element, name, value, SVGElements.has(node.name))
+                    // }
+                    //Assigning props to element via assign prop w/effect may be better for performance.
+                    const props = gatherProps(node, values, components);
+                    spread(domNode as Element, props, SVGElements.has(node.name), true);
+                }
+
                 walkNodes(node.children);
             } else if (node.type === INSERT_NODE || node.type === COMPONENT_NODE) {
                 insert(domNode.parentNode!, renderNode(node, values, components), domNode);
@@ -113,7 +132,7 @@ function renderChildren(
     return toArray(clone.childNodes);
 }
 
-function gatherProps(node: ElementNode | ComponentNode, values: any[], components: ComponentRegistry, props: Record<string,any> = {} ) {
+function gatherProps(node: ElementNode | ComponentNode, values: any[], components: ComponentRegistry, props: Record<string, any> = {}) {
     for (let [name, parts] of node.props) {
         if (name === "...") {
             if (isNumber(parts)) {
@@ -128,7 +147,7 @@ function gatherProps(node: ElementNode | ComponentNode, values: any[], component
                 //     });
                 // }
                 //Or
-                props = mergeProps(props,spread)
+                props = mergeProps(props, spread)
             }
         } else {
             const value =

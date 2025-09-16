@@ -32,7 +32,7 @@ render(
       },
       children: (num) => num.toString(),
     }),
-    createComponent(For, {
+    sld.For( {
       get each() {
         return [1, 2, 3]; //reactive props need to be manually wrapped
       },

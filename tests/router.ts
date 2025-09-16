@@ -1,13 +1,13 @@
 import { A, HashRouter, Route, createAsync, type RouteSectionProps } from "@solidjs/router";
 import { render, Suspense } from "solid-js/web";
-import { h, html, XML, once } from "../src";
+import _sld from "../src";
 import { createSignal } from "solid-js";
 
 const [time, setTime] = createSignal(0)
 
 setInterval(() => setTime(s => s + 1), 1000)
 
-const xml = XML({
+const sld = _sld.define({
   A,
   HashRouter,
   Route,
@@ -16,7 +16,7 @@ const xml = XML({
 });
 
 function Routes() {
-  return xml`<A href="home">Home</A>
+  return sld`<A href="home">Home</A>
   <A href="about">About Us</A>
 `
 }
@@ -30,7 +30,7 @@ function Layout(props: RouteSectionProps) {
   // const user = createAsync(()=>currentUser())
   // const role = createAsync(()=>currentRole())
   // const [pending,start] = useTransition()
-  return xml`
+  return sld`
     <div>
       <nav>
         <time title=${() => time()} class="mx-2 flex-1 px-2">SPAN </time>
@@ -49,7 +49,7 @@ function Layout(props: RouteSectionProps) {
 
 function App() {
 
-  return xml`<HashRouter root=${() => (Layout)}>
+  return sld`<HashRouter root=${() => (Layout)}>
     <Route path="/" component=${() => (Home)} />
     <Route path="/home" component=${() => (Home)} />
     <Route path="/about" component=${() => About} />
@@ -57,11 +57,11 @@ function App() {
 }
 
 function Home() {
-  return xml`<div   class:even=${() => time() % 2} class="base-class" style:width=${() => `${time() * 4}px`} >Home</div>`
+  return sld`<div   class:even=${() => time() % 2} class="base-class" style:width=${() => `${time() * 4}px`} >Home</div>`
 }
 
 function About() {
-  return html`
+  return sld`
 <svg version="1.1"
      baseProfile="full"
      width="20" height="600"

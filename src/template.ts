@@ -10,7 +10,7 @@ export function buildTemplate(node: RootNode | ChildNode): void {
         //Criteria for using template is component or root has at least 1 element. May be be a more optimal condition.
         if (node.children.some((v) => v.type === ELEMENT_NODE)) {
             const template = document.createElement("template");
-            // buildNodes(nodes, template.content);
+            // buildNodes(node.children, template.content);
             template.innerHTML = node.children.map(buildHTML).join("");
             node.template = template
         }
@@ -34,14 +34,20 @@ function buildHTML(node: ChildNode): string {
         case COMPONENT_NODE:
             return `<!--${node.name}-->`;
         case ELEMENT_NODE:
-            const staticAttributes = node.props.filter(
-                ([name, value]) => isString(value) || value === true,
-            );
-            const attributeHTML = staticAttributes
-                .map(([p, v]) => `${p}="${v}"`)
-                .join(" ");
+            let attributeHTML=""
+            node.props = node.props.filter(([name, value]) => {
+                if (isString(value)) {
+                    attributeHTML+=` ${name}="${value}"`
+                    return;
+                } else if (value === true) {
+                    attributeHTML+=` ${name}`
+                    return;
+                }
+                return true;
+            });
 
-            return `<${node.name} ${attributeHTML}>${node.children.map(buildHTML).join("")}</${node.name}>`;
+
+            return `<${node.name}${attributeHTML}>${node.children.map(buildHTML).join("")}</${node.name}>`;
     }
 }
 

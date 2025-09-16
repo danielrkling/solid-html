@@ -3,7 +3,7 @@ import {  sld } from "../src";
 import { createSignal } from "solid-js";
 import html from "solid-js/html"
 // Number of components to render in batch
-const COUNT = 100;
+const COUNT = 1000;
 
 // Benchmark helper
 function benchmark(label, fn) {
@@ -34,7 +34,7 @@ function CounterJSX() {
           </article>
         </main>
         <footer>
-          <small>Rendered using <code><${CounterJSX} //></code> template</small>
+          <small>Rendered using <code></code> template</small>
         </footer>
       </section>
     </div>
@@ -60,7 +60,7 @@ function CounterHTML() {
           </article>
         </main>
         <footer>
-          <small>Rendered using <code><${CounterJSX} //></code> template</small>
+          <small>Rendered using <code></code> template</small>
         </footer>
       </section>
     </div>
@@ -80,14 +80,14 @@ function CounterSLD() {
         <main>
           <article>
             <p>You have clicked the button:</p>
-            <button @click=${() => setCount(v => v + 1)}>
+            <button onClick=${() => setCount(v => v + 1)}>
               <span>Click me</span>
               <strong> → ${() => count()} times</strong>
             </button>
           </article>
         </main>
         <footer>
-          <small>Rendered using <code><CounterJSX/></code> template</small>
+          <small>Rendered using <code></code> template</small>
         </footer>
       </section>
     </div>
@@ -105,6 +105,19 @@ const root3 = document.createElement("div");
 document.body.append(root1, root2, root3);
 
 benchmark("Render JSX", () => {
+  render(() => Array.from({ length: 1 }, () => CounterJSX()), root1);
+});
+
+benchmark("Render SLD", () => {
+  render(() => Array.from({ length: 1 }, () => CounterSLD()), root2);
+});
+
+// Benchmark render performance
+benchmark("Render HTML", () => {
+  render(() => Array.from({ length: 1 }, () => CounterHTML()), root3);
+});
+
+benchmark("Render JSX", () => {
   render(() => Array.from({ length: COUNT }, () => CounterJSX()), root1);
 });
 
@@ -116,5 +129,4 @@ benchmark("Render SLD", () => {
 benchmark("Render HTML", () => {
   render(() => Array.from({ length: COUNT }, () => CounterHTML()), root3);
 });
-
 

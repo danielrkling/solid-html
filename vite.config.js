@@ -9,13 +9,9 @@ export default defineConfig({
     ],
     build: {
         lib: {
-            entry: resolve(__dirname, 'src/index.ts'), 
-            fileName: "index",
+            entry: resolve(__dirname, 'tests/benchmark.tsx'), 
+            fileName: "test",
             formats: ['esm'],
-        },
-        minify: true,
-        rollupOptions: {
-            external: ['solid-js', 'solid-js/web'],
         },
     },
 });

@@ -12,8 +12,8 @@
         "lib": ["dom", "dom.iterable", "esnext"],
         "baseUrl": ".",
         "jsx": "preserve",
-        "jsxImportSource": "solid-js/jsx",
+        "jsxImportSource": "solid-js",
     },
-    "include": ["src"],
-    "exclude": ["node_modules", "dist", "test"]
+    "include": ["src","test"],
+    "exclude": ["node_modules", "dist"]
 }
