@@ -11,9 +11,8 @@
         "forceConsistentCasingInFileNames": true,
         "lib": ["dom", "dom.iterable", "esnext"],
         "baseUrl": ".",
-
-        "jsxFactory": "h",
-        "jsxImportSource": "./src/h.ts",
+        "jsx": "preserve",
+        "jsxImportSource": "solid-js/jsx",
     },
     "include": ["src"],
     "exclude": ["node_modules", "dist", "test"]

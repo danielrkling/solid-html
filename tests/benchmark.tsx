@@ -1,11 +1,9 @@
 import { render } from "solid-js/web";
-import {  html } from "../src";
+import {  sld } from "../src";
 import { createSignal } from "solid-js";
-import {HTML} from "../src/html"
-import { CounterJSX } from "./counter";
-import htm from "solid-js/html"
+import html from "solid-js/html"
 // Number of components to render in batch
-const COUNT = 10;
+const COUNT = 100;
 
 // Benchmark helper
 function benchmark(label, fn) {
@@ -16,10 +14,37 @@ function benchmark(label, fn) {
 }
 
 
+function CounterJSX() {
+  const [count, setCount] = createSignal(1);
+  const increment = () => setCount(count => count + 1);
+
+  return (
+    <div class="counter-xml">
+      <section>
+        <header>
+          <h2>XML Counter</h2>
+        </header>
+        <main>
+          <article>
+            <p>You have clicked the button:</p>
+            <button on:click={() => setCount(v => v + 1)}>
+              <span>Click me</span>
+              <strong> → {count()} times</strong>
+            </button>
+          </article>
+        </main>
+        <footer>
+          <small>Rendered using <code><${CounterJSX} //></code> template</small>
+        </footer>
+      </section>
+    </div>
+  )
+}
+
 // Counter using `xml`
-function CounterHTM() {
+function CounterHTML() {
   const [count, setCount] = createSignal(0);
-  return htm`
+  return html`
     <div class="counter-xml">
       <section>
         <header>
@@ -42,12 +67,11 @@ function CounterHTM() {
   `;
 }
 
-html.h.define({CounterJSX})
 
-// Counter using `xml`
-function CounterHTML() {
+// Counter using `sld`
+function CounterSLD() {
   const [count, setCount] = createSignal(0);
-  return html`
+  return sld`
     <div class="counter-xml">
       <section>
         <header>
@@ -84,13 +108,13 @@ benchmark("Render JSX", () => {
   render(() => Array.from({ length: COUNT }, () => CounterJSX()), root1);
 });
 
-benchmark("Render HTML", () => {
-  render(() => Array.from({ length: COUNT }, () => CounterHTML()), root2);
+benchmark("Render SLD", () => {
+  render(() => Array.from({ length: COUNT }, () => CounterSLD()), root2);
 });
 
 // Benchmark render performance
-benchmark("Render HTM", () => {
-  render(() => Array.from({ length: COUNT }, () => CounterHTM()), root3);
+benchmark("Render HTML", () => {
+  render(() => Array.from({ length: COUNT }, () => CounterHTML()), root3);
 });
 
 

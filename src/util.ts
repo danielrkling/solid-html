@@ -1,5 +1,5 @@
 import { SVGElements } from "solid-js/web";
-import { MaybeFunction } from "./types";
+
 
 export function isString(value: any): value is string {
   return typeof value === "string";
@@ -15,6 +15,10 @@ export function isFunction(value: any): value is Function {
 
 export function isBoolean(value: any): value is boolean {
   return typeof value === "boolean";
+}
+
+export function isObject(value: any): value is object {
+  return typeof value === "object";
 }
 
 export function isArray(value: any): value is any[] {

@@ -1,14 +1,13 @@
 import {
     SyntaxKind,
+    parse as html5parse,
     type INode,
     type IText
 } from "html5parser";
 
-import {
-    type Component
-} from "solid-js";
-import { ComponentRegistry } from "./types";
-import { isString } from "./util";
+import { isNumber, isString } from "./util";
+
+
 //AST Node types
 
 //Non reactive text
@@ -44,17 +43,16 @@ export const COMPONENT_NODE = 5;
 export type ComponentNode = {
     type: typeof COMPONENT_NODE;
     name: string;
-    component: Component;
     props: Property[];
     children: ChildNode[];
-    template?: HTMLTemplateElement; //will have template if any of children are elements
+    template?: HTMLTemplateElement
 };
 
 export const ROOT_NODE = 6;
 export type RootNode = {
     type: typeof ROOT_NODE;
     children: ChildNode[];
-    template?: HTMLTemplateElement; //will have template if any of children are elements
+    template?: HTMLTemplateElement
 };
 
 export type ChildNode =
@@ -69,10 +67,38 @@ export type Property = [name: string, value: ValueParts];
 //string or boolean means static, number means hole and is index, array means mix of string and holes
 export type ValueParts = string | boolean | number | Array<string | number>;
 
+//Needs to be unique character that would never be in the template literal
+const marker = "⧙⧘";
+
+//Captures index of hole
+const match = new RegExp(`${marker}(\\d+)${marker}`, "g");
+
+/**
+ * 
+ * @param input jsx like string to parse
+ * @returns RootNode of an AST
+ */
+export function parse(input: TemplateStringsArray): RootNode {
+    const ast = html5parse(
+        input
+            .slice(1)
+            .reduce(
+                (prev, current, index) => prev + marker + index + marker + current,
+                input[0],
+            ),
+    );
+    return {
+        type: ROOT_NODE,
+        children: parseNodes(ast)
+    }
+}
+
+function parseNodes(nodes: INode[]) {
+    return nodes.flatMap(parseNode)
+}
 //Parse html5parser result for what we care about
-export function parseNode(
+function parseNode(
     node: INode,
-    components: ComponentRegistry,
 ): ChildNode | ChildNode[] {
     //Text nodes are either static text or holes to insert in
     if (node.type === SyntaxKind.Text) {
@@ -90,7 +116,7 @@ export function parseNode(
     if (node.name[0] === "!" || node.name === "") {
         return {
             type: COMMENT_NODE,
-            value: (node.body as IText[])[0].value,
+            value: (node.body as IText[]).reduce((p,v)=>p+=v.value,""),
         } as CommentNode;
     }
 
@@ -121,31 +147,15 @@ export function parseNode(
         }
     }) as Property[];
 
-    const children = node.body?.flatMap((n) => parseNode(n, components)) ?? [];
+    const children = node.body?.flatMap(parseNode) ?? [];
     const name = node.rawName as string;
-    const component = components[name];
-    //component if name starts with capital letter
-    if (component) {
-        return {
-            type: COMPONENT_NODE,
-            name,
-            component,
-            props,
-            children,
-            template: buildTemplate(children),
-        } as ComponentNode;
-    }
-
-    if (/^[A-Z]/.test(name)) {
-        throw new Error(`${name} is not defined`);
-    }
 
     return {
-        type: ELEMENT_NODE,
+        type: /^[A-Z]/.test(name) ? COMPONENT_NODE : ELEMENT_NODE,
         name,
         props,
         children,
-    } as ElementNode;
+    };
 }
 
 function getParts(value: string = ""): Array<string | number> {

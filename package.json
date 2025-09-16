@@ -1,7 +1,7 @@
 {
   "name": "solid-html",
-  "version": "1.7.5",
-  "description": "A package for using SolidJS with tagged template literals.",
+  "version": "1.8.0",
+  "description": "A package for using SolidJS with JSX-like syntax in tagged template literals.",
   "main": "dist/index.mjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -17,10 +17,9 @@
   },
   "keywords": [
     "solidjs",
+    "sld",
     "html",
     "template",
-    "xml",
-    "h",
     "literal"
   ],
   "author": "Daniel Kling danielrkling@gmail.com",
