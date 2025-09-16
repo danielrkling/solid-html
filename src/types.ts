@@ -1,4 +1,4 @@
-import { ValidComponent } from "solid-js";
+import { ValidComponent, JSX } from "solid-js";
 
 /**
  * A value or a function returning a value. Used for reactive or static props.
@@ -37,4 +37,5 @@ export type AssignmentRule = {
 };
 
 
-export type ComponentRegistry = Record<string, ValidComponent>;
+type FunctionComponent = (...args:any[])=>JSX.Element
+export type ComponentRegistry = Record<string, FunctionComponent>;
