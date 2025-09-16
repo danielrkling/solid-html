@@ -1,3 +1,5 @@
+/** @jsxImportSource solid-js */
+
 import { render } from "solid-js/web";
 import {  sld } from "../src";
 import { createSignal } from "solid-js";
