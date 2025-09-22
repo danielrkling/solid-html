@@ -13,13 +13,14 @@ const walker = document.createTreeWalker(document, 133);
 
 export type SLD<T extends ComponentRegistry> = {
     (strings: TemplateStringsArray, ...values: any[]): JSX.Element
-    sld(strings: TemplateStringsArray, ...values: any[]): JSX.Element;
+    sld: SLD<T>;
     define<TNew extends ComponentRegistry>(
         components: TNew,
     ): SLD<T & TNew>;
-} & T;
+    components: T;
+};
 
-export function SLD<T extends ComponentRegistry>(
+export function createSLD<T extends ComponentRegistry>(
     components: T,
 ): SLD<T> {
     function sld(strings: TemplateStringsArray, ...values: any[]) {
@@ -28,22 +29,22 @@ export function SLD<T extends ComponentRegistry>(
 
         return renderChildren(root, values, components);
     }
-
+    sld.components = components;
+    sld.sld = sld
     // components = { ...defaultComponents, ...components };
     sld.define = function define<TNew extends ComponentRegistry>(newComponents: TNew) {
-        return SLD({ ...components, ...newComponents });
+        return createSLD({ ...components, ...newComponents });
     }
-    sld.sld = sld
+    
 
-    Object.entries(components).forEach(([name, value]) => {
-        Object.defineProperty(sld, name, {
-            get() {
-                return (props: any) => createComponent(value, props)
-            }
-        })
-    })
+    // Object.entries(components).forEach(([name, value]) => {
+    //     Object.defineProperty(sld, name, {
+    //         get() {
+    //             return (props: any) => createComponent(value, props)
+    //         }
+    //     })
+    // })
 
-    //@ts-expect-error
     return sld
 }
 

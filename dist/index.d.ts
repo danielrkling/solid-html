@@ -1,17 +1,7 @@
-import { Dynamic, ErrorBoundary, For, Index, Match, NoHydration, Portal, Show, Suspense, Switch } from "solid-js/web";
-import { JSX } from "solid-js";
+import { ErrorBoundary, For, Index, JSX, Match, Show, Suspense, Switch } from "solid-js";
 
 //#region src/types.d.ts
 type FunctionComponent = (...args: any[]) => JSX.Element;
-type ComponentRegistry = Record<string, FunctionComponent>;
-//#endregion
-//#region src/sld.d.ts
-type SLD<T extends ComponentRegistry> = {
-  (strings: TemplateStringsArray, ...values: any[]): JSX.Element;
-  sld(strings: TemplateStringsArray, ...values: any[]): JSX.Element;
-  define<TNew extends ComponentRegistry>(components: TNew): SLD<T & TNew>;
-} & T;
-declare function SLD<T extends ComponentRegistry>(components: T): SLD<T>;
 //#endregion
 //#region src/parse.d.ts
 declare const TEXT_NODE = 1;
@@ -69,10 +59,16 @@ declare const defaultComponents: {
   ErrorBoundary: typeof ErrorBoundary;
   Show: typeof Show;
   Switch: typeof Switch;
-  Dynamic: typeof Dynamic;
-  Portal: typeof Portal;
-  NoHydration: typeof NoHydration;
 };
+declare function SLD(components?: {}): SLD<{
+  For: typeof For;
+  Index: typeof Index;
+  Match: typeof Match;
+  Suspense: typeof Suspense;
+  ErrorBoundary: typeof ErrorBoundary;
+  Show: typeof Show;
+  Switch: typeof Switch;
+}>;
 declare const sld: SLD<{
   For: typeof For;
   Index: typeof Index;
@@ -81,9 +77,6 @@ declare const sld: SLD<{
   ErrorBoundary: typeof ErrorBoundary;
   Show: typeof Show;
   Switch: typeof Switch;
-  Dynamic: typeof Dynamic;
-  Portal: typeof Portal;
-  NoHydration: typeof NoHydration;
 }>;
 /**
  * Helper function for giving better typescript to components. Wrap in createComponent but keep same signature of function. Helps for overlaods.

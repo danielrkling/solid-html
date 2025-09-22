@@ -1,11 +1,8 @@
-import { Dynamic, ErrorBoundary, For, Index, Match, NoHydration, Portal, Show, Suspense, Switch } from "solid-js/web";
-import { SLD } from "./sld";
-import { createComponent } from "solid-js";
+import { createComponent, ErrorBoundary, For, Index, Match, Show, Suspense, Switch } from "solid-js";
+import { createSLD, type SLD } from "./sld";
 import { FunctionComponent } from "./types";
 
-export {parse} from "./parse"
-
-export {SLD}
+export { parse } from "./parse";
 
 export const defaultComponents = {
     For,
@@ -15,12 +12,13 @@ export const defaultComponents = {
     ErrorBoundary,
     Show,
     Switch,
-    Dynamic,
-    Portal,
-    NoHydration,
 };
 
-export const sld = SLD(defaultComponents)
+export function SLD(components = {}) {
+    return createSLD({ ...defaultComponents, ...components });
+}
+
+export const sld = createSLD(defaultComponents)
 
 export default sld
 
