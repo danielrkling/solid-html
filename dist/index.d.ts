@@ -1,20 +1,18 @@
 import { ErrorBoundary, For, Index, JSX, Match, Show, Suspense, Switch } from "solid-js";
 
 //#region src/types.d.ts
-type MaybeFunction<T> = T | (() => T);
-type MaybeFunctionProps<T> = { [K in keyof T]: K extends `on${string}` | "ref" ? T[K] : MaybeFunction<T[K]> };
-type IntrinsicElementsMaybeFunction = { [K in keyof JSX.IntrinsicElements]: MaybeFunctionProps<JSX.IntrinsicElements[K]> };
+
 type FunctionComponent = (...args: any[]) => JSX.Element;
 type ComponentRegistry = Record<string, FunctionComponent>;
-//#endregion
-//#region src/sld.d.ts
 type SLDInstance<T extends ComponentRegistry> = {
   (strings: TemplateStringsArray, ...values: any[]): JSX.Element;
   sld: SLDInstance<T>;
-  SLD<TNew extends ComponentRegistry>(components: TNew): SLDInstance<T & TNew>;
+  define<TNew extends ComponentRegistry>(components: TNew): SLDInstance<T & TNew>;
   components: T;
-  elements: IntrinsicElementsMaybeFunction;
+  elements: JSX.IntrinsicElements;
 };
+//#endregion
+//#region src/sld.d.ts
 declare function createSLD<T extends ComponentRegistry>(components: T): SLDInstance<T>;
 //#endregion
 //#region src/parse.d.ts
