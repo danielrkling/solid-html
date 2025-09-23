@@ -1,8 +1,9 @@
 import { createComponent, ErrorBoundary, For, Index, Match, Show, Suspense, Switch } from "solid-js";
-import { createSLD, type SLD } from "./sld";
-import { FunctionComponent } from "./types";
+import { createSLD, } from "./sld";
+import { FunctionComponent, SLDInstance } from "./types";
 
 export { parse } from "./parse";
+export {createSLD, SLDInstance}
 
 export const defaultComponents = {
     For,

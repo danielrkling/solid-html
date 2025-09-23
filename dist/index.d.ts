@@ -1,7 +1,21 @@
 import { ErrorBoundary, For, Index, JSX, Match, Show, Suspense, Switch } from "solid-js";
 
 //#region src/types.d.ts
+type MaybeFunction<T> = T | (() => T);
+type MaybeFunctionProps<T> = { [K in keyof T]: K extends `on${string}` | "ref" ? T[K] : MaybeFunction<T[K]> };
+type IntrinsicElementsMaybeFunction = { [K in keyof JSX.IntrinsicElements]: MaybeFunctionProps<JSX.IntrinsicElements[K]> };
 type FunctionComponent = (...args: any[]) => JSX.Element;
+type ComponentRegistry = Record<string, FunctionComponent>;
+//#endregion
+//#region src/sld.d.ts
+type SLDInstance<T extends ComponentRegistry> = {
+  (strings: TemplateStringsArray, ...values: any[]): JSX.Element;
+  sld: SLDInstance<T>;
+  SLD<TNew extends ComponentRegistry>(components: TNew): SLDInstance<T & TNew>;
+  components: T;
+  elements: IntrinsicElementsMaybeFunction;
+};
+declare function createSLD<T extends ComponentRegistry>(components: T): SLDInstance<T>;
 //#endregion
 //#region src/parse.d.ts
 declare const TEXT_NODE = 1;
@@ -60,7 +74,7 @@ declare const defaultComponents: {
   Show: typeof Show;
   Switch: typeof Switch;
 };
-declare function SLD(components?: {}): SLD<{
+declare function SLD(components?: {}): SLDInstance<{
   For: typeof For;
   Index: typeof Index;
   Match: typeof Match;
@@ -69,7 +83,7 @@ declare function SLD(components?: {}): SLD<{
   Show: typeof Show;
   Switch: typeof Switch;
 }>;
-declare const sld: SLD<{
+declare const sld: SLDInstance<{
   For: typeof For;
   Index: typeof Index;
   Match: typeof Match;
@@ -85,5 +99,5 @@ declare const sld: SLD<{
  */
 declare function comp<T extends FunctionComponent>(component: T): T;
 //#endregion
-export { SLD, comp, sld as default, sld, defaultComponents, parse };
+export { SLD, SLDInstance, comp, createSLD, sld as default, sld, defaultComponents, parse };
 //# sourceMappingURL=index.d.ts.map

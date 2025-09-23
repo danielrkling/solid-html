@@ -1,12 +1,13 @@
-import { SLD, sld, defaultComponents, comp } from "../src";
+import { SLDInstance, sld, defaultComponents, comp, createSLD } from "../src";
 import { Show, createComponent, type Component, For } from "solid-js";
 
 import { render } from "solid-js/web";
 import { createSignal } from "solid-js";
 
-const onlyCounter = SLD({ Counter });
+const onlyCounter = createSLD({ Counter });
 const defaultAndCounter = sld.define({ Counter });
-const alsoDefaultAndCounter = SLD({ ...defaultComponents, Counter });
+const alsoDefaultAndCounter = createSLD({ ...defaultComponents, Counter });
+
 
 function Counter(props: { message: string }) {
   const [count, setCount] = createSignal(0);
@@ -17,6 +18,7 @@ function Counter(props: { message: string }) {
     </button>
     `;
 }
+
 
 render(
   () => [
