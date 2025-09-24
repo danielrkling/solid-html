@@ -95,7 +95,7 @@ declare const sld: SLDInstance<{
  * @param component Function of component
  * @returns
  */
-declare function comp<T extends FunctionComponent>(component: T): T;
+declare function run<T extends FunctionComponent>(component: T): T;
 //#endregion
-export { SLD, SLDInstance, comp, createSLD, sld as default, sld, defaultComponents, parse };
+export { SLD, SLDInstance, createSLD, sld as default, sld, defaultComponents, parse, run };
 //# sourceMappingURL=index.d.ts.map

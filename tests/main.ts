@@ -1,13 +1,13 @@
-import { SLDInstance, sld, defaultComponents, comp, createSLD } from "../src";
-import { Show, createComponent, type Component, For } from "solid-js";
+import { For } from "solid-js";
+import { SLD, createSLD, defaultComponents, run, sld } from "../src";
 
-import { render } from "solid-js/web";
 import { createSignal } from "solid-js";
+import { render } from "solid-js/web";
 
 const onlyCounter = createSLD({ Counter });
-const defaultAndCounter = sld.define({ Counter });
-const alsoDefaultAndCounter = createSLD({ ...defaultComponents, Counter });
-
+const defaultAndCounterA = SLD({ Counter });
+const defaultAndCounterB = createSLD({ ...defaultComponents, Counter });
+const defaultAndCounterC = sld.define({ Counter });
 
 function Counter(props: { message: string }) {
   const [count, setCount] = createSignal(0);
@@ -22,24 +22,18 @@ function Counter(props: { message: string }) {
 
 render(
   () => [
-    defaultAndCounter`<Counter message="" />`,
+    defaultAndCounterA`<Counter message="" />`,
     sld.define({ Counter })`<Counter message="inline " />`,
     sld.define({ Counter }).sld`<Counter message="sld tag " />`, //named tag for future vscode extension when inlining
 
-    onlyCounter.Counter({ message: "Only Counter " }), //allows for better type checking than createComponent without addtional tools
     //Example
-    comp(For)({
+    run(For)({
       get each() {
         return [1, 2, 3]; //reactive props need to be manually wrapped
       },
       children: (num) => num.toString(),
     }),
-    sld.For( {
-      get each() {
-        return [1, 2, 3]; //reactive props need to be manually wrapped
-      },
-      children: (num) => num.toString(),
-    }),
+
   ],
   document.getElementById("app")!,
 );

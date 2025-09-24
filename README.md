@@ -1,27 +1,16 @@
-# sld (formerly solid-html)
+# sld
 
 sld is a no-build, no-JSX tagged-template library for SolidJS and designed to work with template tooling (editor syntax highlighting, formatters, etc.).
 
 ## Quick overview
 
 - `sld` - default tagged template instance with the built-in component registry.
-- `SLD(components)` - factory function which includes built-in components
+  - `sld.define({CompA})` - creates a new instance from the existing instance and combines registered componenets
+  - `sld.sld` - self reference so all tags can start with `sld` for potential tooling
+- `SLD({CompA})` - factory function which includes built-in components
+- `createSLD({CompA})` - factory function which doesn't includes built-in components
+- `run(CompA)(props)` helper function for createComponent to get better ts. Must manually do getters on props.
 
-```ts
-type SLDInstance<T extends ComponentRegistry> = {
-  (strings: TemplateStringsArray, ...values: any[]): JSX.Element;
-  sld: SLDInstance<T>; //To help trigger tooling
-  SLD<TNew extends ComponentRegistry>(components: TNew): SLDInstance<T & TNew>;
-  components: T; 
-  elements: IntrinsicElementsMaybeFunction; //types for tooling
-};
-```
-
-## Install
-
-```bash
-npm install solid-html
-```
 
 
 ## Basic usage
@@ -62,7 +51,7 @@ sld`<Route component=${()=>Counter} />
 
 ## Template rules and syntax
 
-- Templates are static: tag names and attribute names must be literal (not dynamic expressions).
+- Templates are static: tag names and attribute names must be literal (not dynamic expressions). Use spread and the Dyanmic component if necessary.
 - Tags can be self closing (like JSX)
 - Attribute binding syntax (Same as solid):
   - `<input value="Hello World" />` - static string property
@@ -78,7 +67,7 @@ sld`<Route component=${()=>Counter} />
   - `${}` in content — child value
 - Components must be registered to be used as tags in templates.
 - `children` attribute is used only if the element has no child nodes (JSX-like behavior).
-- Component/attribute names are case-sensitive when registered via `sld.define`.
+- Component/attribute names are case-sensitive when registered via `sld.define` or `SLD`.
 
 ## Built-In Components
 

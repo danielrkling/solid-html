@@ -1,9 +1,9 @@
 import { createComponent, ErrorBoundary, For, Index, Match, Show, Suspense, Switch } from "solid-js";
 import { createSLD, } from "./sld";
-import { FunctionComponent, SLDInstance } from "./types";
+import { type FunctionComponent, type SLDInstance } from "./types";
 
 export { parse } from "./parse";
-export {createSLD, SLDInstance}
+export { createSLD, SLDInstance };
 
 export const defaultComponents = {
     For,
@@ -28,7 +28,7 @@ export default sld
  * @param component Function of component
  * @returns 
  */
-export function comp<T extends FunctionComponent>(component: T): T {
+export function run<T extends FunctionComponent>(component: T): T {
     //@ts-expect-error
     return (props)=>createComponent(component, props)
 }
