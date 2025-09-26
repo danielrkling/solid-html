@@ -177,7 +177,7 @@ function parseNode(
         } as CommentNode;
     }
 
-    const props = node.attributes.map((v) => {
+    const props = node.attributes.flatMap((v) => {
         const nameParts = getParts(v.name.value);
 
         if (nameParts.length === 1) {
@@ -234,7 +234,7 @@ function parseNode(
                 value: nameParts[1]
             }
         }
-        
+
         return []
     }) as Property[];
 
