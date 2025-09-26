@@ -15,11 +15,9 @@ export const defaultComponents = {
     Switch,
 };
 
-export function SLD(components = {}) {
-    return createSLD({ ...defaultComponents, ...components });
-}
 
 export const sld = createSLD(defaultComponents)
+export const SLD = sld.define
 
 export default sld
 

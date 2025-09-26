@@ -31,6 +31,7 @@ export type InsertNode = {
     value: number; //index of hole
 };
 
+//tag with lowercase first letter <div />
 export const ELEMENT_NODE = 4;
 export type ElementNode = {
     type: typeof ELEMENT_NODE;
@@ -39,6 +40,7 @@ export type ElementNode = {
     children: ChildNode[];
 };
 
+//Tag with capital first letter <Div />
 export const COMPONENT_NODE = 5;
 export type ComponentNode = {
     type: typeof COMPONENT_NODE;
@@ -62,7 +64,52 @@ export type ChildNode =
     | InsertNode
     | CommentNode;
 
-export type Property = [name: string, value: ValueParts];
+export type Property = BooleanProperty | StringProperty | DynamicProperty | MixedProperty | SpreadProperty | AnonymousProperty
+
+// <input disabled>
+export const BOOLEAN_PROPERTY = 1
+export type BooleanProperty = {
+    type: typeof BOOLEAN_PROPERTY
+    name: string,
+}
+
+// <input value="myString"> <input value='myString'> <input value=""> <input value=''>
+export const STRING_PROPERTY = 2
+export type StringProperty = {
+    type: typeof STRING_PROPERTY
+    name: string,
+    value: string
+}
+
+// <input value=${}> <input value="${}""> <input value='${}'>
+export const DYNAMIC_PROPERTY = 3
+export type DynamicProperty = {
+    type: typeof DYNAMIC_PROPERTY
+    name: string,
+    value: number
+}
+
+// <input value=" ${}"> <input value="input-${}"> <input value='${"value1"} ${"value2"}'>
+export const MIXED_PROPERTY = 4
+export type MixedProperty = {
+    type: typeof MIXED_PROPERTY
+    name: string,
+    value: Array<string | number>
+}
+
+// <input ...${} />
+export const SPREAD_PROPERTY = 5
+export type SpreadProperty = {
+    type: typeof SPREAD_PROPERTY
+    value: number
+}
+
+// <input ${} />
+export const ANONYMOUS_PROPERTY = 6
+export type AnonymousProperty = {
+    type: typeof ANONYMOUS_PROPERTY
+    value: number
+}
 
 //string or boolean means static, number means hole and is index, array means mix of string and holes
 export type ValueParts = string | boolean | number | Array<string | number>;
@@ -102,21 +149,31 @@ function parseNode(
 ): ChildNode | ChildNode[] {
     //Text nodes are either static text or holes to insert in
     if (node.type === SyntaxKind.Text) {
-        const parts = getParts(node.value);
-        return parts.map((value) => {
-            const type = isString(value) ? TEXT_NODE : INSERT_NODE;
-            return {
-                type,
-                value,
-            } as InsertNode | TextNode;
-        });
+        return node.value
+            .split(match).flatMap((value, index, array) => {
+                if (index % 2 === 1) {
+                    return {
+                        type: INSERT_NODE,
+                        value: Number(value)
+                    }
+                }
+                //We want to trim when only content in textnode is the hole or if textnode is empty
+                if (!value || (array.length === 3 && !value.trim())) {
+                    return []
+                }
+
+                return {
+                    type: TEXT_NODE,
+                    value,
+                }
+            });
     }
 
     //html5parser represents comments as type tag with name "!" or ""
     if (node.name[0] === "!" || node.name === "") {
         return {
             type: COMMENT_NODE,
-            value: (node.body as IText[]).reduce((p,v)=>p+=v.value,""),
+            value: (node.body as IText[]).join(""),
         } as CommentNode;
     }
 
@@ -124,27 +181,61 @@ function parseNode(
         const nameParts = getParts(v.name.value);
 
         if (nameParts.length === 1) {
-            const part = nameParts[0];
-            if (isString(part)) {
-                const valueParts = getParts(v.value?.value);
-                if (valueParts.length === 0) {
-                    //boolean attribute <input disabled>
-                    return [part, true] as Property;
-                } else if (valueParts.length === 1) {
-                    //static or dynamic attribute <input value="text"> or <input value=${}>
-                    return [part, valueParts[0]] as Property;
+            const name = nameParts[0];
+            if (v.value === undefined) {
+                return {
+                    name,
+                    type: BOOLEAN_PROPERTY
+                }
+            }
+
+            if (isNumber(name)) {
+                return {
+                    type: ANONYMOUS_PROPERTY,
+                    value: nameParts[1]
+                }
+            }
+
+            const valueParts = getParts(v.value?.value);
+
+            if (valueParts.length === 0) {
+                return {
+                    name,
+                    type: BOOLEAN_PROPERTY
+                }
+            } else if (valueParts.length === 1) {
+                const value = valueParts[0]
+                if (isNumber(value)) {
+                    return {
+                        type: DYNAMIC_PROPERTY,
+                        name,
+                        value
+                    }
                 } else {
-                    //mixed static and dynamic attribute <input value="text ${} text ${} px">
-                    return [part, valueParts] as Property;
+                    return {
+                        type: STRING_PROPERTY,
+                        name,
+                        value
+                    }
                 }
             } else {
-                //name is hole <input ${}> or <input ${}="anything">. No dynamic names, treat as ref
-                return ["ref", part] as Property;
+                return {
+                    type: MIXED_PROPERTY,
+                    name,
+                    value: valueParts
+                }
             }
-        } else {
-            //name is mixed static and dynamic. We assume something like ...${} but could also be class${} or style${}. Value gets ignored in this case.
-            return [nameParts[0], nameParts[1]];
         }
+
+        //name is mixed static and dynamic. We only look for ...${}
+        if (nameParts[0] === "...") {
+            return {
+                type: SPREAD_PROPERTY,
+                value: nameParts[1]
+            }
+        }
+        
+        return []
     }) as Property[];
 
     const children = node.body?.flatMap(parseNode) ?? [];
@@ -162,5 +253,5 @@ function getParts(value: string = ""): Array<string | number> {
     return value
         .split(match)
         .map((v, i) => (i % 2 === 1 ? Number(v) : v))
-        .filter((v) => isNumber(v) || v.trim());
+        .filter((v) => isNumber(v) || !v);
 }

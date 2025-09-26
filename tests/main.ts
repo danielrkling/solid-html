@@ -22,7 +22,7 @@ function Counter(props: { message: string }) {
 
 render(
   () => [
-    defaultAndCounterA`<Counter message="" />`,
+    defaultAndCounterA`<Counter message="" bool />`,
     sld.define({ Counter })`<Counter message="inline " />`,
     sld.define({ Counter }).sld`<Counter message="sld tag " />`, //named tag for future vscode extension when inlining
 

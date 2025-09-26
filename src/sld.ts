@@ -1,33 +1,36 @@
 import { JSX, createComponent, mergeProps } from "solid-js";
+import { SVGElements, insert, spread } from "solid-js/web";
 import {
-  RootNode,
-  ROOT_NODE,
-  TEXT_NODE,
-  INSERT_NODE,
+  ANONYMOUS_PROPERTY,
+  BOOLEAN_PROPERTY,
   COMMENT_NODE,
-  ELEMENT_NODE,
   COMPONENT_NODE,
-  ComponentNode,
-  ElementNode,
-  parse,
   ChildNode,
+  ComponentNode,
+  DYNAMIC_PROPERTY,
+  ELEMENT_NODE,
+  ElementNode,
+  INSERT_NODE,
+  MIXED_PROPERTY,
+  ROOT_NODE,
+  RootNode,
+  SPREAD_PROPERTY,
+  STRING_PROPERTY,
+  TEXT_NODE,
+  parse,
 } from "./parse";
-import { ComponentRegistry, IntrinsicElementsMaybeFunction, SLDInstance } from "./types";
+import { buildTemplate } from "./template";
+import { ComponentRegistry, SLDInstance } from "./types";
 import {
   createComment,
   createElement,
   flat,
-  toArray,
-  isNumber,
-  isString,
-  isBoolean,
   getValue,
   isFunction,
+  isNumber,
   isObject,
+  toArray
 } from "./util";
-import { SVGElements, insert, spread } from "solid-js/web";
-import { buildTemplate } from "./template";
-import { assignElementProperty } from "./assign";
 
 const cache = new WeakMap<TemplateStringsArray, RootNode>();
 
@@ -44,29 +47,12 @@ export function createSLD<T extends ComponentRegistry>(components: T): SLDInstan
   }
   sld.components = components;
   sld.sld = sld;
-  // components = { ...defaultComponents, ...components };
   sld.define = function define<TNew extends ComponentRegistry>(
     newComponents: TNew
   ) {
     return createSLD({ ...components, ...newComponents });
   };
 
-  //For TS plugin
-//   Object.defineProperty(sld, "elements", {
-//     get() {
-//       throw new Error(
-//         "SLD.elements is only for types and should not be accessed at runtime. Use sld.define to add components."
-//       );
-//     },
-//   });
-
-  // Object.entries(components).forEach(([name, value]) => {
-  //     Object.defineProperty(sld, name, {
-  //         get() {
-  //             return (props: any) => createComponent(value, props)
-  //         }
-  //     })
-  // })
 
   return sld as SLDInstance<T>;
 }
@@ -130,18 +116,6 @@ function renderChildren(
       const domNode = walker.nextNode()!;
       if (node.type === ELEMENT_NODE) {
         if (node.props.length) {
-          // for (const [name, parts] of node.props) {
-          //     const value =
-          //         isString(parts) || isBoolean(parts)
-          //             ? parts
-          //             : isNumber(parts)
-          //                 ? values[parts]
-          //                 : () =>
-          //                     parts
-          //                         .map((v) => (isNumber(v) ? getValue(values[v]) : v))
-          //                         .join("");
-          //     assignElementProperty(domNode as Element, name, value, SVGElements.has(node.name))
-          // }
           //Assigning props to element via assign prop w/effect may be better for performance.
           const props = gatherProps(node, values, components);
           spread(domNode as Element, props, SVGElements.has(node.name), true);
@@ -167,48 +141,33 @@ function gatherProps(
   components: ComponentRegistry,
   props: Record<string, any> = {}
 ) {
-  for (let [name, parts] of node.props) {
-    if (name === "...") {
-      if (isNumber(parts)) {
-        const spread = values[parts];
-        if (!isObject(spread)) throw new Error("Can only spread objects");
-        // for (const n in values[parts]){
-        //     Object.defineProperty(props, n, {
-        //         get() {
-        //             return (spread as any)[n]
-        //         },
-        //         enumerable: true,
-        //     });
-        // }
-        //Or
-        props = mergeProps(props, spread);
-      }
-    } else {
-      const value =
-        isString(parts) || isBoolean(parts)
-          ? parts
-          : isNumber(parts)
-          ? values[parts]
-          : () =>
-              parts
-                .map((v) => (isNumber(v) ? getValue(values[v]) : v))
-                .join("");
+  for (const prop of node.props) {
+    switch (prop.type) {
 
-      if (
-        isFunction(value) &&
-        value.length === 0 &&
-        name !== "ref" &&
-        !name.startsWith("on")
-      ) {
-        Object.defineProperty(props, name, {
-          get() {
-            return value();
-          },
-          enumerable: true,
-        });
-      } else {
-        props[name] = value;
-      }
+      case BOOLEAN_PROPERTY:
+        props[prop.name] = true;
+        break;
+      case STRING_PROPERTY:
+        props[prop.name] = prop.value
+        break;
+      case DYNAMIC_PROPERTY:
+        applyGetter(props, prop.name, values[prop.value])
+        break;
+      case MIXED_PROPERTY:
+        const value = () =>
+          prop.value
+            .map((v) => (isNumber(v) ? getValue(values[v]) : v))
+            .join("");
+        applyGetter(props, prop.name, value);
+        break;
+      case SPREAD_PROPERTY:
+        const spread = values[prop.value];
+        if (!isObject(spread)) throw new Error("Can only spread objects");
+        props = mergeProps(props, spread);
+        break;
+      case ANONYMOUS_PROPERTY:
+        props.ref = values[prop.value];
+        break;
     }
   }
 
@@ -221,4 +180,23 @@ function gatherProps(
     });
   }
   return props;
+}
+
+
+function applyGetter(props: Record<string, any>, name: string, value: any) {
+  if (
+    isFunction(value) &&
+    value.length === 0 &&
+    name !== "ref" &&
+    !name.startsWith("on")
+  ) {
+    Object.defineProperty(props, name, {
+      get() {
+        return value();
+      },
+      enumerable: true,
+    });
+  } else {
+    props[name] = value;
+  }
 }

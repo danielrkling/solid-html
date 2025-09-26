@@ -53,8 +53,40 @@ type RootNode = {
   template?: HTMLTemplateElement;
 };
 type ChildNode = TextNode | ComponentNode | ElementNode | InsertNode | CommentNode;
-type Property = [name: string, value: ValueParts];
-type ValueParts = string | boolean | number | Array<string | number>;
+type Property = BooleanProperty | StringProperty | DynamicProperty | MixedProperty | SpreadProperty | AnonymousProperty;
+declare const BOOLEAN_PROPERTY = 1;
+type BooleanProperty = {
+  type: typeof BOOLEAN_PROPERTY;
+  name: string;
+};
+declare const STRING_PROPERTY = 2;
+type StringProperty = {
+  type: typeof STRING_PROPERTY;
+  name: string;
+  value: string;
+};
+declare const DYNAMIC_PROPERTY = 3;
+type DynamicProperty = {
+  type: typeof DYNAMIC_PROPERTY;
+  name: string;
+  value: number;
+};
+declare const MIXED_PROPERTY = 4;
+type MixedProperty = {
+  type: typeof MIXED_PROPERTY;
+  name: string;
+  value: Array<string | number>;
+};
+declare const SPREAD_PROPERTY = 5;
+type SpreadProperty = {
+  type: typeof SPREAD_PROPERTY;
+  value: number;
+};
+declare const ANONYMOUS_PROPERTY = 6;
+type AnonymousProperty = {
+  type: typeof ANONYMOUS_PROPERTY;
+  value: number;
+};
 /**
  *
  * @param input jsx like string to parse
@@ -72,15 +104,6 @@ declare const defaultComponents: {
   Show: typeof Show;
   Switch: typeof Switch;
 };
-declare function SLD(components?: {}): SLDInstance<{
-  For: typeof For;
-  Index: typeof Index;
-  Match: typeof Match;
-  Suspense: typeof Suspense;
-  ErrorBoundary: typeof ErrorBoundary;
-  Show: typeof Show;
-  Switch: typeof Switch;
-}>;
 declare const sld: SLDInstance<{
   For: typeof For;
   Index: typeof Index;
@@ -90,6 +113,15 @@ declare const sld: SLDInstance<{
   Show: typeof Show;
   Switch: typeof Switch;
 }>;
+declare const SLD: <TNew extends ComponentRegistry>(components: TNew) => SLDInstance<{
+  For: typeof For;
+  Index: typeof Index;
+  Match: typeof Match;
+  Suspense: typeof Suspense;
+  ErrorBoundary: typeof ErrorBoundary;
+  Show: typeof Show;
+  Switch: typeof Switch;
+} & TNew>;
 /**
  * Helper function for giving better typescript to components. Wrap in createComponent but keep same signature of function. Helps for overlaods.
  * @param component Function of component

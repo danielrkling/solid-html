@@ -1,4 +1,4 @@
-import { COMMENT_NODE, COMPONENT_NODE, ELEMENT_NODE, INSERT_NODE, TEXT_NODE, ChildNode, RootNode, ComponentNode, ROOT_NODE } from "./parse";
+import { COMMENT_NODE, COMPONENT_NODE, ELEMENT_NODE, INSERT_NODE, TEXT_NODE, ChildNode, RootNode, ComponentNode, ROOT_NODE, STRING_PROPERTY, BOOLEAN_PROPERTY } from "./parse";
 import { createComment, createElement, isString } from "./util";
 
 
@@ -35,12 +35,12 @@ function buildHTML(node: ChildNode): string {
             return `<!--${node.name}-->`;
         case ELEMENT_NODE:
             let attributeHTML=""
-            node.props = node.props.filter(([name, value]) => {
-                if (isString(value)) {
-                    attributeHTML+=` ${name}="${value}"`
+            node.props = node.props.filter((prop) => {
+                if (prop.type === STRING_PROPERTY) {
+                    attributeHTML+=` ${prop.name}="${prop.value}"`
                     return;
-                } else if (value === true) {
-                    attributeHTML+=` ${name}`
+                } else if (prop.type===BOOLEAN_PROPERTY) {
+                    attributeHTML+=` ${prop.name}`
                     return;
                 }
                 return true;
@@ -72,12 +72,12 @@ function buildNodes(nodes: ChildNode[], parent: Node) {
                 parent.appendChild(elem);
 
                 //set static attributes only and remove from props
-                node.props = node.props.filter(([name, value]) => {
-                    if (isString(value)) {
-                        elem.setAttribute(name, value);
+                node.props = node.props.filter((prop) => {
+                    if (prop.type === STRING_PROPERTY) {
+                        elem.setAttribute(prop.name, prop.value);
                         return;
-                    } else if (value === true) {
-                        elem.setAttribute(name, ""); //boolean attribute
+                    } else if (prop.type===BOOLEAN_PROPERTY) {
+                        elem.setAttribute(prop.name, ""); //boolean attribute
                         return;
                     }
                     return true;
