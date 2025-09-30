@@ -19,7 +19,6 @@ function Counter(props: { message: string }) {
     `;
 }
 
-
 render(
   () => [
     defaultAndCounterA`<Counter message="" bool />`,

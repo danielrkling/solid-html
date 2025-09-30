@@ -38,7 +38,7 @@ const cache = new WeakMap<TemplateStringsArray, RootNode>();
 const walker = document.createTreeWalker(document, 133);
 
 
-
+//Factory function to create new SLD instances.
 export function createSLD<T extends ComponentRegistry>(components: T): SLDInstance<T> {
   function sld(strings: TemplateStringsArray, ...values: any[]) {
     const root = getCachedRoot(strings);

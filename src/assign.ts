@@ -1,3 +1,5 @@
+// Not used, copied from dom-expressions. May be faster to assign directly instead of using spread
+
 import { style, classList, DelegatedEvents, delegateEvents, setAttribute, setBoolAttribute, ChildProperties, getPropAlias, Properties, className, SVGNamespace, setAttributeNS, Aliases, addEventListener } from "solid-js/web";
 import { isFunction } from "./util";
 import { createRenderEffect } from "solid-js";

@@ -1,3 +1,4 @@
+// WE use html5parser because it preservers case of tags and attributes
 import {
     SyntaxKind,
     parse as html5parse,
@@ -143,6 +144,7 @@ export function parse(input: TemplateStringsArray): RootNode {
 function parseNodes(nodes: INode[]) {
     return nodes.flatMap(parseNode)
 }
+
 //Parse html5parser result for what we care about
 function parseNode(
     node: INode,
@@ -249,9 +251,10 @@ function parseNode(
     };
 }
 
+// Splits a string into static parts and hole indexes
 function getParts(value: string = ""): Array<string | number> {
     return value
         .split(match)
-        .map((v, i) => (i % 2 === 1 ? Number(v) : v))
+        .map((v, i) => (i % 2 === 1 ? parseInt(v) : v))
         .filter((v) => isNumber(v) || !v);
 }

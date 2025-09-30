@@ -5,6 +5,9 @@ import { type FunctionComponent, type SLDInstance } from "./types";
 export { parse } from "./parse";
 export { createSLD, SLDInstance };
 
+/**
+ * Default components included with SLD. Can be extended with sld.define({MyComponent})
+ */
 export const defaultComponents = {
     For,
     Index,
@@ -15,11 +18,18 @@ export const defaultComponents = {
     Switch,
 };
 
-
+/**
+ * Default SLD instance with basic components included. Can be extended with sld.define({MyComponent})
+ */
 export const sld = createSLD(defaultComponents)
+export default sld
+
+/**
+ * SLD factory function to create new SLD instances with built-in components.
+ */
 export const SLD = sld.define
 
-export default sld
+
 
 /**
  * Helper function for giving better typescript to components. Wrap in createComponent but keep same signature of function. Helps for overlaods.
