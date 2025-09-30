@@ -256,5 +256,5 @@ function getParts(value: string = ""): Array<string | number> {
     return value
         .split(match)
         .map((v, i) => (i % 2 === 1 ? parseInt(v) : v))
-        .filter((v) => isNumber(v) || !v);
+        .filter((v) => isNumber(v) || v !== "");
 }
