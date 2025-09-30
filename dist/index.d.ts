@@ -3,12 +3,57 @@ import { ErrorBoundary, For, Index, JSX, Match, Show, Suspense, Switch } from "s
 //#region src/types.d.ts
 
 type FunctionComponent = (...args: any[]) => JSX.Element;
+/**
+ * Component registry type
+ * @example
+ * ```tsx
+ * const components: ComponentRegistry = {
+ *   MyComponent: (props) => <div>Hello {props.name}</div>
+ * }
+ * ```
+ */
 type ComponentRegistry = Record<string, FunctionComponent>;
+/**
+ * SLD Instance type
+ * @template T Component registry
+ */
 type SLDInstance<T extends ComponentRegistry> = {
+  /**
+   * SLD template function
+   * @example
+   * ```tsx
+   * const myTemplate = sld`<div>Hello World</div>`
+   * ```
+   */
   (strings: TemplateStringsArray, ...values: any[]): JSX.Element;
+  /**
+   * Self reference to SLD instance for tooling
+   * @example
+   * ```tsx
+   * const MyComponent: FunctionComponent = (props) => {
+   *   // Use sld to create a template inside a component
+   *   return mySLD.sld`<div>Hello ${props.name}</div>`
+   * ```
+   */
   sld: SLDInstance<T>;
+  /**
+   * Create a new SLD instance with additional components added to the registry
+   * @param components New components to add to the registry
+   * @example
+   * ```tsx
+   * const MyComponent: FunctionComponent = (props) => <div>Hello {props.name}</div>
+   * const mySLD = sld.define({MyComponent})
+   * const myTemplate = mySLD`<MyComponent name="World" />`
+   * ```
+   */
   define<TNew extends ComponentRegistry>(components: TNew): SLDInstance<T & TNew>;
+  /**
+   * Component registry
+   */
   components: T;
+  /**
+   * For types for tools only. Not used at runtime.
+   */
   elements: JSX.IntrinsicElements;
 };
 //#endregion
@@ -95,6 +140,9 @@ type AnonymousProperty = {
 declare function parse(input: TemplateStringsArray): RootNode;
 //#endregion
 //#region src/index.d.ts
+/**
+ * Default components included with SLD. Can be extended with sld.define({MyComponent})
+ */
 declare const defaultComponents: {
   For: typeof For;
   Index: typeof Index;
@@ -104,6 +152,9 @@ declare const defaultComponents: {
   Show: typeof Show;
   Switch: typeof Switch;
 };
+/**
+ * Default SLD instance with basic components included. Can be extended with sld.define({MyComponent})
+ */
 declare const sld: SLDInstance<{
   For: typeof For;
   Index: typeof Index;
@@ -113,6 +164,9 @@ declare const sld: SLDInstance<{
   Show: typeof Show;
   Switch: typeof Switch;
 }>;
+/**
+ * SLD factory function to create new SLD instances with built-in components.
+ */
 declare const SLD: <TNew extends ComponentRegistry>(components: TNew) => SLDInstance<{
   For: typeof For;
   Index: typeof Index;
