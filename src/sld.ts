@@ -1,23 +1,19 @@
 import { JSX, createComponent, mergeProps } from "solid-js";
 import { SVGElements, insert, spread } from "solid-js/web";
 import {
-  ANONYMOUS_PROPERTY,
-  BOOLEAN_PROPERTY,
-  COMMENT_NODE,
-  COMPONENT_NODE,
+  parse,
+  RootNode,
   ChildNode,
-  ComponentNode,
-  DYNAMIC_PROPERTY,
+  TEXT_NODE,
+  EXPRESSION_NODE,
   ELEMENT_NODE,
   ElementNode,
-  INSERT_NODE,
-  MIXED_PROPERTY,
   ROOT_NODE,
-  RootNode,
-  SPREAD_PROPERTY,
-  STRING_PROPERTY,
-  TEXT_NODE,
-  parse,
+  BOOLEAN_PROP,
+  STATIC_PROP,
+  EXPRESSION_PROP,
+  MIXED_PROP,
+  SPREAD_PROP,
 } from "./parse";
 import { buildTemplate } from "./template";
 import { ComponentRegistry, SLDInstance } from "./types";
@@ -26,20 +22,47 @@ import {
   createElement,
   flat,
   getValue,
+  isComponentNode,
   isFunction,
   isNumber,
   isObject,
-  toArray
+  toArray,
 } from "./util";
+import { tokenize } from "./tokenize";
 
 const cache = new WeakMap<TemplateStringsArray, RootNode>();
 
 //Walk over text, comment, and element nodes
 const walker = document.createTreeWalker(document, 133);
 
+export const voidElements = new Set([
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
+]);
+
+export const rawTextElements = new Set([
+  "script",
+  "style",
+  "textarea",
+  "title",
+]);
 
 //Factory function to create new SLD instances.
-export function createSLD<T extends ComponentRegistry>(components: T): SLDInstance<T> {
+export function createSLD<T extends ComponentRegistry>(
+  components: T,
+): SLDInstance<T> {
   function sld(strings: TemplateStringsArray, ...values: any[]) {
     const root = getCachedRoot(strings);
 
@@ -48,11 +71,10 @@ export function createSLD<T extends ComponentRegistry>(components: T): SLDInstan
   sld.components = components;
   sld.sld = sld;
   sld.define = function define<TNew extends ComponentRegistry>(
-    newComponents: TNew
+    newComponents: TNew,
   ) {
     return createSLD({ ...components, ...newComponents });
   };
-
 
   return sld as SLDInstance<T>;
 }
@@ -60,7 +82,8 @@ export function createSLD<T extends ComponentRegistry>(components: T): SLDInstan
 function getCachedRoot(strings: TemplateStringsArray): RootNode {
   let root = cache.get(strings);
   if (!root) {
-    root = parse(strings);
+    root = parse(tokenize(strings, rawTextElements), voidElements);
+    console.log(root)
     buildTemplate(root);
     cache.set(strings, root);
     // console.log(root)
@@ -71,43 +94,42 @@ function getCachedRoot(strings: TemplateStringsArray): RootNode {
 function renderNode(
   node: ChildNode,
   values: any[],
-  components: ComponentRegistry
+  components: ComponentRegistry,
 ): any {
   switch (node.type) {
     case TEXT_NODE:
       return node.value;
-    case INSERT_NODE:
+    case EXPRESSION_NODE:
       return values[node.value];
-    case COMMENT_NODE:
-      return createComment(node.value);
     case ELEMENT_NODE:
+      const component = components[node.name];
+      if (component) {
+        return createComponent(
+          component,
+          gatherProps(node, values, components),
+        );
+      }
       const element = createElement(node.name);
       spread(
         element,
         gatherProps(node, values, components),
         SVGElements.has(node.name),
-        true
+        true,
       );
       return element;
-    case COMPONENT_NODE:
-      const component = components[node.name];
-      if (!component) throw new Error(`${node.name} is not defined`);
-      return createComponent(component, gatherProps(node, values, components));
   }
 }
 
 function renderChildren(
-  node: ComponentNode | RootNode | ElementNode,
+  node: RootNode | ElementNode,
   values: any[],
-  components: ComponentRegistry
+  components: ComponentRegistry,
 ): JSX.Element {
-  const template =
-    (node.type === ROOT_NODE || node.type === COMPONENT_NODE) && node.template;
-  if (!template) {
+  if (!("template" in node)) {
     return flat(node.children.map((n) => renderNode(n, values, components)));
   }
 
-  const clone = template.content.cloneNode(true);
+  const clone = node.template.content.cloneNode(true);
   walker.currentNode = clone;
   walkNodes(node.children);
 
@@ -115,6 +137,15 @@ function renderChildren(
     for (const node of nodes) {
       const domNode = walker.nextNode()!;
       if (node.type === ELEMENT_NODE) {
+        if (isComponentNode(node)) {
+          insert(
+            domNode.parentNode!,
+            renderNode(node, values, components),
+            domNode,
+          );
+          walker.currentNode = domNode;
+          continue;
+        }
         if (node.props.length) {
           //Assigning props to element via assign prop w/effect may be better for performance.
           const props = gatherProps(node, values, components);
@@ -122,11 +153,11 @@ function renderChildren(
         }
 
         walkNodes(node.children);
-      } else if (node.type === INSERT_NODE || node.type === COMPONENT_NODE) {
+      } else if (node.type === EXPRESSION_NODE) {
         insert(
           domNode.parentNode!,
           renderNode(node, values, components),
-          domNode
+          domNode,
         );
         walker.currentNode = domNode;
       }
@@ -136,37 +167,33 @@ function renderChildren(
 }
 
 function gatherProps(
-  node: ElementNode | ComponentNode,
+  node: ElementNode,
   values: any[],
   components: ComponentRegistry,
-  props: Record<string, any> = {}
+  props: Record<string, any> = {},
 ) {
   for (const prop of node.props) {
     switch (prop.type) {
-
-      case BOOLEAN_PROPERTY:
+      case BOOLEAN_PROP:
         props[prop.name] = true;
         break;
-      case STRING_PROPERTY:
-        props[prop.name] = prop.value
+      case STATIC_PROP:
+        props[prop.name] = prop.value;
         break;
-      case DYNAMIC_PROPERTY:
-        applyGetter(props, prop.name, values[prop.value])
+      case EXPRESSION_PROP:
+        applyGetter(props, prop.name, values[prop.value]);
         break;
-      case MIXED_PROPERTY:
+      case MIXED_PROP:
         const value = () =>
           prop.value
             .map((v) => (isNumber(v) ? getValue(values[v]) : v))
             .join("");
         applyGetter(props, prop.name, value);
         break;
-      case SPREAD_PROPERTY:
+      case SPREAD_PROP:
         const spread = values[prop.value];
         if (!isObject(spread)) throw new Error("Can only spread objects");
         props = mergeProps(props, spread);
-        break;
-      case ANONYMOUS_PROPERTY:
-        props.ref = values[prop.value];
         break;
     }
   }
@@ -181,7 +208,6 @@ function gatherProps(
   }
   return props;
 }
-
 
 function applyGetter(props: Record<string, any>, name: string, value: any) {
   if (

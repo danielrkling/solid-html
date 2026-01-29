@@ -1,14 +1,14 @@
-import { COMMENT_NODE, COMPONENT_NODE, ELEMENT_NODE, INSERT_NODE, TEXT_NODE, ChildNode, RootNode, ComponentNode, ROOT_NODE, STRING_PROPERTY, BOOLEAN_PROPERTY } from "./parse";
-import { createComment, createElement, isString } from "./util";
+import { BOOLEAN_PROP, ChildNode, ELEMENT_NODE, EXPRESSION_NODE, ROOT_NODE, RootNode, STATIC_PROP, TEXT_NODE } from "./parse";
+import { createComment, createElement, isComponentNode, isElementNode, isString } from "./util";
 
 
 
 
 //build template element with same exact shape as tree so they can be walked through in sync
 export function buildTemplate(node: RootNode | ChildNode): void {
-    if (node.type === ROOT_NODE || node.type === COMPONENT_NODE) {
+    if (node.type === ROOT_NODE || isComponentNode(node)) {
         //Criteria for using template is component or root has at least 1 element. May be be a more optimal condition.
-        if (node.children.some((v) => v.type === ELEMENT_NODE)) {
+        if (node.children.some(isElementNode)) {
             const template = document.createElement("template");
             // buildNodes(node.children, template.content);
             template.innerHTML = node.children.map(buildHTML).join("");
@@ -16,7 +16,7 @@ export function buildTemplate(node: RootNode | ChildNode): void {
         }
         node.children.forEach(buildTemplate)
     }
-    if (node.type === ELEMENT_NODE) {
+    if (isElementNode(node)) {
         node.children.forEach(buildTemplate)
     }
 }
@@ -27,19 +27,19 @@ function buildHTML(node: ChildNode): string {
     switch (node.type) {
         case TEXT_NODE:
             return node.value;
-        case COMMENT_NODE:
-            return `<!--${node.value}-->`;
-        case INSERT_NODE:
+        // case COMMENT_NODE:
+        //     return `<!--${node.value}-->`;
+        case EXPRESSION_NODE:
             return `<!--+-->`;
-        case COMPONENT_NODE:
-            return `<!--${node.name}-->`;
+        // case COMPONENT_NODE:
+        //     return `<!--${node.name}-->`;
         case ELEMENT_NODE:
             let attributeHTML=""
             node.props = node.props.filter((prop) => {
-                if (prop.type === STRING_PROPERTY) {
+                if (prop.type === STATIC_PROP) {
                     attributeHTML+=` ${prop.name}="${prop.value}"`
                     return;
-                } else if (prop.type===BOOLEAN_PROPERTY) {
+                } else if (prop.type===BOOLEAN_PROP) {
                     attributeHTML+=` ${prop.name}`
                     return;
                 }

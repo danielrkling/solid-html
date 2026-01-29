@@ -60,84 +60,112 @@ type SLDInstance<T extends ComponentRegistry> = {
 //#region src/sld.d.ts
 declare function createSLD<T extends ComponentRegistry>(components: T): SLDInstance<T>;
 //#endregion
-//#region src/parse.d.ts
-declare const TEXT_NODE = 1;
-type TextNode = {
-  type: typeof TEXT_NODE;
+//#region src/tokenize.d.ts
+declare const OPEN_TAG_TOKEN = 0;
+declare const CLOSE_TAG_TOKEN = 1;
+declare const SLASH_TOKEN = 2;
+declare const IDENTIFIER_TOKEN = 3;
+declare const EQUALS_TOKEN = 4;
+declare const ATTRIBUTE_VALUE_TOKEN = 5;
+declare const TEXT_TOKEN = 6;
+declare const EXPRESSION_TOKEN = 7;
+declare const QUOTE_CHAR_TOKEN = 8;
+interface OpenTagToken {
+  type: typeof OPEN_TAG_TOKEN;
+  value: "<";
+}
+interface CloseTagToken {
+  type: typeof CLOSE_TAG_TOKEN;
+  value: ">";
+}
+interface SlashToken {
+  type: typeof SLASH_TOKEN;
+  value: "/";
+}
+interface IdentifierToken {
+  type: typeof IDENTIFIER_TOKEN;
   value: string;
-};
-declare const COMMENT_NODE = 2;
-type CommentNode = {
-  type: typeof COMMENT_NODE;
+}
+interface EqualsToken {
+  type: typeof EQUALS_TOKEN;
+  value: "=";
+}
+interface AttributeValueToken {
+  type: typeof ATTRIBUTE_VALUE_TOKEN;
   value: string;
-};
-declare const INSERT_NODE = 3;
-type InsertNode = {
-  type: typeof INSERT_NODE;
+}
+interface TextToken {
+  type: typeof TEXT_TOKEN;
+  value: string;
+}
+interface ExpressionToken {
+  type: typeof EXPRESSION_TOKEN;
   value: number;
-};
-declare const ELEMENT_NODE = 4;
-type ElementNode = {
-  type: typeof ELEMENT_NODE;
-  name: string;
-  props: Property[];
-  children: ChildNode[];
-};
-declare const COMPONENT_NODE = 5;
-type ComponentNode = {
-  type: typeof COMPONENT_NODE;
-  name: string;
-  props: Property[];
-  children: ChildNode[];
-  template?: HTMLTemplateElement;
-};
-declare const ROOT_NODE = 6;
-type RootNode = {
+}
+interface QuoteCharToken {
+  type: typeof QUOTE_CHAR_TOKEN;
+  value: "'" | '"';
+}
+type Token = OpenTagToken | CloseTagToken | SlashToken | IdentifierToken | EqualsToken | AttributeValueToken | TextToken | ExpressionToken | QuoteCharToken;
+//#endregion
+//#region src/parse.d.ts
+declare const ROOT_NODE = 0;
+declare const ELEMENT_NODE = 1;
+declare const TEXT_NODE = 2;
+declare const EXPRESSION_NODE = 3;
+declare const BOOLEAN_PROP = 0;
+declare const STATIC_PROP = 1;
+declare const EXPRESSION_PROP = 2;
+declare const SPREAD_PROP = 3;
+declare const MIXED_PROP = 4;
+interface RootNode {
   type: typeof ROOT_NODE;
   children: ChildNode[];
-  template?: HTMLTemplateElement;
-};
-type ChildNode = TextNode | ComponentNode | ElementNode | InsertNode | CommentNode;
-type Property = BooleanProperty | StringProperty | DynamicProperty | MixedProperty | SpreadProperty | AnonymousProperty;
-declare const BOOLEAN_PROPERTY = 1;
-type BooleanProperty = {
-  type: typeof BOOLEAN_PROPERTY;
+}
+type ChildNode = ElementNode | TextNode | ExpressionNode;
+interface ElementNode {
+  type: typeof ELEMENT_NODE;
   name: string;
-};
-declare const STRING_PROPERTY = 2;
-type StringProperty = {
-  type: typeof STRING_PROPERTY;
-  name: string;
+  props: PropNode[];
+  children: ChildNode[];
+}
+interface TextNode {
+  type: typeof TEXT_NODE;
   value: string;
-};
-declare const DYNAMIC_PROPERTY = 3;
-type DynamicProperty = {
-  type: typeof DYNAMIC_PROPERTY;
-  name: string;
+}
+interface ExpressionNode {
+  type: typeof EXPRESSION_NODE;
   value: number;
-};
-declare const MIXED_PROPERTY = 4;
-type MixedProperty = {
-  type: typeof MIXED_PROPERTY;
+}
+interface BooleanProp {
   name: string;
+  type: typeof BOOLEAN_PROP;
+  value: boolean;
+}
+interface StaticProp {
+  name: string;
+  type: typeof STATIC_PROP;
+  value: string;
+  quote?: "'" | '"';
+}
+interface ExpressionProp {
+  name: string;
+  type: typeof EXPRESSION_PROP;
+  value: number;
+  quote?: "'" | '"';
+}
+interface SpreadProp {
+  type: typeof SPREAD_PROP;
+  value: number;
+}
+interface MixedProp {
+  name: string;
+  type: typeof MIXED_PROP;
   value: Array<string | number>;
-};
-declare const SPREAD_PROPERTY = 5;
-type SpreadProperty = {
-  type: typeof SPREAD_PROPERTY;
-  value: number;
-};
-declare const ANONYMOUS_PROPERTY = 6;
-type AnonymousProperty = {
-  type: typeof ANONYMOUS_PROPERTY;
-  value: number;
-};
-/**
- *
- * @param input jsx like string to parse
- * @returns RootNode of an AST
- */
-declare function parse(input: TemplateStringsArray): RootNode;
+  quote?: "'" | '"';
+}
+type PropNode = BooleanProp | StaticProp | ExpressionProp | SpreadProp | MixedProp;
+declare function parse(tokens: Token[], voidElements: Set<string>): RootNode;
 //#endregion
 //#region src/index.d.ts
 /**

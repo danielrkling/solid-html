@@ -1,4 +1,5 @@
 import { SVGElements } from "solid-js/web";
+import { ELEMENT_NODE, ElementNode } from "./parse";
 
 
 export function isString(value: any): value is string {
@@ -43,4 +44,12 @@ export function flat(arr: any[]) {
 export function getValue(value: any) {
   while (isFunction(value)) value = value();
   return value;
+}
+
+export function isComponentNode(node: ElementNode): boolean {
+  return node.type === ELEMENT_NODE && node.name?.[0] === node.name?.[0].toUpperCase();
+}
+
+export function isElementNode(node: ElementNode): boolean {
+  return node.type === ELEMENT_NODE && !isComponentNode(node);
 }
