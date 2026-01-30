@@ -28,7 +28,7 @@ import {
   isObject,
   toArray,
   rawTextElements,
-  voidElements
+  voidElements,
 } from "./util";
 import { tokenize } from "./tokenize";
 
@@ -36,8 +36,6 @@ const cache = new WeakMap<TemplateStringsArray, RootNode>();
 
 //Walk over text, comment, and element nodes
 const walker = document.createTreeWalker(document, 133);
-
-
 
 //Factory function to create new SLD instances.
 export function createSLD<T extends ComponentRegistry>(
@@ -63,10 +61,9 @@ function getCachedRoot(strings: TemplateStringsArray): RootNode {
   let root = cache.get(strings);
   if (!root) {
     root = parse(tokenize(strings, rawTextElements), voidElements);
-    console.log(root)
     buildTemplate(root);
     cache.set(strings, root);
-    // console.log(root)
+    console.log(root);
   }
   return root;
 }
@@ -82,15 +79,20 @@ function renderNode(
     case EXPRESSION_NODE:
       return values[node.value];
     case ELEMENT_NODE:
+      let name = node.name;
       let component: any;
-      
+
       // 1. Resolve the component/tag name
-      if (typeof node.name === 'number') {
+      if (typeof name === "number") {
         // Dynamic Tag: <${MyComp}>
-        component = values[node.name];
-      } else {
-        // Static Tag: <div /> or <MyComp />
-        component = components[node.name];
+        if (typeof values[name] === "function") {
+          component = values[name];
+        } else {
+          name = values[name];
+        }
+      } else if (typeof name === "string" && components[name]) {
+        // Registered Component by dynamic name
+        component = components[name];
       }
 
       // 2. Render as Component if resolved, otherwise as standard HTML
@@ -102,16 +104,11 @@ function renderNode(
       }
 
       // 3. Standard HTML Element (node.name is guaranteed string here)
-      const element = createElement(node.name as string);
+      const element = createElement(name as string);
       const props = gatherProps(node, values, components);
-      
-      spread(
-        element,
-        props,
-        SVGElements.has(node.name as string),
-        true,
-      );
-      
+
+      spread(element, props, SVGElements.has(name as string), true);
+
       return element;
   }
 }
@@ -129,42 +126,47 @@ function renderChildren(
   walker.currentNode = clone;
   walkNodes(node.children);
 
-function walkNodes(nodes: ChildNode[]) {
-  for (const node of nodes) {
-    const domNode = walker.nextNode()!;
-    
-    if (node.type === ELEMENT_NODE) {
-      // Check if it's a component (either by registry name or by being a number index)
-      const isDynamicOrRegistered = 
-        typeof node.name === 'number' || components[node.name];
+  function walkNodes(nodes: ChildNode[]) {
+    for (const node of nodes) {
+      const domNode = walker.nextNode()!;
 
-      if (isDynamicOrRegistered) {
+      if (node.type === ELEMENT_NODE) {
+        // Check if it's a component (either by registry name or by being a number index)
+        const isDynamicOrRegistered =
+          typeof node.name === "number" || components[node.name];
+
+        if (isDynamicOrRegistered) {
+          insert(
+            domNode.parentNode!,
+            renderNode(node, values, components),
+            domNode,
+          );
+          walker.currentNode = domNode;
+          continue;
+        }
+
+        // Standard Element path...
+        if (node.props.length) {
+          const props = gatherProps(node, values, components);
+          spread(
+            domNode as Element,
+            props,
+            SVGElements.has(node.name as string),
+            true,
+          );
+        }
+
+        walkNodes(node.children);
+      } else if (node.type === EXPRESSION_NODE) {
         insert(
           domNode.parentNode!,
           renderNode(node, values, components),
           domNode,
         );
         walker.currentNode = domNode;
-        continue;
       }
-      
-      // Standard Element path...
-      if (node.props.length) {
-        const props = gatherProps(node, values, components);
-        spread(domNode as Element, props, SVGElements.has(node.name as string), true);
-      }
-
-      walkNodes(node.children);
-    } else if (node.type === EXPRESSION_NODE) {
-      insert(
-        domNode.parentNode!,
-        renderNode(node, values, components),
-        domNode,
-      );
-      walker.currentNode = domNode;
     }
   }
-}
   return toArray(clone.childNodes);
 }
 
