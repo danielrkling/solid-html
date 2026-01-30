@@ -1,22 +1,20 @@
 import { BOOLEAN_PROP, ChildNode, ELEMENT_NODE, EXPRESSION_NODE, ROOT_NODE, RootNode, STATIC_PROP, TEXT_NODE } from "./parse";
-import { createComment, createElement, isComponentNode, isElementNode, isString } from "./util";
-
-
+import { createComment, createElement, isComponentNode, isElementNode, isHtmlElementNode, isString } from "./util";
 
 
 //build template element with same exact shape as tree so they can be walked through in sync
 export function buildTemplate(node: RootNode | ChildNode): void {
     if (node.type === ROOT_NODE || isComponentNode(node)) {
         //Criteria for using template is component or root has at least 1 element. May be be a more optimal condition.
-        if (node.children.some(isElementNode)) {
+        if (node.children.some(isHtmlElementNode)) {
             const template = document.createElement("template");
             // buildNodes(node.children, template.content);
             template.innerHTML = node.children.map(buildHTML).join("");
             node.template = template
         }
         node.children.forEach(buildTemplate)
-    }
-    if (isElementNode(node)) {
+    } else
+    if (isHtmlElementNode(node)) {
         node.children.forEach(buildTemplate)
     }
 }

@@ -1,5 +1,5 @@
 import { SVGElements } from "solid-js/web";
-import { ELEMENT_NODE, ElementNode } from "./parse";
+import { ELEMENT_NODE, ElementNode, ChildNode } from "./parse";
 
 
 export function isString(value: any): value is string {
@@ -29,12 +29,10 @@ export function isArray(value: any): value is any[] {
 export const toArray = Array.from;
 
 
-export const doc = document
-
-export const createComment = (data:string)=>doc.createComment(data)
+export const createComment = (data:string)=>document.createComment(data)
 
 export function createElement(tag: string){
-  return SVGElements.has(tag) ? doc.createElementNS("http://www.w3.org/2000/svg", tag) : doc.createElement(tag)
+  return SVGElements.has(tag) ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag)
 }
 
 export function flat(arr: any[]) {
@@ -46,10 +44,58 @@ export function getValue(value: any) {
   return value;
 }
 
-export function isComponentNode(node: ElementNode): boolean {
-  return node.type === ELEMENT_NODE && node.name?.[0] === node.name?.[0].toUpperCase();
+/**
+ * Checks if a node is an ELEMENT_NODE.
+ * Narrowing this allows access to node.name, node.props, and node.children.
+ */
+export function isElementNode(node: ChildNode): node is ElementNode {
+  return node.type === ELEMENT_NODE;
 }
 
-export function isElementNode(node: ElementNode): boolean {
-  return node.type === ELEMENT_NODE && !isComponentNode(node);
+/**
+ * Checks if a node is a Component.
+ * In your parser, a node is a component if:
+ * 1. It is an ELEMENT_NODE AND
+ * 2. Its name is a number (dynamic expression) OR
+ * 3. Its name is a string starting with an Uppercase letter (static component).
+ */
+export function isComponentNode(node: ChildNode): node is ElementNode {
+  if (!isElementNode(node)) return false;
+
+  const name = node.name;
+  return (
+    typeof name === "number" || 
+    (typeof name === "string" && name[0] === name[0].toUpperCase())
+  );
 }
+
+/**
+ * Optional: Check specifically for static HTML elements (div, span, etc.)
+ */
+export function isHtmlElementNode(node: ChildNode): node is ElementNode {
+  return isElementNode(node) && !isComponentNode(node);
+}
+
+export const voidElements = new Set([
+  "area",
+  "base",
+  "br",
+  "col",
+  "embed",
+  "hr",
+  "img",
+  "input",
+  "link",
+  "meta",
+  "param",
+  "source",
+  "track",
+  "wbr",
+]);
+
+export const rawTextElements = new Set([
+  "script",
+  "style",
+  "textarea",
+  "title",
+]);

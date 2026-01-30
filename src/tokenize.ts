@@ -127,7 +127,7 @@ export function tokenize(
           
           const nextCode = str.charCodeAt(nextTag + 1);
           // Case-sensitive identifier check remains the same
-          if (nextCode === 47 || isIdentifierChar(nextCode)) {
+          if (nextCode === 47 || isIdentifierChar(nextCode) || nextTag + 1 === len) {
             tokens.push({ type: OPEN_TAG_TOKEN, value: "<" });
             state = STATE_TAG;
             cursor = nextTag + 1;

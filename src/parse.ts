@@ -47,7 +47,7 @@ export type ChildNode = ElementNode | TextNode | ExpressionNode;
 
 export interface ElementNode {
   type: typeof ELEMENT_NODE;
-  name: string;
+  name: string | number;
   props: PropNode[];
   children: ChildNode[];
 }
