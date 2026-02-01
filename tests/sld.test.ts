@@ -1,97 +1,166 @@
-import { createRoot, createSignal } from "solid-js";
-import { createSLD, sld } from "../src"; // Your entry point
-import { expect, it, describe } from "vitest";
+import { createRoot, createSignal, For, Show } from "solid-js";
+import { createSLD } from "../src";
+import { expect, it, describe, beforeEach } from "vitest";
 
-describe("SLD Integration (Browser)", () => {
-  
-  it("should render a static tree using a template clone", () => {
-    const sld = createSLD({});
-    const result = sld`
-      <div class="container">
-        <h1>Title</h1>
-        <p>Description</p>
-      </div>
-    ` as unknown as Node[];
+describe("SLD Advanced Integration", () => {
+  const sld = createSLD({ For, Show });
 
-    const container = document.createElement("div");
-    container.append(...result);
-    document.body.appendChild(container);
-
-    // Verify structure
-    expect(container.querySelector(".container")).not.toBeNull();
-    expect(container.querySelector("h1")?.textContent).toBe("Title");
+  beforeEach(() => {
+    document.body.innerHTML = "";
   });
 
-  it("should handle dynamic components with <//> shorthand", () => {
-    const Card = (props: any) => sld`<div class="card">${props.children}</div>`;
-    const sldA = createSLD({ Card });
+  // --- ATTRIBUTE EDGE CASES ---
+  describe("Attributes and Props", () => {
+    it("handles complex attribute names and mixed values", () => {
+      const [cls, setCls] = createSignal("active");
+      const result = sld`<div class="base ${cls}" data-test-id="main-div" aria-hidden="false"></div>` as Node[];
+      const el = result[0] as HTMLElement;
 
-    const result = sldA`
-      <Card>
-        <span>Content</span>
-      <//>
-    ` as unknown as Node[];
+      expect(el.className).toBe("base active");
+      expect(el.getAttribute("data-test-id")).toBe("main-div");
+      
+      setCls("inactive");
+      expect(el.className).toBe("base inactive");
+    });
 
-    const container = document.createElement("div");
-    container.append(...result);
-    document.body.appendChild(container);
+    it("handles boolean attributes correctly", () => {
+      const [disabled, setDisabled] = createSignal(true);
+      const result = sld`<button disabled=${disabled} autofocus>Click</button>` as Node[];
+      const btn = result[0] as HTMLButtonElement;
 
-    const card = container.querySelector(".card");
-    expect(card).not.toBeNull();
-    expect(card?.firstElementChild?.tagName).toBe("SPAN");
+      expect(btn.disabled).toBe(true);
+      expect(btn.hasAttribute("autofocus")).toBe(true);
+
+      setDisabled(false);
+      expect(btn.disabled).toBe(false);
+    });
+
+    it("handles spread props and overrides", () => {
+      const props = { id: "spread", class: "blue", "data-attr": "val" };
+      const result = sld`<div id="static" class="red"  ...${props}></div>` as Node[];
+      const el = result[0] as HTMLElement;
+
+      expect(el.id).toBe("spread");
+      expect(el.className).toBe("blue");
+      expect(el.getAttribute("data-attr")).toBe("val");
+    });
+
+        it("handles spread props and overrides", () => {
+      const props = { id: "spread", class: "blue", "data-attr": "val" };
+      const result = sld`<div  ...${props} id="static" class="red"  ></div>` as Node[];
+      const el = result[0] as HTMLElement;
+
+      expect(el.id).toBe("static");
+      expect(el.className).toBe("red");
+      expect(el.getAttribute("data-attr")).toBe("val");
+    });
   });
 
-  it("should be reactive when signals update", () => {
-    const sld = createSLD({});
-    
-    createRoot((dispose) => {
-      const [count, setCount] = createSignal(0);
-      const result = sld`<div>Count: ${() => count()}</div>` as unknown as Node[];
+  // --- TOKENIZER & PARSER EDGE CASES ---
+  describe("Parser & Tokenizer Robustness", () => {
+    it("ignores HTML comments and their contents", () => {
+      const signal = () => "HIDDEN";
+      // The tokenizer should skip the expression inside the comment entirely
+      const result = sld`
+        <div>
+            <!-- This is a comment with an expression: ${signal()} -->
+          <p>Visible</p>
+        </div>` as Node[];
+      
+      const container = document.createElement("div");
+      container.append(...result);
+      expect(container.innerHTML).not.toContain("HIDDEN");
+      expect(container.querySelector("p")?.textContent).toBe("Visible");
+    });
+
+    it("handles deep nesting and shorthand closing in mixed order", () => {
+      const Box = (props: any) => sld`<div class="box">${props.children}</div>`;
+      const localSld = createSLD({ Box });
+
+      
+      
+      const result = localSld`
+        <Box>
+          <ul>
+            <li><Box>Item 1<//></li>
+            <li><Box>Item 2</Box></li>
+          </ul>
+        </Box>` as Node[];
+
+      const container = document.createElement("div");
+      container.append(...result);
+      console.log(container.innerHTML);
+      expect(container.querySelectorAll(".box").length).toBe(3);
+      expect(container.querySelector("li")?.textContent).toBe("Item 1");
+    });
+
+    it("handles weird whitespace and line breaks in tags", () => {
+      const result = sld`
+        <div 
+          id="test"
+          class = 
+            "spaced"
+        >  Text  </div>` as Node[];
+      const el = result[0] as HTMLElement;
+      expect(el.id).toBe("test");
+      expect(el.className).toBe("spaced");
+      expect(el.textContent?.trim()).toBe("Text");
+    });
+  });
+
+  // --- REACTIVITY & LOGIC ---
+  describe("Logic and Control Flow", () => {
+    it("works with Solid's <Show> component", () => {
+      const [visible, setVisible] = createSignal(false);
+      const result = sld`<div>
+        <Show when=${visible}>
+          <span id="target">I am visible</span>
+        </Show>
+        </div>` as Node[];
+
+        console.log(result);
       
       const container = document.createElement("div");
       container.append(...result);
       document.body.appendChild(container);
 
-      expect(container.textContent).toBe("Count: 0");
+      expect(container.querySelector("#target")).toBeNull();
 
-      setCount(1);
-      // Solid's fine-grained update happens here
-      console.log(count());
-      expect(container.textContent).toBe("Count: 1");
+      setVisible(true);
+      expect(container.querySelector("#target")).not.toBeNull();
+      expect(container.querySelector("#target")?.textContent).toBe("I am visible");
+    });
+
+    it("works with Solid's <For> component", () => {
+      const [items, setItems] = createSignal(["A", "B"]);
+      const result = sld`
+        <ul>
+          <For each=${items}>
+            ${(item: string) => sld`<li>${item}</li>`}
+          </For>
+        </ul>` as Node[];
+
+      const container = document.createElement("div");
+      container.append(...result);
       
-      dispose();
+      expect(container.querySelectorAll("li").length).toBe(2);
+      
+      setItems(["A", "B", "C"]);
+      expect(container.querySelectorAll("li").length).toBe(3);
     });
   });
 
-  it("should preserve SVG namespace for nested paths", () => {
-    const sld = createSLD({});
-    const result = sld`
-      <svg viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="40" />
-      </svg>
-    ` as unknown as Node[];
 
-    const svg = result[0] as SVGSVGElement;
-    const circle = svg.querySelector("circle");
+
+  // --- RAW TEXT ELEMENTS ---
+  it("treats <script> and <style> as raw text", () => {
+    // This tests that < or > inside style don't get parsed as tags
+    const result = sld`
+      <style>
+        body > div { color: red; }
+      </style>` as Node[];
     
-    // Crucial: check that it's not an HTMLUnknownElement
-    expect(circle?.namespaceURI).toBe("http://www.w3.org/2000/svg");
-  });
-
-  it("should handle void elements without breaking the TreeWalker", () => {
-    const sld = createSLD({});
-    // If <br> isn't handled as void, the walker might look for children
-    const result = sld`
-      <div>
-        <br>
-        <span id="after">After</span>
-      </div>
-    ` as unknown as Node[];
-
-    const container = document.createElement("div");
-    container.append(...result);
-
-    expect(container.querySelector("#after")).not.toBeNull();
-    expect(container.querySelector("br")?.childNodes.length).toBe(0);
+    expect(result[0].textContent).toContain("body > div");
+    expect((result[0] as HTMLElement).tagName).toBe("STYLE");
   });
 });

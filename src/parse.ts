@@ -158,16 +158,22 @@ export function parse(tokens: Token[], voidElements: Set<string>): RootNode {
       // Handle Closing Tag: </name>
       if (next && next.type === SLASH_TOKEN) {
         const nameToken = tokens[pos + 2];
-        // Ensure we only pop if the tag matches (prevents stack corruption)
-        if (nameToken && nameToken.type === IDENTIFIER_TOKEN) {
-          if (
-            stack.length > 1 &&
-            (stack[stack.length - 1] as ElementNode).name === nameToken.value
-          ) {
+
+        if (stack.length > 1) {
+          // Determine if we should pop:
+          // 1. It's the shorthand <//> (next token is another slash)
+          // 2. It's a named tag </div houses matching the current stack top
+          const isShorthand = nameToken?.type === SLASH_TOKEN;
+          const isMatched =
+            nameToken?.type === IDENTIFIER_TOKEN &&
+            (stack[stack.length - 1] as ElementNode).name === nameToken.value;
+
+          if (isShorthand || isMatched) {
             stack.pop();
           }
         }
-        pos += 4; // skip <, /, name, >
+
+        pos += 4; // Move past <, /, (name or /), and >
         continue;
       }
 

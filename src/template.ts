@@ -1,16 +1,15 @@
 import {
-    BOOLEAN_PROP,
-    ChildNode,
-    ELEMENT_NODE,
-    EXPRESSION_NODE,
-    ROOT_NODE,
-    RootNode,
-    STATIC_PROP,
-    TEXT_NODE
+  BOOLEAN_PROP,
+  ChildNode,
+  ELEMENT_NODE,
+  EXPRESSION_NODE,
+  ROOT_NODE,
+  RootNode,
+  SPREAD_PROP,
+  STATIC_PROP,
+  TEXT_NODE,
 } from "./parse";
-import {
-    isComponentNode,
-} from "./util";
+import { isComponentNode } from "./util";
 
 //build template element with same exact shape as tree so they can be walked through in sync
 export function buildTemplate(node: RootNode | ChildNode): void {
@@ -50,16 +49,19 @@ function buildHTML(node: ChildNode): string {
       }
       let attributeHTML = "";
 
-      node.props = node.props.filter((prop) => {
-        if (prop.type === STATIC_PROP) {
-          attributeHTML += ` ${prop.name}="${prop.value}"`;
-          return;
-        } else if (prop.type === BOOLEAN_PROP) {
-          attributeHTML += ` ${prop.name}`;
-          return;
-        }
-        return true;
-      });
+      //dont add static props when spread is present. so that overrides work correctly
+      if (!node.props.some((p) => p.type === SPREAD_PROP)) {
+        node.props = node.props.filter((prop) => {
+          if (prop.type === STATIC_PROP) {
+            attributeHTML += ` ${prop.name}="${prop.value}"`;
+            return;
+          } else if (prop.type === BOOLEAN_PROP) {
+            attributeHTML += ` ${prop.name}`;
+            return;
+          }
+          return true;
+        });
+      }
 
       return `<${node.name}${attributeHTML}>${node.children.map(buildHTML).join("")}</${node.name}>`;
   }

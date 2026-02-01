@@ -798,3 +798,72 @@ describe("Dynamic Tag AST", () => {
     });
   });
 });
+
+describe("Edge Cases", () => {
+  it("empty template", () => {
+    const ast = jsx``;
+    expect(ast).toEqual({ type: ROOT_NODE, children: [] });
+  });
+  it("only expressions", () => {
+    const a = 1;
+    const b = 2;
+    const ast = jsx`${a}${b}`;
+    expect(ast).toEqual({
+      type: ROOT_NODE,
+      children: [
+        { type: EXPRESSION_NODE, value: 0 },
+        { type: EXPRESSION_NODE, value: 1 },
+      ],
+    });
+  });
+
+  it("shorthand closing", () => {
+    const ast = jsx`<div><span>Text<//><//>`;
+    expect(ast).toEqual({
+      type: ROOT_NODE,
+      children: [
+        {
+          type: ELEMENT_NODE,
+          name: "div",
+          props: [],
+          children: [
+            {
+              type: ELEMENT_NODE,
+              name: "span",
+              props: [],
+              children: [{ type: TEXT_NODE, value: "Text" }],
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("shorthand closing in listed elements", () => {
+    const ast = jsx`<ul><li>Item 1<//><li>Item 2<//><//>`;
+    expect(ast).toEqual({
+      type: ROOT_NODE,
+      children: [
+        {
+          type: ELEMENT_NODE,
+          name: "ul",
+          props: [],
+          children: [
+            {
+              type: ELEMENT_NODE,
+              name: "li",
+              props: [],
+              children: [{ type: TEXT_NODE, value: "Item 1" }],
+            },
+            {
+              type: ELEMENT_NODE,
+              name: "li",
+              props: [],
+              children: [{ type: TEXT_NODE, value: "Item 2" }],
+            },
+          ],
+        },
+      ],
+    });
+  });
+});

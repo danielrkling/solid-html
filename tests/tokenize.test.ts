@@ -17,7 +17,6 @@ function tokenizeTemplate( strings: TemplateStringsArray, ...values: any[]) {
   return tokenize(strings, rawTextElements);
 }
 
-describe("tokenizer", () => {
   describe("basic tokens", () => {
     it("should tokenize opening tag", () => {
       const tokens = tokenizeTemplate`<div`;
@@ -1205,7 +1204,7 @@ it("should handle dynamic closing tags with no whitespace", () => {
       ]); 
     }); 
   });
-});
+
 
 describe("comments handling", () => {
   it ("should tokenize comments correctly", () => {

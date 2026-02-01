@@ -56,7 +56,7 @@ function getCachedRoot(strings: TemplateStringsArray): RootNode {
     root = parse(tokenize(strings, rawTextElements), voidElements);
     buildTemplate(root);
     cache.set(strings, root);
-    console.log(root);
+    // console.log(root);
   }
   return root;
 }
