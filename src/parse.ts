@@ -249,7 +249,10 @@ export function parse(tokens: Token[], voidElements: Set<string>): RootNode {
               }
             }
           } else {
-            node.props.push({ name: pName, type: BOOLEAN_PROP, value: true });
+            //because whitespace is ignored, ...${} would be boolean + expression.
+            if (pName !== "...") {
+              node.props.push({ name: pName, type: BOOLEAN_PROP, value: true });
+            }
           }
           continue;
         }
