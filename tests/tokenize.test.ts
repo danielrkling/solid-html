@@ -1206,3 +1206,30 @@ it("should handle dynamic closing tags with no whitespace", () => {
     }); 
   });
 });
+
+describe("comments handling", () => {
+  it ("should tokenize comments correctly", () => {
+    const tokens = tokenizeTemplate`<div><!-- This is a comment --></div>`;
+    expect(tokens).toEqual([
+      { type: OPEN_TAG_TOKEN, value: "<" },
+      { type: IDENTIFIER_TOKEN, value: "div" },
+      { type: CLOSE_TAG_TOKEN, value: ">" },
+      { type: OPEN_TAG_TOKEN, value: "<" },
+      { type: SLASH_TOKEN, value: "/" },
+      { type: IDENTIFIER_TOKEN, value: "div" },
+      { type: CLOSE_TAG_TOKEN, value: ">" },
+    ]);
+  });
+
+  it ("should handle comments with special characters", () => {
+    const tokens = tokenizeTemplate`<!-- Special chars: <>&'" -->`;
+    expect(tokens).toEqual([
+    ]);
+  });
+  it ("should handle comments with expressions inside", () => {
+    const value = "test";
+    const tokens = tokenizeTemplate`<!-- Comment with ${value} inside -->`;
+    expect(tokens).toEqual([
+    ]);
+  });
+});
