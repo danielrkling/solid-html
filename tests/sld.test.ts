@@ -83,7 +83,7 @@ describe("SLD Advanced Integration", () => {
         <Box>
           <ul>
             <li><Box>Item 1<//></li>
-            <li><Box>Item 2</Box></li>
+            <li><Box>Item 2<//></li>
           </ul>
         </Box>` as Node[];
 
@@ -97,12 +97,14 @@ describe("SLD Advanced Integration", () => {
     it("handles weird whitespace and line breaks in tags", () => {
       const result = sld`
         <div 
-          id="test"
+          id="test
+          "
           class = 
             "spaced"
         >  Text  </div>` as Node[];
       const el = result[0] as HTMLElement;
-      expect(el.id).toBe("test");
+      expect(el.id).toBe(`test
+          `);
       expect(el.className).toBe("spaced");
       expect(el.textContent?.trim()).toBe("Text");
     });
