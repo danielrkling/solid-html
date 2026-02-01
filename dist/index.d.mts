@@ -118,16 +118,18 @@ declare const STATIC_PROP = 1;
 declare const EXPRESSION_PROP = 2;
 declare const SPREAD_PROP = 3;
 declare const MIXED_PROP = 4;
+type ChildNode = ElementNode | TextNode | ExpressionNode;
 interface RootNode {
   type: typeof ROOT_NODE;
   children: ChildNode[];
+  template?: HTMLTemplateElement;
 }
-type ChildNode = ElementNode | TextNode | ExpressionNode;
 interface ElementNode {
   type: typeof ELEMENT_NODE;
-  name: string;
+  name: string | number;
   props: PropNode[];
   children: ChildNode[];
+  template?: HTMLTemplateElement;
 }
 interface TextNode {
   type: typeof TEXT_NODE;
@@ -212,4 +214,3 @@ declare const SLD: <TNew extends ComponentRegistry>(components: TNew) => SLDInst
 declare function run<T extends FunctionComponent>(component: T): T;
 //#endregion
 export { SLD, SLDInstance, createSLD, sld as default, sld, defaultComponents, parse, run };
-//# sourceMappingURL=index.d.ts.map

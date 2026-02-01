@@ -1,16 +1,16 @@
 import { JSX } from "solid-js";
 
-
 export type MaybeFunction<T> = T | (() => T);
 export type MaybeFunctionProps<T> = {
-    [K in keyof T]: K extends `on${string}` | "ref" ? T[K] : MaybeFunction<T[K]>;
+  [K in keyof T]: K extends `on${string}` | "ref" ? T[K] : MaybeFunction<T[K]>;
 };
 export type IntrinsicElementsMaybeFunction = {
-    [K in keyof JSX.IntrinsicElements]: MaybeFunctionProps<JSX.IntrinsicElements[K]>;
+  [K in keyof JSX.IntrinsicElements]: MaybeFunctionProps<
+    JSX.IntrinsicElements[K]
+  >;
 };
 
-
-export type FunctionComponent = (...args: any[]) => JSX.Element
+export type FunctionComponent = (...args: any[]) => JSX.Element;
 /**
  * Component registry type
  * @example
@@ -57,7 +57,9 @@ export type SLDInstance<T extends ComponentRegistry> = {
    * const myTemplate = mySLD`<MyComponent name="World" />`
    * ```
    */
-  define<TNew extends ComponentRegistry>(components: TNew): SLDInstance<T & TNew>;
+  define<TNew extends ComponentRegistry>(
+    components: TNew,
+  ): SLDInstance<T & TNew>;
 
   /**
    * Component registry

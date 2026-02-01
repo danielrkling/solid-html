@@ -38,8 +38,6 @@ export type PropType =
   | typeof SPREAD_PROP
   | typeof MIXED_PROP;
 
-
-
 export type ChildNode = ElementNode | TextNode | ExpressionNode;
 
 export interface RootNode {
@@ -53,7 +51,7 @@ export interface ElementNode {
   name: string | number;
   props: PropNode[];
   children: ChildNode[];
-template?: HTMLTemplateElement;
+  template?: HTMLTemplateElement;
 }
 
 export interface TextNode {

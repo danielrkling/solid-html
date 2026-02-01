@@ -76,7 +76,6 @@ export interface ExpressionToken {
   value: number;
 }
 
-
 export interface QuoteCharToken {
   type: typeof QUOTE_CHAR_TOKEN;
   value: "'" | '"';
@@ -93,13 +92,12 @@ export type Token =
   | ExpressionToken
   | QuoteCharToken;
 
-
-
 // Add a new state for elements that contain raw text only
 const STATE_TEXT = 0;
 const STATE_TAG = 1;
 const STATE_ATTR_VALUE = 2;
 const STATE_RAW_TEXT = 3;
+const STATE_COMMENT = 4;
 
 export function tokenize(
   strings: TemplateStringsArray | string[],
@@ -108,7 +106,7 @@ export function tokenize(
   const tokens: Token[] = [];
   let state = STATE_TEXT;
   let quoteChar: '"' | "'" | "" = "";
-  let lastTagName = ""; 
+  let lastTagName = "";
   let cursor = 0;
 
   for (let i = 0; i < strings.length; i++) {
@@ -120,14 +118,23 @@ export function tokenize(
       if (state === STATE_TEXT) {
         const nextTag = str.indexOf("<", cursor);
         if (nextTag === -1) {
-          if (cursor < len) tokens.push({ type: TEXT_TOKEN, value: str.slice(cursor) });
+          if (cursor < len)
+            tokens.push({ type: TEXT_TOKEN, value: str.slice(cursor) });
           cursor = len;
         } else {
-          if (nextTag > cursor) tokens.push({ type: TEXT_TOKEN, value: str.slice(cursor, nextTag) });
-          
+          if (nextTag > cursor)
+            tokens.push({
+              type: TEXT_TOKEN,
+              value: str.slice(cursor, nextTag),
+            });
+
           const nextCode = str.charCodeAt(nextTag + 1);
           // Case-sensitive identifier check remains the same
-          if (nextCode === 47 || isIdentifierChar(nextCode) || nextTag + 1 === len) {
+          if (
+            nextCode === 47 ||
+            isIdentifierChar(nextCode) ||
+            nextTag + 1 === len
+          ) {
             tokens.push({ type: OPEN_TAG_TOKEN, value: "<" });
             state = STATE_TAG;
             cursor = nextTag + 1;
@@ -136,9 +143,7 @@ export function tokenize(
             cursor = nextTag + 1;
           }
         }
-      } 
-      
-      else if (state === STATE_TAG) {
+      } else if (state === STATE_TAG) {
         const char = str[cursor];
         const code = str.charCodeAt(cursor);
 
@@ -146,7 +151,7 @@ export function tokenize(
           cursor++;
         } else if (char === ">") {
           tokens.push({ type: CLOSE_TAG_TOKEN, value: ">" });
-          
+
           // Case-sensitive lookup
           if (rawTextElements.has(lastTagName)) {
             state = STATE_RAW_TEXT;
@@ -167,32 +172,35 @@ export function tokenize(
           cursor++;
         } else if (isIdentifierChar(code)) {
           const start = cursor;
-          while (cursor < len && isIdentifierChar(str.charCodeAt(cursor))) cursor++;
+          while (cursor < len && isIdentifierChar(str.charCodeAt(cursor)))
+            cursor++;
           // Capture tag name exactly as it appears
           lastTagName = str.slice(start, cursor);
           tokens.push({ type: IDENTIFIER_TOKEN, value: lastTagName });
         } else {
           cursor++;
         }
-      } 
-      
-      else if (state === STATE_ATTR_VALUE) {
+      } else if (state === STATE_ATTR_VALUE) {
         const endQuoteIndex = str.indexOf(quoteChar, cursor);
         if (endQuoteIndex === -1) {
-          tokens.push({ type: ATTRIBUTE_VALUE_TOKEN, value: str.slice(cursor) });
+          tokens.push({
+            type: ATTRIBUTE_VALUE_TOKEN,
+            value: str.slice(cursor),
+          });
           cursor = len;
         } else {
           if (endQuoteIndex > cursor) {
-            tokens.push({ type: ATTRIBUTE_VALUE_TOKEN, value: str.slice(cursor, endQuoteIndex) });
+            tokens.push({
+              type: ATTRIBUTE_VALUE_TOKEN,
+              value: str.slice(cursor, endQuoteIndex),
+            });
           }
           tokens.push({ type: QUOTE_CHAR_TOKEN, value: quoteChar as any });
           state = STATE_TAG;
           quoteChar = "";
           cursor = endQuoteIndex + 1;
         }
-      }
-
-      else if (state === STATE_RAW_TEXT) {
+      } else if (state === STATE_RAW_TEXT) {
         // Case-sensitive search for the specific closing tag
         const closeTagStr = `</${lastTagName}>`;
         const endOfRawIdx = str.indexOf(closeTagStr, cursor);
@@ -202,10 +210,13 @@ export function tokenize(
           cursor = len;
         } else {
           if (endOfRawIdx > cursor) {
-            tokens.push({ type: TEXT_TOKEN, value: str.slice(cursor, endOfRawIdx) });
+            tokens.push({
+              type: TEXT_TOKEN,
+              value: str.slice(cursor, endOfRawIdx),
+            });
           }
           state = STATE_TEXT;
-          cursor = endOfRawIdx; 
+          cursor = endOfRawIdx;
         }
       }
     }

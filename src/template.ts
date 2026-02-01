@@ -1,24 +1,15 @@
 import {
-  BOOLEAN_PROP,
-  ChildNode,
-  ELEMENT_NODE,
-  ElementNode,
-  EXPRESSION_NODE,
-  ExpressionNode,
-  NodeType,
-  ROOT_NODE,
-  RootNode,
-  STATIC_PROP,
-  TEXT_NODE,
-  TextNode,
+    BOOLEAN_PROP,
+    ChildNode,
+    ELEMENT_NODE,
+    EXPRESSION_NODE,
+    ROOT_NODE,
+    RootNode,
+    STATIC_PROP,
+    TEXT_NODE
 } from "./parse";
 import {
-  createComment,
-  createElement,
-  isComponentNode,
-  isElementNode,
-  isHtmlElementNode,
-  isString,
+    isComponentNode,
 } from "./util";
 
 //build template element with same exact shape as tree so they can be walked through in sync
@@ -29,7 +20,7 @@ export function buildTemplate(node: RootNode | ChildNode): void {
   ) {
     //Criteria for using template is component or root has at least 1 element. May be be a more optimal condition.
     if (
-      node.children.some((v) => v.type === ELEMENT_NODE && isHtmlElementNode(v))
+      node.children.some((v) => v.type === ELEMENT_NODE && !isComponentNode(v))
     ) {
       const template = document.createElement("template");
       // buildNodes(node.children, template.content);
@@ -37,7 +28,7 @@ export function buildTemplate(node: RootNode | ChildNode): void {
       node.template = template;
     }
     node.children.forEach(buildTemplate);
-  } else if (node.type === ELEMENT_NODE && isHtmlElementNode(node)) {
+  } else if (node.type === ELEMENT_NODE && !isComponentNode(node)) {
     node.children.forEach(buildTemplate);
   }
 }

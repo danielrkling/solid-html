@@ -1,36 +1,29 @@
 import { JSX, createComponent, mergeProps } from "solid-js";
 import { SVGElements, insert, spread } from "solid-js/web";
 import {
-  parse,
-  RootNode,
-  ChildNode,
-  TEXT_NODE,
-  EXPRESSION_NODE,
-  ELEMENT_NODE,
-  ElementNode,
-  ROOT_NODE,
   BOOLEAN_PROP,
-  STATIC_PROP,
+  ChildNode,
+  ELEMENT_NODE,
+  EXPRESSION_NODE,
   EXPRESSION_PROP,
+  ElementNode,
   MIXED_PROP,
+  RootNode,
   SPREAD_PROP,
+  STATIC_PROP,
+  TEXT_NODE,
+  parse
 } from "./parse";
 import { buildTemplate } from "./template";
+import { tokenize } from "./tokenize";
 import { ComponentRegistry, SLDInstance } from "./types";
 import {
-  createComment,
-  createElement,
   flat,
   getValue,
   isComponentNode,
-  isFunction,
-  isNumber,
-  isObject,
-  toArray,
   rawTextElements,
-  voidElements,
+  voidElements
 } from "./util";
-import { tokenize } from "./tokenize";
 
 const cache = new WeakMap<TemplateStringsArray, RootNode>();
 
@@ -84,15 +77,23 @@ function renderNode(
 
       // 1. Resolve the component/tag name
       if (typeof name === "number") {
+        const value = values[name];
         // Dynamic Tag: <${MyComp}>
-        if (typeof values[name] === "function") {
-          component = values[name];
+        if (typeof value === "function") {
+          component = value;
+        } else if (typeof value === "string") {
+          name = value;
         } else {
-          name = values[name];
+          throw new Error("Dynamic element name must be a string or component");
         }
-      } else if (typeof name === "string" && components[name]) {
-        // Registered Component by dynamic name
-        component = components[name];
+      } else if (typeof name === "string") {
+        if (isComponentNode(node)) {
+          // Registered Component by static name
+          component = components[name];
+          if (!component) {
+            throw new Error(`Component "${name}" not found in registry`);
+          }
+        }
       }
 
       // 2. Render as Component if resolved, otherwise as standard HTML
@@ -103,11 +104,14 @@ function renderNode(
         );
       }
 
+      const isSvg = SVGElements.has(name as string);
       // 3. Standard HTML Element (node.name is guaranteed string here)
-      const element = createElement(name as string);
+      const element = isSvg
+        ? document.createElementNS("http://www.w3.org/2000/svg", name as string)
+        : document.createElement(name as string);
       const props = gatherProps(node, values, components);
 
-      spread(element, props, SVGElements.has(name as string), true);
+      spread(element, props, isSvg, true);
 
       return element;
   }
@@ -167,7 +171,7 @@ function renderChildren(
       }
     }
   }
-  return toArray(clone.childNodes);
+  return Array.from(clone.childNodes);
 }
 
 function gatherProps(
@@ -190,13 +194,14 @@ function gatherProps(
       case MIXED_PROP:
         const value = () =>
           prop.value
-            .map((v) => (isNumber(v) ? getValue(values[v]) : v))
+            .map((v) => (typeof v === "number" ? getValue(values[v]) : v))
             .join("");
         applyGetter(props, prop.name, value);
         break;
       case SPREAD_PROP:
         const spread = values[prop.value];
-        if (!isObject(spread)) throw new Error("Can only spread objects");
+        if (!spread || typeof spread !== "object")
+          throw new Error("Can only spread objects");
         props = mergeProps(props, spread);
         break;
     }
@@ -215,7 +220,7 @@ function gatherProps(
 
 function applyGetter(props: Record<string, any>, name: string, value: any) {
   if (
-    isFunction(value) &&
+    typeof value === "function" &&
     value.length === 0 &&
     name !== "ref" &&
     !name.startsWith("on")
