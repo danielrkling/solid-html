@@ -53,7 +53,7 @@ function buildHTML(node: ChildNode): string {
       if (!node.props.some((p) => p.type === SPREAD_PROP)) {
         node.props = node.props.filter((prop) => {
           if (prop.type === STATIC_PROP) {
-            attributeHTML += ` ${prop.name}="${prop.value}"`;
+            attributeHTML += ` ${prop.name}=${prop.quote}${prop.value}${prop.quote}`;
             return;
           } else if (prop.type === BOOLEAN_PROP) {
             attributeHTML += ` ${prop.name}`;

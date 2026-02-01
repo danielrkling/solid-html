@@ -5,7 +5,7 @@ import { sld } from "./src";
 
 function Counter() {
     const [count, setCount] = createSignal(0);
-    return sld`<button  "quote" attr  =  "false" disabled ...${{class: "btn"}} onclick=${() => setCount(count() + 1)}>Count: ${() => count()}</button>`;
+    return sld`<button  "quote" attr  =  "false"  ...${{class: "btn"}} onClick=${[() => setCount(count() + 1), true]}>Count: ${() => count()}</button>`;
 }
 
 render(Counter, document.getElementById("app")!);
