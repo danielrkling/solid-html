@@ -223,8 +223,7 @@ export function tokenize(
         }
       }else if (state === STATE_COMMENT) {
         // LOOK FOR END OF COMMENT: - - >
-        const commentCloser = "-->";
-        const endComment = str.indexOf(commentCloser, cursor);
+        const endComment = str.indexOf("-->", cursor);
         
         if (endComment === -1) {
           // If we don't find the closer in this string chunk, 
