@@ -1,21 +1,17 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vitest/config'
+import solidPlugin from 'vite-plugin-solid'
+import { playwright } from '@vitest/browser-playwright'
+import {preview} from "@vitest/browser-preview"
 
 export default defineConfig({
+  plugins: [solidPlugin()],
   test: {
-    globals: true,
-    // Change this to jsdom to support document/TreeWalker
-    environment: 'jsdom', 
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'dist/',
-      ]
-    },
-    benchmark: {
-      include: ['tests/**/*.bench.ts', 'bench/**/*.bench.ts'],
-      outputFile: './benchmarks-results.json',
+    browser: {
+      enabled: true,
+      provider: playwright(),
+      instances: [
+        { browser: 'chromium' },
+      ],
     }
   }
-});
+})

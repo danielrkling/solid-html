@@ -1,7 +1,6 @@
 import { SVGElements } from "solid-js/web";
 import { ELEMENT_NODE, ElementNode, ChildNode } from "./parse";
 
-
 export function isString(value: any): value is string {
   return typeof value === "string";
 }
@@ -28,15 +27,16 @@ export function isArray(value: any): value is any[] {
 
 export const toArray = Array.from;
 
+export const createComment = (data: string) => document.createComment(data);
 
-export const createComment = (data:string)=>document.createComment(data)
-
-export function createElement(tag: string){
-  return SVGElements.has(tag) ? document.createElementNS("http://www.w3.org/2000/svg", tag) : document.createElement(tag)
+export function createElement(tag: string) {
+  return SVGElements.has(tag)
+    ? document.createElementNS("http://www.w3.org/2000/svg", tag)
+    : document.createElement(tag);
 }
 
 export function flat(arr: any[]) {
-  return (arr.length === 1 ? arr[0] : arr);
+  return arr.length === 1 ? arr[0] : arr;
 }
 
 export function getValue(value: any) {
@@ -59,21 +59,20 @@ export function isElementNode(node: ChildNode): node is ElementNode {
  * 2. Its name is a number (dynamic expression) OR
  * 3. Its name is a string starting with an Uppercase letter (static component).
  */
-export function isComponentNode(node: ChildNode): node is ElementNode {
-  if (!isElementNode(node)) return false;
-
+export function isComponentNode(node: ElementNode): boolean {
   const name = node.name;
+  if (typeof name === "number") return true;
+  const char = name.charCodeAt(0);
   return (
-    typeof name === "number" || 
-    (typeof name === "string" && name[0] === name[0].toUpperCase())
+    char >= 65 && char <= 90 // Uppercase A-Z
   );
 }
 
 /**
  * Optional: Check specifically for static HTML elements (div, span, etc.)
  */
-export function isHtmlElementNode(node: ChildNode): node is ElementNode {
-  return isElementNode(node) && !isComponentNode(node);
+export function isHtmlElementNode(node: ElementNode): boolean {
+  return !isComponentNode(node);
 }
 
 export const voidElements = new Set([

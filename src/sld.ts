@@ -1,5 +1,5 @@
-import { JSX, createComponent, mergeProps } from "solid-js/dist/solid.js";
-import { SVGElements, insert, spread } from "solid-js/web/dist/web.js";
+import { JSX, createComponent, mergeProps } from "solid-js";
+import { SVGElements, insert, spread } from "solid-js/web";
 import {
   parse,
   RootNode,
@@ -118,7 +118,7 @@ function renderChildren(
   values: any[],
   components: ComponentRegistry,
 ): JSX.Element {
-  if (!("template" in node)) {
+  if (!node.template) {
     return flat(node.children.map((n) => renderNode(n, values, components)));
   }
 
