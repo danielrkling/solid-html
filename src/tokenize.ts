@@ -138,6 +138,9 @@ export function tokenize(
             tokens.push({ type: OPEN_TAG_TOKEN, value: "<" });
             state = STATE_TAG;
             cursor = nextTag + 1;
+          } else if (str.slice(nextTag, nextTag + 4) === "<!--") {
+            state = STATE_COMMENT;
+            cursor = nextTag + 4;
           } else {
             tokens.push({ type: TEXT_TOKEN, value: "<" });
             cursor = nextTag + 1;
@@ -218,11 +221,27 @@ export function tokenize(
           state = STATE_TEXT;
           cursor = endOfRawIdx;
         }
+      }else if (state === STATE_COMMENT) {
+        // LOOK FOR END OF COMMENT: - - >
+        const commentCloser = "-->";
+        const endComment = str.indexOf(commentCloser, cursor);
+        
+        if (endComment === -1) {
+          // If we don't find the closer in this string chunk, 
+          // we consume the rest of the string and stay in STATE_COMMENT
+          cursor = len; 
+        } else {
+          // Found it! Return to normal text parsing
+          state = STATE_TEXT;
+          cursor = endComment + 3;
+        }
       }
     }
 
     if (i < strings.length - 1) {
+        if (state !== STATE_COMMENT) {
       tokens.push({ type: EXPRESSION_TOKEN, value: i });
+        }
     }
   }
 
