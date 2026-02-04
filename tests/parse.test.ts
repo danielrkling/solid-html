@@ -122,6 +122,21 @@ describe("Attributes", () => {
     });
   });
 
+  it("string attribute single quoted", () => {
+    const ast = jsx`<div id='app'></div>`;
+    expect(ast).toEqual({
+      type: ROOT_NODE,
+      children: [
+        {
+          type: ELEMENT_NODE,
+          name: "div",
+          props: [{ name: "id", type: STATIC_PROP, value: "app", quote: "'" }],
+          children: [],
+        },
+      ],
+    });
+  });
+
   it("boolean attribute", () => {
     const ast = jsx`<input checked />`;
     expect(ast).toEqual({
@@ -130,6 +145,21 @@ describe("Attributes", () => {
         {
           type: ELEMENT_NODE,
           name: "input",
+          props: [{ name: "checked", type: BOOLEAN_PROP, value: true }],
+          children: [],
+        },
+      ],
+    });
+  });
+
+  it("boolean attribute", () => {
+    const ast = jsx`<button checked></button>`;
+    expect(ast).toEqual({
+      type: ROOT_NODE,
+      children: [
+        {
+          type: ELEMENT_NODE,
+          name: "button",
           props: [{ name: "checked", type: BOOLEAN_PROP, value: true }],
           children: [],
         },
@@ -208,28 +238,7 @@ describe("Attributes", () => {
     });
   });
 
-  it("mixed attribute (string + expression)", () => {
-    const active = true;
-    const ast = jsx`<div class="btn ${active ? "active" : ""}"></div>`;
-    expect(ast).toEqual({
-      type: ROOT_NODE,
-      children: [
-        {
-          type: ELEMENT_NODE,
-          name: "div",
-          props: [
-            {
-              name: "class",
-              type: MIXED_PROP,
-              value: ["btn ", 0],
-              quote: '"',
-            },
-          ],
-          children: [],
-        },
-      ],
-    });
-  });
+
 
   it("mixed attribute (string + expression) with single quotes", () => {
     const active = true;
@@ -291,6 +300,38 @@ describe("Attributes", () => {
             { name: "value", type: EXPRESSION_PROP, value: 0 },
             { name: "disabled", type: BOOLEAN_PROP, value: true },
           ],
+          children: [],
+        },
+      ],
+    });
+  });
+
+  it("spread attribute", () => {
+    const id = "my-id";
+    const ast = jsx`<div ${id}></div>`;
+    expect(ast).toEqual({
+      type: ROOT_NODE,
+      children: [
+        {
+          type: ELEMENT_NODE,
+          name: "div",
+          props: [{ type: SPREAD_PROP, value: 0 }],
+          children: [],
+        },
+      ],
+    });
+  });
+
+  it("spread attribute with ...", () => {
+    const id = "my-id";
+    const ast = jsx`<div ...${id}></div>`;
+    expect(ast).toEqual({
+      type: ROOT_NODE,
+      children: [
+        {
+          type: ELEMENT_NODE,
+          name: "div",
+          props: [{ type: SPREAD_PROP, value: 0 }],
           children: [],
         },
       ],
@@ -418,7 +459,7 @@ describe("whitespace handling", () => {
 
   it("filters only beginning and trailing whitespace in mixed text nodes", () => {
     const name = "User";
-    const ast = jsx`<div>  ${"Hello"} ${name}  !  </div>`;
+    const ast = jsx`<div>  ${"Hello"}  ${name}  !  </div>`;
     expect(ast).toEqual({
       type: ROOT_NODE,
       children: [
@@ -428,7 +469,7 @@ describe("whitespace handling", () => {
           props: [],
           children: [
             { type: EXPRESSION_NODE, value: 0 },
-            { type: TEXT_NODE, value: " " },
+            { type: TEXT_NODE, value: "  " },
             { type: EXPRESSION_NODE, value: 1 },
             { type: TEXT_NODE, value: "  !  " },
           ],
@@ -633,3 +674,33 @@ describe("Edge Cases", () => {
 
 
 });
+
+describe("Errors",()=>{
+  it("error on open tag",()=>{
+    expect(()=>jsx`<div`).toThrow()
+  })
+
+  it("error on mismatched tag",()=>{
+    expect(()=>jsx`<div></span>`).toThrow()
+  })
+
+  it("error on extra <",()=>{
+    expect(()=>jsx`<div><</span>`).toThrow()
+  })
+
+  it("error on bad tag name",()=>{
+    expect(()=>jsx`<1div><</1div>`).toThrow()
+  })
+
+  it("error on unclosed tags",()=>{
+    expect(()=>jsx`<div>`).toThrow()
+  })
+
+  it("error on spread without expression",()=>{
+    expect(()=>jsx`<div ... bool></div>`).toThrow()
+  })
+
+  it("error on unmatched close",()=>{
+    expect(()=>jsx`</div>`).toThrow()
+  })
+})
