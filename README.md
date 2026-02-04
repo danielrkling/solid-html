@@ -30,7 +30,7 @@ function Counter() {
 function App(){
   return sld.define({Counter}).sld`
   <Counter />
-  <${Counter} />
+  ${run(Counter)()}
 `
 }
 
@@ -45,11 +45,10 @@ render(()=>App(),document.body)
 - When in doubt set text via expression to ensure exact match.
 
 ### Elements && Component Tags
-- Tag names must immediately follow < and can have `a-zA-Z0-9.:-_` characters.
-- Elements/Components can be self closing `<div />`, matched closing `<div></div>`, or shorthand closing `<div><//>` (Not recomended for elemnts)
-- Capital tags are treated as components and will throw if now registered `<ComponentA></ComponentA>` or `<ComponentA><//>` (Not recomended for registered components)
-- Tags can also be dynamic `<${ComponentA} />` with self closing or `<${ComponentA}><//>`. ComponentA must be a function.
-- Content between tags is treated as children. Will return an array unless only one child node (text,elem, or expression)
+- Tag names must start with `a-zA-Z$_` and then can  have `a-zA-Z0-9$.:-_` characters.
+- Elements/Components must be self closing `<div />` or matched closing `<div></div>`
+- Capital tags are treated as components and will throw if now registered `<ComponentA></ComponentA>` or `<ComponentA />`
+- Content between tags is treated as children. Will return an array unless only a single child node (text,elem, or expression)
 
 ### Attributes & Properties
 - `<input value="Hello World" />` - static string property
@@ -66,7 +65,6 @@ render(()=>App(),document.body)
 - `<input attr:class=${} />` — string attribute
 - `<input bool:disabled=${} />` — boolean attribute
 - `<input ...${} />` — spread properties
-- `<input ${} />` also spread
 - `<input ref=${} />` — ref (Not Reactive)
 - `<div children=${} />` attribute is used only if the element has no child nodes (JSX-like behavior).
 
@@ -108,18 +106,6 @@ sld`<div>
 ```
 
 
-## HTML vs JSX vs SLD
+## JSX vs SLD
+SLD tries to match JSX when possible
 
-| Feature | HTML | JSX | sld |
-| :--- | :--- | :--- | :--- |
-| **Syntax Style** | Tag-based markup language. | XML-like syntax extension for JavaScript. | Tagged-template literal that mimics HTML/JSX. |
-| **Case Sensitivity** | Tag and attribute names are **case-insensitive**. | **Case-sensitive**. Lowercase for HTML elements (`div`), PascalCase for components (`MyComponent`). | **Case-sensitive**. Distinguishes between standard elements and capitalized components (`<ComponentA />`). |
-| **Valid Tag Characters** | `a-z`, `0-9`, and `-` (for custom elements). | Standard JavaScript identifier characters. | `a-z`, `A-Z`, `0-9`, `.`, `:`, `-`, `_`.  |
-| **Valid Attribute Name Characters** | Almost anything | Standard JavaScript identifier characters + ":". | `a-z`, `A-Z`, `0-9`, `.`, `:`, `-`, `_`.  |
-| **Self-Closing Tags** | Only for "void elements" like `<input>` and `<img>`. Writing `<div />` is invalid. | **Any element** can be self-closing if it has no children (e.g., `<div />`). | **Any element** can be self-closing (`<div />`). "void elements are auto-closed". Also supports a shorthand closing tag (`<div><//>`). |
-| **Whitespace Rules** | Collapses multiple whitespace characters between elements into a single space. | Similar to HTML, collapses whitespace. Use `{ ' ' }` for explicit spacing. | Leading/trailing whitespace only text nodes are omitted in at the top level and as child nodes. |
-| **Character Decoding** | Automatically decodes HTML entities (e.g., `&lt;` becomes `<`). | Encodes string content by default to prevent XSS. Raw HTML requires `dangerouslySetInnerHTML`. | Text is set via `innerHTML`, so it decodes HTML entities like `&lt;` and `&nbsp;`. |
-| **Dynamic Attributes** | Not supported. Requires JavaScript to manipulate the DOM. | Uses curly braces `{}` to embed JavaScript expressions for props. | Uses template literal placeholders `${}` for dynamic properties, events, and spreads. |
-| **Component Model** | Uses "Custom Elements" (e.g., `<my-element>`). | Components are functions or classes, invoked with `<MyComponent />`. | Components are functions registered via `sld.define()` or inlined (`<${Comp} />`). |
-| **Comments** | `<!-- comment -->` | Uses JavaScript block comments inside braces: `{/* comment */}` | `<!-- comment -->` (Skipped during parsing) |
-| **Spread** | N/A | `{...obj}` | `...${}` or `${}` |
