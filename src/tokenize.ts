@@ -7,29 +7,24 @@ export const ATTRIBUTE_VALUE_TOKEN = 5;
 export const TEXT_TOKEN = 6;
 export const EXPRESSION_TOKEN = 7;
 export const QUOTE_CHAR_TOKEN = 8;
+export const SPREAD_TOKEN = 9;
 
-export type TokenType =
-  | typeof OPEN_TAG_TOKEN
-  | typeof CLOSE_TAG_TOKEN
-  | typeof SLASH_TOKEN
-  | typeof IDENTIFIER_TOKEN
-  | typeof EQUALS_TOKEN
-  | typeof ATTRIBUTE_VALUE_TOKEN
-  | typeof TEXT_TOKEN
-  | typeof EXPRESSION_TOKEN
-  | typeof QUOTE_CHAR_TOKEN;
 
 // Character code helpers for fast path testing (faster than regex)
 const isIdentifierChar = (code: number): boolean => {
+  return isIdentifierStart(code) ||
+    (code >= 48 && code <= 58) || // 0-9, :
+    code === 46 || // .
+    code === 45  // -
+};
+
+const isIdentifierStart = (code: number): boolean => {
   return (
-    (code >= 48 && code <= 57) || // 0-9
     (code >= 65 && code <= 90) || // A-Z
     (code >= 97 && code <= 122) || // a-z
-    code === 46 || // .
-    code === 58 || // :
     code === 95 || // _
-    code === 45
-  ); // -
+    code === 36 // $
+  );
 };
 
 const isWhitespace = (code: number): boolean => {
@@ -38,17 +33,17 @@ const isWhitespace = (code: number): boolean => {
 
 export interface OpenTagToken {
   type: typeof OPEN_TAG_TOKEN;
-  value: "<";
+  // value: "<";
 }
 
 export interface CloseTagToken {
   type: typeof CLOSE_TAG_TOKEN;
-  value: ">";
+  // value: ">";
 }
 
 export interface SlashToken {
   type: typeof SLASH_TOKEN;
-  value: "/";
+  // value: "/";
 }
 
 export interface IdentifierToken {
@@ -58,10 +53,10 @@ export interface IdentifierToken {
 
 export interface EqualsToken {
   type: typeof EQUALS_TOKEN;
-  value: "=";
+  // value: "=";
 }
 
-export interface AttributeValueToken {
+export interface AttributeToken {
   type: typeof ATTRIBUTE_VALUE_TOKEN;
   value: string;
 }
@@ -76,9 +71,14 @@ export interface ExpressionToken {
   value: number;
 }
 
-export interface QuoteCharToken {
+export interface QuoteToken {
   type: typeof QUOTE_CHAR_TOKEN;
   value: "'" | '"';
+}
+
+export interface SpreadToken {
+  type: typeof SPREAD_TOKEN;
+  // value: "..."
 }
 
 export type Token =
@@ -87,10 +87,11 @@ export type Token =
   | SlashToken
   | IdentifierToken
   | EqualsToken
-  | AttributeValueToken
+  | AttributeToken
   | TextToken
   | ExpressionToken
-  | QuoteCharToken;
+  | QuoteToken
+  | SpreadToken
 
 // Add a new state for elements that contain raw text only
 const STATE_TEXT = 0;
@@ -128,21 +129,12 @@ export function tokenize(
               value: str.slice(cursor, nextTag),
             });
 
-          const nextCode = str.charCodeAt(nextTag + 1);
-          // Case-sensitive identifier check remains the same
-          if (
-            nextCode === 47 ||
-            isIdentifierChar(nextCode) ||
-            nextTag + 1 === len
-          ) {
-            tokens.push({ type: OPEN_TAG_TOKEN, value: "<" });
-            state = STATE_TAG;
-            cursor = nextTag + 1;
-          } else if (str.slice(nextTag, nextTag + 4) === "<!--") {
+          if (str.slice(nextTag, nextTag + 4) === "<!--") {
             state = STATE_COMMENT;
             cursor = nextTag + 4;
           } else {
-            tokens.push({ type: TEXT_TOKEN, value: "<" });
+            tokens.push({ type: OPEN_TAG_TOKEN });
+            state = STATE_TAG;
             cursor = nextTag + 1;
           }
         }
@@ -153,7 +145,7 @@ export function tokenize(
         if (isWhitespace(code)) {
           cursor++;
         } else if (char === ">") {
-          tokens.push({ type: CLOSE_TAG_TOKEN, value: ">" });
+          tokens.push({ type: CLOSE_TAG_TOKEN });
 
           // Case-sensitive lookup
           if (rawTextElements.has(lastTagName)) {
@@ -163,24 +155,28 @@ export function tokenize(
           }
           cursor++;
         } else if (char === "=") {
-          tokens.push({ type: EQUALS_TOKEN, value: char });
+          tokens.push({ type: EQUALS_TOKEN });
           cursor++;
         } else if (char === "/") {
-          tokens.push({ type: SLASH_TOKEN, value: char });
+          tokens.push({ type: SLASH_TOKEN });
           cursor++;
         } else if (char === '"' || char === "'") {
           tokens.push({ type: QUOTE_CHAR_TOKEN, value: char });
           quoteChar = char;
           state = STATE_ATTR_VALUE;
           cursor++;
-        } else if (isIdentifierChar(code)) {
+        } else if (isIdentifierStart(code)) {
           const start = cursor;
           while (cursor < len && isIdentifierChar(str.charCodeAt(cursor)))
             cursor++;
           // Capture tag name exactly as it appears
           lastTagName = str.slice(start, cursor);
           tokens.push({ type: IDENTIFIER_TOKEN, value: lastTagName });
+        } else if (char==="." && str.slice(cursor,cursor+3)==="..."){
+          tokens.push({type: SPREAD_TOKEN})
+          cursor += 3
         } else {
+          //throw?
           cursor++;
         }
       } else if (state === STATE_ATTR_VALUE) {
@@ -221,14 +217,14 @@ export function tokenize(
           state = STATE_TEXT;
           cursor = endOfRawIdx;
         }
-      }else if (state === STATE_COMMENT) {
+      } else if (state === STATE_COMMENT) {
         // LOOK FOR END OF COMMENT: - - >
         const endComment = str.indexOf("-->", cursor);
-        
+
         if (endComment === -1) {
           // If we don't find the closer in this string chunk, 
           // we consume the rest of the string and stay in STATE_COMMENT
-          cursor = len; 
+          cursor = len;
         } else {
           // Found it! Return to normal text parsing
           state = STATE_TEXT;
@@ -238,9 +234,9 @@ export function tokenize(
     }
 
     if (i < strings.length - 1) {
-        if (state !== STATE_COMMENT) {
-      tokens.push({ type: EXPRESSION_TOKEN, value: i });
-        }
+      if (state !== STATE_COMMENT) {
+        tokens.push({ type: EXPRESSION_TOKEN, value: i });
+      }
     }
   }
 

@@ -10,7 +10,6 @@ import {
   SLASH_TOKEN,
   TEXT_TOKEN,
   Token,
-  TokenType,
 } from "./tokenize";
 
 // Node type constants

@@ -6,12 +6,17 @@ import {preview} from "@vitest/browser-preview"
 export default defineConfig({
   plugins: [solidPlugin()],
   test: {
-    browser: {
-      enabled: true,
-      provider: playwright(), 
-      instances: [
-        { browser: 'chromium' },
-      ],
-    }
+    // browser: {
+    //   enabled: true,
+    //   provider: playwright(), 
+    //   instances: [
+    //     { browser: 'chromium' },
+    //   ],
+    // }
+    environment:"node",
+    include:[
+      "./tests/parse.test.ts",
+      "./tests/tokenize.test.ts"
+    ]
   }
 })
