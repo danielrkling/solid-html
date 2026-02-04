@@ -1,13 +1,13 @@
-export const OPEN_TAG_TOKEN = 0;
-export const CLOSE_TAG_TOKEN = 1;
-export const SLASH_TOKEN = 2;
-export const IDENTIFIER_TOKEN = 3;
-export const EQUALS_TOKEN = 4;
-export const ATTRIBUTE_VALUE_TOKEN = 5;
-export const TEXT_TOKEN = 6;
-export const EXPRESSION_TOKEN = 7;
-export const QUOTE_CHAR_TOKEN = 8;
-export const SPREAD_TOKEN = 9;
+export const OPEN_TAG_TOKEN = "<";
+export const CLOSE_TAG_TOKEN = ">";
+export const SLASH_TOKEN = "/";
+export const IDENTIFIER_TOKEN = "IDENTIFIER";
+export const EQUALS_TOKEN = "=";
+export const ATTRIBUTE_VALUE_TOKEN = "Attr";
+export const TEXT_TOKEN = "Text"
+export const EXPRESSION_TOKEN = "${}"
+export const QUOTE_CHAR_TOKEN = "'"
+export const SPREAD_TOKEN = "..."
 
 
 // Character code helpers for fast path testing (faster than regex)
@@ -176,8 +176,7 @@ export function tokenize(
           tokens.push({type: SPREAD_TOKEN})
           cursor += 3
         } else {
-          //throw?
-          cursor++;
+          throw new Error(`Unexpected Character: ${char} at ${str.slice(0,cursor)}`)
         }
       } else if (state === STATE_ATTR_VALUE) {
         const endQuoteIndex = str.indexOf(quoteChar, cursor);

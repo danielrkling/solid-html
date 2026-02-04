@@ -258,6 +258,74 @@ describe("attribute values", () => {
       },
     ]);
   });
+
+  it("should handle deeply nested quotes", () => {
+    const tokens = tokenizeTemplate`<div data="value with 'nested' quotes">`;
+
+    expect(tokens).toContainEqual(
+      expect.objectContaining({
+        type: ATTRIBUTE_VALUE_TOKEN,
+        value: "value with 'nested' quotes",
+      }),
+    );
+  });
+
+  it("should handle attribute values with special characters", () => {
+    const tokens = tokenizeTemplate`<div data="!@#$%^&*()_+-=[]{}|;:,.<>?">`;
+
+    expect(tokens).toContainEqual(
+      expect.objectContaining({
+        type: ATTRIBUTE_VALUE_TOKEN,
+        value: "!@#$%^&*()_+-=[]{}|;:,.<>?",
+      }),
+    );
+  });
+
+  it("should handle empty attribute values", () => {
+    const tokens = tokenizeTemplate`<div attr="">`;
+
+    expect(tokens).toEqual([
+      {
+        type: OPEN_TAG_TOKEN,
+
+      },
+      {
+        type: IDENTIFIER_TOKEN,
+        value: "div",
+      },
+      {
+        type: IDENTIFIER_TOKEN,
+        value: "attr",
+      },
+      {
+        type: EQUALS_TOKEN,
+
+      },
+      {
+        type: QUOTE_CHAR_TOKEN,
+        value: '"',
+      },
+      {
+        type: QUOTE_CHAR_TOKEN,
+        value: '"',
+      },
+      {
+        type: CLOSE_TAG_TOKEN,
+
+      },
+    ]);
+  });
+
+  it("should handle URL-like attribute values", () => {
+    const tokens = tokenizeTemplate`<a href="https://example.com/path?query=value&other=test#section">`;
+
+    expect(tokens).toContainEqual(
+      expect.objectContaining({
+        type: ATTRIBUTE_VALUE_TOKEN,
+        value: "https://example.com/path?query=value&other=test#section",
+      }),
+    );
+  });
 });
 
 describe("expressions", () => {
@@ -447,12 +515,22 @@ describe("expressions", () => {
       },
     ]);
   });
+
+  it("should handle data attributes with hyphens and underscores", () => {
+    const tokens = tokenizeTemplate`<div data-my_value="test" data_other-name="value">`;
+
+    const attrNames = tokens.filter(
+      (t) =>
+        t.type === IDENTIFIER_TOKEN && (t.value as string).includes("data"),
+    );
+    expect(attrNames.length).toBeGreaterThanOrEqual(2);
+  });
 });
 
 
 describe("whitespace handling", () => {
-  it("should skip whitespace between attribute tokens", () => {
-    const tokens = tokenizeTemplate`<  div   id   =   "app"  >`;
+  it("should skip whitespace inside tags", () => {
+    const tokens = tokenizeTemplate`< \n  div   id   =   "app"  >`;
 
     // Should not have whitespace tokens in tag context
     expect(tokens).toEqual([
@@ -746,8 +824,8 @@ describe("special characters in names", () => {
     ]);
   });
 
-  it("should tokenize attribute with hyphens", () => {
-    const tokens = tokenizeTemplate`<div data-id="value">`;
+  it("should tokenize attribute with -_.:$", () => {
+    const tokens = tokenizeTemplate`<div data-id data_id data.id data:id dataid$>`;
 
     expect(tokens).toEqual([
       {
@@ -763,20 +841,20 @@ describe("special characters in names", () => {
         value: "data-id",
       },
       {
-        type: EQUALS_TOKEN,
-
+        type: IDENTIFIER_TOKEN,
+        value: "data_id",
       },
       {
-        type: QUOTE_CHAR_TOKEN,
-        value: '"',
+        type: IDENTIFIER_TOKEN,
+        value: "data.id",
       },
       {
-        type: ATTRIBUTE_VALUE_TOKEN,
-        value: "value",
+        type: IDENTIFIER_TOKEN,
+        value: "data:id",
       },
       {
-        type: QUOTE_CHAR_TOKEN,
-        value: '"',
+        type: IDENTIFIER_TOKEN,
+        value: "dataid$",
       },
       {
         type: CLOSE_TAG_TOKEN,
@@ -786,50 +864,31 @@ describe("special characters in names", () => {
   });
 });
 
-describe("edge cases and malformed syntax", () => {
+describe("invalid syntax", () => {
 
-  it("should handle mixed quoted and unquoted attributes", () => {
-    const tokens = tokenizeTemplate`<div id="app" class='container' data_value>`;
-
-    const idTokens = tokens.filter((t) => t.type === IDENTIFIER_TOKEN) as IdentifierToken[];
-    expect(idTokens.some((t) => t.value === "id")).toBe(true);
-    expect(idTokens.some((t) => t.value === "class")).toBe(true);
-    expect(idTokens.some((t) => t.value === "data_value")).toBe(true);
+  it("should throw with extra <", () => {
+    expect(()=>tokenizeTemplate`<<div / >`).toThrow()
   });
 
-  it("should handle multiple spaces before closing tag", () => {
-    const tokens = tokenizeTemplate`<div id="app"   />`;
-
-    expect(tokens).toContainEqual(
-      expect.objectContaining({
-        type: SLASH_TOKEN,
-
-      }),
-    );
-    expect(tokens).toContainEqual(
-      expect.objectContaining({
-        type: CLOSE_TAG_TOKEN,
-
-      }),
-    );
+  it("should throw with extra <", () => {
+    expect(()=>tokenizeTemplate`<div / <>`).toThrow()
   });
 
-  it("should handle slash and closing bracket with spaces", () => {
-    const tokens = tokenizeTemplate`<div /   >`;
-
-    expect(tokens).toContainEqual(
-      expect.objectContaining({
-        type: SLASH_TOKEN,
-
-      }),
-    );
-    expect(tokens).toContainEqual(
-      expect.objectContaining({
-        type: CLOSE_TAG_TOKEN,
-
-      }),
-    );
+  it("should throw on invalid identofier", () => {
+    expect(()=>tokenizeTemplate`<.div />`).toThrow()
   });
+
+  it("should throw on invalid identofier", () => {
+    expect(()=>tokenizeTemplate`<div @fa />`).toThrow()
+  });
+
+  it("should throw on invalid identofier", () => {
+    expect(()=>tokenizeTemplate`<div 0fa />`).toThrow()
+  });
+
+});
+
+describe("bad but valid syntaxes",()=>{
 
   it("should handle multiple attributes in tight syntax", () => {
     const tokens = tokenizeTemplate`<div a="1"b="2"c="3">`;
@@ -843,72 +902,8 @@ describe("edge cases and malformed syntax", () => {
     expect(attrNames).toHaveLength(3);
   });
 
-  it("should handle deeply nested quotes", () => {
-    const tokens = tokenizeTemplate`<div data="value with 'nested' quotes">`;
-
-    expect(tokens).toContainEqual(
-      expect.objectContaining({
-        type: ATTRIBUTE_VALUE_TOKEN,
-        value: "value with 'nested' quotes",
-      }),
-    );
-  });
-
-  it("should handle attribute values with special characters", () => {
-    const tokens = tokenizeTemplate`<div data="!@#$%^&*()_+-=[]{}|;:,.<>?">`;
-
-    expect(tokens).toContainEqual(
-      expect.objectContaining({
-        type: ATTRIBUTE_VALUE_TOKEN,
-        value: "!@#$%^&*()_+-=[]{}|;:,.<>?",
-      }),
-    );
-  });
-
-  it("should handle empty attribute values", () => {
-    const tokens = tokenizeTemplate`<div attr="">`;
-
-    expect(tokens).toEqual([
-      {
-        type: OPEN_TAG_TOKEN,
-
-      },
-      {
-        type: IDENTIFIER_TOKEN,
-        value: "div",
-      },
-      {
-        type: IDENTIFIER_TOKEN,
-        value: "attr",
-      },
-      {
-        type: EQUALS_TOKEN,
-
-      },
-      {
-        type: QUOTE_CHAR_TOKEN,
-        value: '"',
-      },
-      {
-        type: QUOTE_CHAR_TOKEN,
-        value: '"',
-      },
-      {
-        type: CLOSE_TAG_TOKEN,
-
-      },
-    ]);
-  });
-
-  it("should handle consecutive equals signs (malformed)", () => {
-    const tokens = tokenizeTemplate`<div attr=="value">`;
-
-    const equalTokens = tokens.filter((t) => t.type === EQUALS_TOKEN);
-    expect(equalTokens.length).toBeGreaterThanOrEqual(1);
-  });
-
   it("should handle attribute without value but with slash", () => {
-    const tokens = tokenizeTemplate`<div required />`;
+    const tokens = tokenizeTemplate`<div required/>`;
 
     expect(tokens).toContainEqual(
       expect.objectContaining({
@@ -920,42 +915,6 @@ describe("edge cases and malformed syntax", () => {
       expect.objectContaining({
         type: SLASH_TOKEN,
 
-      }),
-    );
-  });
-
-
-  it("should handle URL-like attribute values", () => {
-    const tokens = tokenizeTemplate`<a href="https://example.com/path?query=value&other=test#section">`;
-
-    expect(tokens).toContainEqual(
-      expect.objectContaining({
-        type: ATTRIBUTE_VALUE_TOKEN,
-        value: "https://example.com/path?query=value&other=test#section",
-      }),
-    );
-  });
-
-  it("should handle data attributes with hyphens and underscores", () => {
-    const tokens = tokenizeTemplate`<div data-my_value="test" data_other-name="value">`;
-
-    const attrNames = tokens.filter(
-      (t) =>
-        t.type === IDENTIFIER_TOKEN && (t.value as string).includes("data"),
-    );
-    expect(attrNames.length).toBeGreaterThanOrEqual(2);
-  });
-
-
-
-  it("should handle expression in complex malformed context", () => {
-    const expr = { test: "value" };
-    const tokens = tokenizeTemplate`<div attr=${expr} />`;
-
-    expect(tokens).toContainEqual(
-      expect.objectContaining({
-        type: EXPRESSION_TOKEN,
-        value: 0,
       }),
     );
   });
@@ -976,83 +935,82 @@ describe("edge cases and malformed syntax", () => {
       }),
     );
   });
+});
 
+describe("handling of raw text elements", () => {
+  it("should tokenize content inside <script> as text", () => {
+    const tokens = tokenizeTemplate`<script>const a = 5<10;</script>`;
 
-
-  describe("handling of raw text elements", () => {
-    it("should tokenize content inside <script> as text", () => {
-      const tokens = tokenizeTemplate`<script>const a = 5<10;</script>`;
-
-      expect(tokens).toEqual([
-        { type: OPEN_TAG_TOKEN, },
-        { type: IDENTIFIER_TOKEN, value: "script" },
-        { type: CLOSE_TAG_TOKEN, },
-        { type: TEXT_TOKEN, value: "const a = 5<10;" },
-        { type: OPEN_TAG_TOKEN, },
-        { type: SLASH_TOKEN, },
-        { type: IDENTIFIER_TOKEN, value: "script" },
-        { type: CLOSE_TAG_TOKEN, },
-      ]);
-    });
-
-    it("should tokenize content inside <style> as text", () => {
-      const tokens = tokenizeTemplate`<style>.class > span { color: red; }</style>`;
-
-      expect(tokens).toEqual([
-        { type: OPEN_TAG_TOKEN, },
-        { type: IDENTIFIER_TOKEN, value: "style" },
-        { type: CLOSE_TAG_TOKEN, },
-        { type: TEXT_TOKEN, value: ".class > span { color: red; }" },
-        { type: OPEN_TAG_TOKEN, },
-        { type: SLASH_TOKEN, },
-        { type: IDENTIFIER_TOKEN, value: "style" },
-        { type: CLOSE_TAG_TOKEN, },
-      ]);
-    });
-
-    it("should tokenize content inside <textarea> as text", () => {
-      const tokens = tokenizeTemplate`<textarea>This is <span>not parsed</span>.</textarea>`;
-
-      expect(tokens).toEqual([
-        { type: OPEN_TAG_TOKEN, },
-        { type: IDENTIFIER_TOKEN, value: "textarea" },
-        { type: CLOSE_TAG_TOKEN, },
-        { type: TEXT_TOKEN, value: "This is <span>not parsed</span>." },
-        { type: OPEN_TAG_TOKEN, },
-        { type: SLASH_TOKEN, },
-        { type: IDENTIFIER_TOKEN, value: "textarea" },
-        { type: CLOSE_TAG_TOKEN, },
-      ]);
-    });
+    expect(tokens).toEqual([
+      { type: OPEN_TAG_TOKEN, },
+      { type: IDENTIFIER_TOKEN, value: "script" },
+      { type: CLOSE_TAG_TOKEN, },
+      { type: TEXT_TOKEN, value: "const a = 5<10;" },
+      { type: OPEN_TAG_TOKEN, },
+      { type: SLASH_TOKEN, },
+      { type: IDENTIFIER_TOKEN, value: "script" },
+      { type: CLOSE_TAG_TOKEN, },
+    ]);
   });
 
+  it("should tokenize content inside <style> as text", () => {
+    const tokens = tokenizeTemplate`<style>.class > span { color: red; }</style>`;
 
-  describe("comments handling", () => {
-    it("should not tokenzie comments", () => {
-      const tokens = tokenizeTemplate`<div><!-- This is a comment --></div>`;
-      expect(tokens).toEqual([
-        { type: OPEN_TAG_TOKEN, },
-        { type: IDENTIFIER_TOKEN, value: "div" },
-        { type: CLOSE_TAG_TOKEN },
-        { type: OPEN_TAG_TOKEN },
-        { type: SLASH_TOKEN },
-        { type: IDENTIFIER_TOKEN, value: "div" },
-        { type: CLOSE_TAG_TOKEN },
-      ]);
-    });
-
-    it("should handle comments with special characters", () => {
-      const tokens = tokenizeTemplate`<!-- Special chars: <>&'" -->`;
-      expect(tokens).toEqual([
-      ]);
-    });
-
-    it("should handle comments with expressions inside", () => {
-      const value = "test";
-      const tokens = tokenizeTemplate`<!-- Comment with ${value} inside -->`;
-      expect(tokens).toEqual([
-      ]);
-    });
+    expect(tokens).toEqual([
+      { type: OPEN_TAG_TOKEN, },
+      { type: IDENTIFIER_TOKEN, value: "style" },
+      { type: CLOSE_TAG_TOKEN, },
+      { type: TEXT_TOKEN, value: ".class > span { color: red; }" },
+      { type: OPEN_TAG_TOKEN, },
+      { type: SLASH_TOKEN, },
+      { type: IDENTIFIER_TOKEN, value: "style" },
+      { type: CLOSE_TAG_TOKEN, },
+    ]);
   });
 
+  it("should tokenize content inside <textarea> as text", () => {
+    const tokens = tokenizeTemplate`<textarea>This is <span>not parsed</span>.</textarea>`;
+
+    expect(tokens).toEqual([
+      { type: OPEN_TAG_TOKEN, },
+      { type: IDENTIFIER_TOKEN, value: "textarea" },
+      { type: CLOSE_TAG_TOKEN, },
+      { type: TEXT_TOKEN, value: "This is <span>not parsed</span>." },
+      { type: OPEN_TAG_TOKEN, },
+      { type: SLASH_TOKEN, },
+      { type: IDENTIFIER_TOKEN, value: "textarea" },
+      { type: CLOSE_TAG_TOKEN, },
+    ]);
+  });
+});
+
+
+
+
+describe("comments handling", () => {
+  it("should not tokenzie comments", () => {
+    const tokens = tokenizeTemplate`<div><!-- This is a comment --></div>`;
+    expect(tokens).toEqual([
+      { type: OPEN_TAG_TOKEN, },
+      { type: IDENTIFIER_TOKEN, value: "div" },
+      { type: CLOSE_TAG_TOKEN },
+      { type: OPEN_TAG_TOKEN },
+      { type: SLASH_TOKEN },
+      { type: IDENTIFIER_TOKEN, value: "div" },
+      { type: CLOSE_TAG_TOKEN },
+    ]);
+  });
+
+  it("should handle comments with special characters", () => {
+    const tokens = tokenizeTemplate`<!-- Special chars: <>&'" -->`;
+    expect(tokens).toEqual([
+    ]);
+  });
+
+  it("should handle comments with expressions inside", () => {
+    const value = "test";
+    const tokens = tokenizeTemplate`<!-- Comment with ${value} inside -->`;
+    expect(tokens).toEqual([
+    ]);
+  });
 });

@@ -1,29 +1,32 @@
 import {
   ATTRIBUTE_VALUE_TOKEN,
+  AttributeToken,
   CLOSE_TAG_TOKEN,
   EQUALS_TOKEN,
   EXPRESSION_TOKEN,
+  ExpressionToken,
   IDENTIFIER_TOKEN,
   IdentifierToken,
   OPEN_TAG_TOKEN,
   QUOTE_CHAR_TOKEN,
   SLASH_TOKEN,
+  SPREAD_TOKEN,
   TEXT_TOKEN,
   Token,
 } from "./tokenize";
 
 // Node type constants
-export const ROOT_NODE = 0;
-export const ELEMENT_NODE = 1;
-export const TEXT_NODE = 2;
-export const EXPRESSION_NODE = 3;
+export const ROOT_NODE = "Root";
+export const ELEMENT_NODE = "Elem";
+export const TEXT_NODE = "Text";
+export const EXPRESSION_NODE = "Expr";
 
 // Prop type constants
-export const BOOLEAN_PROP = 0;
-export const STATIC_PROP = 1;
-export const EXPRESSION_PROP = 2;
-export const SPREAD_PROP = 3;
-export const MIXED_PROP = 4;
+export const BOOLEAN_PROP = "Bool";
+export const STATIC_PROP = "Static";
+export const EXPRESSION_PROP = "Expre";
+export const SPREAD_PROP = "Spread";
+export const MIXED_PROP = "Mixed";
 
 export type NodeType =
   | typeof ROOT_NODE
@@ -116,9 +119,6 @@ export function parse(tokens: Token[], voidElements: Set<string>): RootNode {
     if (token.type === TEXT_TOKEN) {
       const val = token.value;
 
-      // Optimization: Only trim if the string is small and looks like whitespace
-      // Most meaningful text nodes are longer or contain non-whitespace characters
-      let shouldPush = true;
       const trimmed = val.trim();
       if (trimmed === "") {
         const prev = tokens[pos - 1]?.type;
@@ -129,13 +129,12 @@ export function parse(tokens: Token[], voidElements: Set<string>): RootNode {
           prev === OPEN_TAG_TOKEN ||
           next === OPEN_TAG_TOKEN
         ) {
-          shouldPush = false;
+          pos++;
+          continue;
         }
       }
 
-      if (shouldPush) {
-        currentParent.children.push({ type: TEXT_NODE, value: val });
-      }
+      currentParent.children.push({ type: TEXT_NODE, value: val });
       pos++;
       continue;
     }
@@ -154,126 +153,154 @@ export function parse(tokens: Token[], voidElements: Set<string>): RootNode {
     if (token.type === OPEN_TAG_TOKEN) {
       const next = tokens[pos + 1];
 
+
       // Handle Closing Tag: </name>
       if (next && next.type === SLASH_TOKEN) {
-        const nameToken = tokens[pos + 2];
 
         if (stack.length > 1) {
-          // Determine if we should pop:
-          // 1. It's the shorthand <//> (next token is another slash)
-          // 2. It's a named tag </div houses matching the current stack top
-          const isShorthand = nameToken?.type === SLASH_TOKEN;
-          const isMatched =
-            nameToken?.type === IDENTIFIER_TOKEN &&
-            (stack[stack.length - 1] as ElementNode).name === nameToken.value;
+          const nameToken = tokens[pos + 2];
 
-          if (isShorthand || isMatched) {
+          if (nameToken?.type === IDENTIFIER_TOKEN &&
+            (stack[stack.length - 1] as ElementNode).name === nameToken.value) {
             stack.pop();
+            pos += 4; // Move past <, /, (name or /), and >
+            continue;
+          } else {
+            throw new Error(`Mismatched Clsoing Tag`)
           }
+        } else {
+          throw new Error(`No Tag to Close`)
         }
 
-        pos += 4; // Move past <, /, (name or /), and >
+
+      }
+
+      if (next && next.type === IDENTIFIER_TOKEN) {
+        // Handle Opening Tag: <name ...>
+        pos++; // consume <
+        const tagName = next.value;
+        const node: ElementNode = {
+          type: ELEMENT_NODE,
+          name: tagName,
+          props: [],
+          children: [],
+        };
+        currentParent.children.push(node)
+        pos++
+
+        // Inline Prop Parsing Loop
+        while (pos < len) {
+          const t = tokens[pos];
+          console.log("props", t)
+          if (t.type === CLOSE_TAG_TOKEN || t.type === SLASH_TOKEN) {
+            // pos++;
+            break;
+          };
+
+          if (t.type === EXPRESSION_TOKEN) {
+            node.props.push({ type: SPREAD_PROP, value: t.value });
+            pos++;
+            continue;
+          }
+
+          if (t.type === SPREAD_TOKEN) {
+            const expr = tokens[pos + 1]
+            if (expr && expr.type === EXPRESSION_TOKEN) {
+              node.props.push({ type: SPREAD_PROP, value: expr.value });
+              pos += 2
+              continue;
+            } else {
+              throw new Error(`No expression to spread`)
+            }
+          }
+
+          if (t.type === IDENTIFIER_TOKEN) {
+            const pName = t.value;
+            pos++;
+
+            if (tokens[pos]?.type === EQUALS_TOKEN) {
+              pos++; // consume =
+              const valToken = tokens[pos];
+
+              if (valToken.type === EXPRESSION_TOKEN) {
+                node.props.push({
+                  name: pName,
+                  type: EXPRESSION_PROP,
+                  value: valToken.value,
+                });
+                pos++;
+              } else if (valToken.type === QUOTE_CHAR_TOKEN) {
+                const q = valToken.value;
+                pos++; // consume opening quote
+
+                let parts: (string | number)[] = [];
+                while (pos < len && tokens[pos].type !== QUOTE_CHAR_TOKEN) {
+                  const part = tokens[pos++] as ExpressionToken | AttributeToken;
+                  if (part.value !== "") parts.push(part.value);
+                }
+                pos++; // consume closing quote
+
+                if (parts.length === 0) {
+                  node.props.push({
+                    name: pName,
+                    type: STATIC_PROP,
+                    value: "",
+                    quote: q,
+                  });
+                } else if (parts.length === 1) {
+                  const v = parts[0];
+                  node.props.push({
+                    name: pName,
+                    type: typeof v === "string" ? STATIC_PROP : EXPRESSION_PROP,
+                    value: v as any,
+                    quote: q,
+                  });
+                } else {
+                  node.props.push({
+                    name: pName,
+                    type: MIXED_PROP,
+                    value: parts,
+                    quote: q,
+                  });
+                }
+              }
+            } else {
+              node.props.push({
+                type: BOOLEAN_PROP,
+                name: pName,
+                value: true
+              })
+            }
+
+            continue;
+          }
+
+          // A token that is not an attribute or a tag closer is invalid here.
+          throw new Error(`Unexpected token in tag: ${JSON.stringify(t)}`);
+
+        }
+
+        if (tokens[pos].type === CLOSE_TAG_TOKEN){
+          pos++
+          stack.push(node)
+        }else if (tokens[pos].type === SLASH_TOKEN && tokens[pos+1].type===CLOSE_TAG_TOKEN){
+          pos+=2
+        }
         continue;
       }
 
-      // Handle Opening Tag: <name ...>
-      pos++; // consume <
-      const tagName = (tokens[pos++] as IdentifierToken).value;
-      const node: ElementNode = {
-        type: ELEMENT_NODE,
-        name: tagName,
-        props: [],
-        children: [],
-      };
-
-      // Inline Prop Parsing Loop
-      while (pos < len) {
-        const t = tokens[pos];
-        if (t.type === CLOSE_TAG_TOKEN || t.type === SLASH_TOKEN) break;
-
-        if (t.type === EXPRESSION_TOKEN) {
-          node.props.push({ type: SPREAD_PROP, value: t.value });
-          pos++;
-          continue;
-        }
-
-        if (t.type === IDENTIFIER_TOKEN) {
-          const pName = t.value;
-          pos++;
-
-          if (tokens[pos]?.type === EQUALS_TOKEN) {
-            pos++; // consume =
-            const valToken = tokens[pos];
-
-            if (valToken.type === EXPRESSION_TOKEN) {
-              node.props.push({
-                name: pName,
-                type: EXPRESSION_PROP,
-                value: valToken.value,
-              });
-              pos++;
-            } else if (valToken.type === QUOTE_CHAR_TOKEN) {
-              const q = valToken.value;
-              pos++; // consume opening quote
-
-              let parts: (string | number)[] = [];
-              while (pos < len && tokens[pos].type !== QUOTE_CHAR_TOKEN) {
-                const part = tokens[pos++];
-                if (part.value !== "") parts.push(part.value as any);
-              }
-              pos++; // consume closing quote
-
-              if (parts.length === 0) {
-                node.props.push({
-                  name: pName,
-                  type: STATIC_PROP,
-                  value: "",
-                  quote: q,
-                });
-              } else if (parts.length === 1) {
-                const v = parts[0];
-                node.props.push({
-                  name: pName,
-                  type: typeof v === "string" ? STATIC_PROP : EXPRESSION_PROP,
-                  value: v as any,
-                  quote: q,
-                });
-              } else {
-                node.props.push({
-                  name: pName,
-                  type: MIXED_PROP,
-                  value: parts,
-                  quote: q,
-                });
-              }
-            }
-          } else {
-            //because whitespace is ignored, ...${} would be boolean + expression.
-            if (pName !== "...") {
-              node.props.push({ name: pName, type: BOOLEAN_PROP, value: true });
-            }
-          }
-          continue;
-        }
-        pos++;
-      }
-
-      currentParent.children.push(node);
-
-      // Handle Self-Closing/Void Logic
-      if (tokens[pos]?.type === SLASH_TOKEN) {
-        pos += 2; // skip / and >
-      } else if (voidElements.has(tagName)) {
-        pos++; // skip >
-      } else {
-        pos++; // skip >
-        stack.push(node); // Move context into this element
-      }
-      continue;
+      pos++
+      continue; // Continue main parsing loop
     }
 
+    if (pos<len){
+      throw new Error(`Unexpected Token: ${JSON.stringify(token)}`)
+    }
+    
     pos++;
   }
 
   return root;
 }
+
+
