@@ -116,118 +116,117 @@ export function tokenize(
     cursor = 0;
 
     while (cursor < len) {
-      if (state === STATE_TEXT) {
-        const nextTag = str.indexOf("<", cursor);
-        if (nextTag === -1) {
-          if (cursor < len)
-            tokens.push({ type: TEXT_TOKEN, value: str.slice(cursor) });
-          cursor = len;
-        } else {
-          if (nextTag > cursor)
-            tokens.push({
-              type: TEXT_TOKEN,
-              value: str.slice(cursor, nextTag),
-            });
-
-          if (str.slice(nextTag, nextTag + 4) === "<!--") {
-            state = STATE_COMMENT;
-            cursor = nextTag + 4;
+      switch (state) {
+        case STATE_TEXT: {
+          const nextTag = str.indexOf("<", cursor);
+          if (nextTag === -1) {
+            if (cursor < len)
+              tokens.push({ type: TEXT_TOKEN, value: str.slice(cursor) });
+            cursor = len;
           } else {
-            tokens.push({ type: OPEN_TAG_TOKEN });
-            state = STATE_TAG;
-            cursor = nextTag + 1;
-          }
-        }
-      } else if (state === STATE_TAG) {
-        const char = str[cursor];
-        const code = str.charCodeAt(cursor);
+            if (nextTag > cursor)
+              tokens.push({
+                type: TEXT_TOKEN,
+                value: str.slice(cursor, nextTag),
+              });
 
-        if (isWhitespace(code)) {
-          cursor++;
-        } else if (char === ">") {
-          tokens.push({ type: CLOSE_TAG_TOKEN });
-
-          // Case-sensitive lookup
-          if (rawTextElements.has(lastTagName)) {
-            state = STATE_RAW_TEXT;
-          } else {
-            state = STATE_TEXT;
+            if (str.slice(nextTag, nextTag + 4) === "<!--") {
+              state = STATE_COMMENT;
+              cursor = nextTag + 4;
+            } else {
+              tokens.push({ type: OPEN_TAG_TOKEN });
+              state = STATE_TAG;
+              cursor = nextTag + 1;
+            }
           }
-          cursor++;
-        } else if (char === "=") {
-          tokens.push({ type: EQUALS_TOKEN });
-          cursor++;
-        } else if (char === "/") {
-          tokens.push({ type: SLASH_TOKEN });
-          cursor++;
-        } else if (char === '"' || char === "'") {
-          tokens.push({ type: QUOTE_CHAR_TOKEN, value: char });
-          quoteChar = char;
-          state = STATE_ATTR_VALUE;
-          cursor++;
-        } else if (isIdentifierStart(code)) {
-          const start = cursor;
-          while (cursor < len && isIdentifierChar(str.charCodeAt(cursor)))
+          break;
+        } case STATE_TAG: {
+          const code = str.charCodeAt(cursor);
+
+          if (isWhitespace(code)) {
             cursor++;
-          // Capture tag name exactly as it appears
-          lastTagName = str.slice(start, cursor);
-          tokens.push({ type: IDENTIFIER_TOKEN, value: lastTagName });
-        } else if (char==="." && str.slice(cursor,cursor+3)==="..."){
-          tokens.push({type: SPREAD_TOKEN})
-          cursor += 3
-        } else {
-          throw new Error(`Unexpected Character: ${char} at ${str.slice(0,cursor)}`)
-        }
-      } else if (state === STATE_ATTR_VALUE) {
-        const endQuoteIndex = str.indexOf(quoteChar, cursor);
-        if (endQuoteIndex === -1) {
-          tokens.push({
-            type: ATTRIBUTE_VALUE_TOKEN,
-            value: str.slice(cursor),
-          });
-          cursor = len;
-        } else {
-          if (endQuoteIndex > cursor) {
+          } else if (code === 62) { // ">"
+            tokens.push({ type: CLOSE_TAG_TOKEN });
+            state = rawTextElements.has(lastTagName) ? STATE_RAW_TEXT : STATE_TEXT;
+            cursor++;
+          } else if (code === 61) { // "="
+            tokens.push({ type: EQUALS_TOKEN });
+            cursor++;
+          } else if (code === 47) { // "/"
+            tokens.push({ type: SLASH_TOKEN });
+            cursor++;
+          } else if (code === 34 || code === 39) { // '"' or "'"
+            const char = str[cursor] as "'" | '"';
+            tokens.push({ type: QUOTE_CHAR_TOKEN, value: char });
+            quoteChar = char;
+            state = STATE_ATTR_VALUE;
+            cursor++;
+          } else if (isIdentifierStart(code)) {
+            const start = cursor;
+            while (cursor < len && isIdentifierChar(str.charCodeAt(cursor))) cursor++;
+            lastTagName = str.slice(start, cursor);
+            tokens.push({ type: IDENTIFIER_TOKEN, value: lastTagName });
+          } else if (code === 46 && str[cursor + 1] === '.' && str[cursor + 2] === '.') { // "."
+            tokens.push({ type: SPREAD_TOKEN });
+            cursor += 3;
+          } else {
+            throw new Error(`Unexpected Character: ${str[cursor]}`);
+          }
+          break;
+        } case STATE_ATTR_VALUE: {
+          const endQuoteIndex = str.indexOf(quoteChar, cursor);
+          if (endQuoteIndex === -1) {
             tokens.push({
               type: ATTRIBUTE_VALUE_TOKEN,
-              value: str.slice(cursor, endQuoteIndex),
+              value: str.slice(cursor),
             });
+            cursor = len;
+          } else {
+            if (endQuoteIndex > cursor) {
+              tokens.push({
+                type: ATTRIBUTE_VALUE_TOKEN,
+                value: str.slice(cursor, endQuoteIndex),
+              });
+            }
+            tokens.push({ type: QUOTE_CHAR_TOKEN, value: quoteChar as any });
+            state = STATE_TAG;
+            quoteChar = "";
+            cursor = endQuoteIndex + 1;
           }
-          tokens.push({ type: QUOTE_CHAR_TOKEN, value: quoteChar as any });
-          state = STATE_TAG;
-          quoteChar = "";
-          cursor = endQuoteIndex + 1;
-        }
-      } else if (state === STATE_RAW_TEXT) {
-        // Case-sensitive search for the specific closing tag
-        const closeTagStr = `</${lastTagName}>`;
-        const endOfRawIdx = str.indexOf(closeTagStr, cursor);
+          break;
+        } case STATE_RAW_TEXT: {
+          // Case-sensitive search for the specific closing tag
+          const closeTagStr = `</${lastTagName}>`;
+          const endOfRawIdx = str.indexOf(closeTagStr, cursor);
 
-        if (endOfRawIdx === -1) {
-          tokens.push({ type: TEXT_TOKEN, value: str.slice(cursor) });
-          cursor = len;
-        } else {
-          if (endOfRawIdx > cursor) {
-            tokens.push({
-              type: TEXT_TOKEN,
-              value: str.slice(cursor, endOfRawIdx),
-            });
+          if (endOfRawIdx === -1) {
+            tokens.push({ type: TEXT_TOKEN, value: str.slice(cursor) });
+            cursor = len;
+          } else {
+            if (endOfRawIdx > cursor) {
+              tokens.push({
+                type: TEXT_TOKEN,
+                value: str.slice(cursor, endOfRawIdx),
+              });
+            }
+            state = STATE_TEXT;
+            cursor = endOfRawIdx;
           }
-          state = STATE_TEXT;
-          cursor = endOfRawIdx;
-        }
-      } else if (state === STATE_COMMENT) {
-        // LOOK FOR END OF COMMENT: - - >
-        const endComment = str.indexOf("-->", cursor);
+          break;
+        } case STATE_COMMENT: {
+          // LOOK FOR END OF COMMENT: - - >
+          const endComment = str.indexOf("-->", cursor);
 
-        if (endComment === -1) {
-          // If we don't find the closer in this string chunk, 
-          // we consume the rest of the string and stay in STATE_COMMENT
-          cursor = len;
-        } else {
-          // Found it! Return to normal text parsing
-          state = STATE_TEXT;
-          cursor = endComment + 3;
+          if (endComment === -1) {
+            // If we don't find the closer in this string chunk, 
+            // we consume the rest of the string and stay in STATE_COMMENT
+            cursor = len;
+          } else {
+            // Found it! Return to normal text parsing
+            state = STATE_TEXT;
+            cursor = endComment + 3;
+          }
+          break;
         }
       }
     }
