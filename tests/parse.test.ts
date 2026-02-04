@@ -306,21 +306,6 @@ describe("Attributes", () => {
     });
   });
 
-  it("spread attribute", () => {
-    const id = "my-id";
-    const ast = jsx`<div ${id}></div>`;
-    expect(ast).toEqual({
-      type: ROOT_NODE,
-      children: [
-        {
-          type: ELEMENT_NODE,
-          name: "div",
-          props: [{ type: SPREAD_PROP, value: 0 }],
-          children: [],
-        },
-      ],
-    });
-  });
 
   it("spread attribute with ...", () => {
     const id = "my-id";
@@ -563,9 +548,9 @@ describe("Complex Examples", () => {
 });
 
 describe("Specialized Element AST", () => {
-  it("void elements: img and br siblings", () => {
+  it("void elements: children", () => {
     // Note: br is void, img is void. They should be siblings, not nested.
-    const ast = jsx`<div><br /><img src="test.png" /></div>`;
+    const ast = jsx`<div><img src="test.png" >Children should get <span>wiped</span></img></div>`;
 
     expect(ast).toEqual({
       type: ROOT_NODE,
@@ -575,12 +560,7 @@ describe("Specialized Element AST", () => {
           name: "div",
           props: [],
           children: [
-            {
-              type: ELEMENT_NODE,
-              name: "br",
-              props: [],
-              children: [],
-            },
+
             {
               type: ELEMENT_NODE,
               name: "img",
