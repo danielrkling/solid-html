@@ -130,7 +130,7 @@ export function tokenize(
                 value: str.slice(cursor, nextTag),
               });
 
-            if (str.slice(nextTag, nextTag + 4) === "<!--") {
+            if (str[nextTag + 1] === '!' && str[nextTag + 2] === '-' && str[nextTag + 3] === '-') {
               state = STATE_COMMENT;
               cursor = nextTag + 4;
             } else {
