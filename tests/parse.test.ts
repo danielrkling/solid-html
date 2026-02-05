@@ -286,6 +286,30 @@ describe("Attributes", () => {
     });
   });
 
+  it("mixed attributes",()=>{
+    const ast = jsx`
+        <h1 title="${1} John ${"Smith"}"></h1>
+      `
+    expect(ast).toEqual({
+      type: ROOT_NODE,
+      children: [
+        {
+          type: ELEMENT_NODE,
+          name: "h1",
+          props: [
+            {
+              name: "title",
+              type: MIXED_PROP,
+              value: [0, " John ", 1],
+              quote: '"',
+            },
+          ],
+          children: [],
+        },
+      ],
+    });
+  })
+
   it("multiple attributes", () => {
     const value = "test";
     const ast = jsx`<input type="text" value=${value} disabled />`;
@@ -437,6 +461,28 @@ describe("whitespace handling", () => {
           name: "div",
           props: [],
           children: [{ type: EXPRESSION_NODE, value: 0 }],
+        },
+      ],
+    });
+  });
+
+    it("trims whitespace-only text nodes around expressions", () => {
+    const name = "User";
+    const ast = jsx`   ${name}   `;
+    expect(ast).toEqual({
+      type: ROOT_NODE,
+      children: [
+        {
+          type: TEXT_NODE,
+          value: "   ",
+        },
+        {
+          type: EXPRESSION_NODE,
+          value: 0,
+        },
+        {
+          type: TEXT_NODE,
+          value: "   ",
         },
       ],
     });

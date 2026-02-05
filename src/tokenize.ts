@@ -94,11 +94,11 @@ export type Token =
   | SpreadToken
 
 // Add a new state for elements that contain raw text only
-const STATE_TEXT = 0;
-const STATE_TAG = 1;
-const STATE_ATTR_VALUE = 2;
-const STATE_RAW_TEXT = 3;
-const STATE_COMMENT = 4;
+const STATE_TEXT = "TEXT";
+const STATE_TAG = "TAG";
+const STATE_ATTR_VALUE = "ATTR_VALUE";
+const STATE_RAW_TEXT = "RAW_TEXT";
+const STATE_COMMENT = "COMMENT";
 
 export function tokenize(
   strings: TemplateStringsArray | string[],
@@ -118,6 +118,7 @@ export function tokenize(
     while (cursor < len) {
       switch (state) {
         case STATE_TEXT: {
+          lastTagName = "";
           const nextTag = str.indexOf("<", cursor);
           if (nextTag === -1) {
             if (cursor < len)
@@ -147,7 +148,7 @@ export function tokenize(
             cursor++;
           } else if (code === 62) { // ">"
             tokens.push({ type: CLOSE_TAG_TOKEN });
-            state = rawTextElements.has(lastTagName) ? STATE_RAW_TEXT : STATE_TEXT;
+            state = rawTextElements.has(lastTagName) ? STATE_RAW_TEXT : STATE_TEXT;            
             cursor++;
           } else if (code === 61) { // "="
             tokens.push({ type: EQUALS_TOKEN });
@@ -164,8 +165,11 @@ export function tokenize(
           } else if (isIdentifierStart(code)) {
             const start = cursor;
             while (cursor < len && isIdentifierChar(str.charCodeAt(cursor))) cursor++;
-            lastTagName = str.slice(start, cursor);
-            tokens.push({ type: IDENTIFIER_TOKEN, value: lastTagName });
+            const value = str.slice(start, cursor);
+            if (lastTagName === "") {
+              lastTagName = value;
+            }
+            tokens.push({ type: IDENTIFIER_TOKEN, value });
           } else if (code === 46 && str[cursor + 1] === '.' && str[cursor + 2] === '.') { // "."
             tokens.push({ type: SPREAD_TOKEN });
             cursor += 3;
@@ -198,6 +202,7 @@ export function tokenize(
           // Case-sensitive search for the specific closing tag
           const closeTagStr = `</${lastTagName}>`;
           const endOfRawIdx = str.indexOf(closeTagStr, cursor);
+          lastTagName = "";
 
           if (endOfRawIdx === -1) {
             tokens.push({ type: TEXT_TOKEN, value: str.slice(cursor) });

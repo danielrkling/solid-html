@@ -114,6 +114,6 @@ sld`<div>
 | **Dot Notation** | Supported: `<Input.Label />` | **Supported**: `.` is valid in identifier tokens |
 | **Mixed Attributes** | Requires template literals: `class=${`btn ${p}`}` | **Native**: `class="btn ${p}"` is handled by the parser |
 | **Spread Syntax** | `<div {...props} />` | `<div ...${props} />` |
-| **Comments** | `{/* JSX Comment */}` | `<-- -->` (Stripped by parser) |
+| **Comments** | `{/* JSX Comment */}` | `<!-- -->` (Stripped by parser) |
 | **Raw Text Tags** | Escaping or `innerHTML` required | **Automatic**: `<style>`/`<script>` treat children as text |
 | **Whitespace** | JSX-style stripping | Contextual: Trims between tags, preserves inside text |

@@ -25,7 +25,6 @@ describe("basic tags", () => {
     expect(tokens).toEqual([
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -40,7 +39,6 @@ describe("basic tags", () => {
     expect(tokens).toEqual([
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -48,7 +46,6 @@ describe("basic tags", () => {
       },
       {
         type: CLOSE_TAG_TOKEN,
-
       },
     ]);
   });
@@ -59,7 +56,6 @@ describe("basic tags", () => {
     expect(tokens).toEqual([
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -67,11 +63,9 @@ describe("basic tags", () => {
       },
       {
         type: SLASH_TOKEN,
-
       },
       {
         type: CLOSE_TAG_TOKEN,
-
       },
     ]);
   });
@@ -82,7 +76,6 @@ describe("basic tags", () => {
     expect(tokens).toEqual([
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -90,15 +83,12 @@ describe("basic tags", () => {
       },
       {
         type: CLOSE_TAG_TOKEN,
-
       },
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: SLASH_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -107,14 +97,10 @@ describe("basic tags", () => {
 
       {
         type: CLOSE_TAG_TOKEN,
-
       },
     ]);
   });
-
 });
-
-
 
 describe("attribute values", () => {
   it("should tokenize quoted string", () => {
@@ -123,7 +109,6 @@ describe("attribute values", () => {
     expect(tokens).toEqual([
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -135,7 +120,6 @@ describe("attribute values", () => {
       },
       {
         type: EQUALS_TOKEN,
-
       },
       {
         type: QUOTE_CHAR_TOKEN,
@@ -151,7 +135,6 @@ describe("attribute values", () => {
       },
       {
         type: CLOSE_TAG_TOKEN,
-
       },
     ]);
   });
@@ -162,7 +145,6 @@ describe("attribute values", () => {
     expect(tokens).toEqual([
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -174,7 +156,6 @@ describe("attribute values", () => {
       },
       {
         type: EQUALS_TOKEN,
-
       },
       {
         type: QUOTE_CHAR_TOKEN,
@@ -190,7 +171,6 @@ describe("attribute values", () => {
       },
       {
         type: CLOSE_TAG_TOKEN,
-
       },
     ]);
   });
@@ -201,7 +181,6 @@ describe("attribute values", () => {
     expect(tokens).toEqual([
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -213,7 +192,6 @@ describe("attribute values", () => {
       },
       {
         type: EQUALS_TOKEN,
-
       },
       {
         type: QUOTE_CHAR_TOKEN,
@@ -226,7 +204,6 @@ describe("attribute values", () => {
       },
       {
         type: CLOSE_TAG_TOKEN,
-
       },
     ]);
   });
@@ -237,7 +214,6 @@ describe("attribute values", () => {
     expect(tokens).toEqual([
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -254,7 +230,6 @@ describe("attribute values", () => {
 
       {
         type: CLOSE_TAG_TOKEN,
-
       },
     ]);
   });
@@ -287,7 +262,6 @@ describe("attribute values", () => {
     expect(tokens).toEqual([
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -299,7 +273,6 @@ describe("attribute values", () => {
       },
       {
         type: EQUALS_TOKEN,
-
       },
       {
         type: QUOTE_CHAR_TOKEN,
@@ -311,7 +284,6 @@ describe("attribute values", () => {
       },
       {
         type: CLOSE_TAG_TOKEN,
-
       },
     ]);
   });
@@ -325,6 +297,28 @@ describe("attribute values", () => {
         value: "https://example.com/path?query=value&other=test#section",
       }),
     );
+  });
+
+  it("attribute name doesnt trigger raw text", () => {
+    const tokens = tokenizeTemplate`
+            <h1 title=""></h1>
+          `;
+
+    expect(tokens).toEqual([
+      { type: TEXT_TOKEN, value: "\n            " },
+      { type: OPEN_TAG_TOKEN },
+      { type: IDENTIFIER_TOKEN, value: "h1" },
+      { type: IDENTIFIER_TOKEN, value: "title" },
+      { type: EQUALS_TOKEN },
+      { type: QUOTE_CHAR_TOKEN, value: '"' },
+      { type: QUOTE_CHAR_TOKEN, value: '"' },
+      { type: CLOSE_TAG_TOKEN },
+      { type: OPEN_TAG_TOKEN },
+      { type: SLASH_TOKEN },
+      { type: IDENTIFIER_TOKEN, value: "h1" },
+      { type: CLOSE_TAG_TOKEN },
+      { type: TEXT_TOKEN, value: "\n          " },
+    ]);
   });
 });
 
@@ -365,7 +359,6 @@ describe("expressions", () => {
     expect(tokens).toEqual([
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -377,7 +370,6 @@ describe("expressions", () => {
       },
       {
         type: EQUALS_TOKEN,
-
       },
       {
         type: EXPRESSION_TOKEN,
@@ -385,7 +377,6 @@ describe("expressions", () => {
       },
       {
         type: CLOSE_TAG_TOKEN,
-
       },
     ]);
   });
@@ -397,7 +388,6 @@ describe("expressions", () => {
     expect(tokens).toEqual([
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -409,7 +399,6 @@ describe("expressions", () => {
       },
       {
         type: EQUALS_TOKEN,
-
       },
       { type: QUOTE_CHAR_TOKEN, value: '"' },
       {
@@ -419,7 +408,6 @@ describe("expressions", () => {
       { type: QUOTE_CHAR_TOKEN, value: '"' },
       {
         type: CLOSE_TAG_TOKEN,
-
       },
     ]);
   });
@@ -431,7 +419,6 @@ describe("expressions", () => {
     expect(tokens).toEqual([
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -443,7 +430,6 @@ describe("expressions", () => {
       },
       {
         type: EQUALS_TOKEN,
-
       },
       { type: QUOTE_CHAR_TOKEN, value: "'" },
       {
@@ -453,7 +439,6 @@ describe("expressions", () => {
       { type: QUOTE_CHAR_TOKEN, value: "'" },
       {
         type: CLOSE_TAG_TOKEN,
-
       },
     ]);
   });
@@ -485,7 +470,6 @@ describe("expressions", () => {
     expect(tokens).toEqual([
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -497,7 +481,6 @@ describe("expressions", () => {
       },
       {
         type: EQUALS_TOKEN,
-
       },
       { type: QUOTE_CHAR_TOKEN, value: "'" },
       {
@@ -511,7 +494,6 @@ describe("expressions", () => {
       { type: QUOTE_CHAR_TOKEN, value: "'" },
       {
         type: CLOSE_TAG_TOKEN,
-
       },
     ]);
   });
@@ -527,7 +509,6 @@ describe("expressions", () => {
   });
 });
 
-
 describe("whitespace handling", () => {
   it("should skip whitespace inside tags", () => {
     const tokens = tokenizeTemplate`< \n  div   id   =   "app"  >`;
@@ -536,7 +517,6 @@ describe("whitespace handling", () => {
     expect(tokens).toEqual([
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -548,7 +528,6 @@ describe("whitespace handling", () => {
       },
       {
         type: EQUALS_TOKEN,
-
       },
       {
         type: QUOTE_CHAR_TOKEN,
@@ -564,7 +543,6 @@ describe("whitespace handling", () => {
       },
       {
         type: CLOSE_TAG_TOKEN,
-
       },
     ]);
   });
@@ -588,7 +566,6 @@ describe("whitespace handling", () => {
     expect(tokens).toEqual([
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -596,7 +573,6 @@ describe("whitespace handling", () => {
       },
       {
         type: CLOSE_TAG_TOKEN,
-
       },
       {
         type: TEXT_TOKEN,
@@ -604,11 +580,9 @@ describe("whitespace handling", () => {
       },
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: SLASH_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -616,7 +590,6 @@ describe("whitespace handling", () => {
       },
       {
         type: CLOSE_TAG_TOKEN,
-
       },
     ]);
   });
@@ -704,14 +677,14 @@ describe("edge cases", () => {
     // The first should be SLASH, CLOSE
     // The second should be OPEN, SLASH, SLASH, CLOSE
     expect(tokens).toEqual([
-      { type: OPEN_TAG_TOKEN, },
+      { type: OPEN_TAG_TOKEN },
       { type: IDENTIFIER_TOKEN, value: "div" },
-      { type: SLASH_TOKEN, },
-      { type: CLOSE_TAG_TOKEN, },
-      { type: OPEN_TAG_TOKEN, },
-      { type: SLASH_TOKEN, },
-      { type: SLASH_TOKEN, },
-      { type: CLOSE_TAG_TOKEN, },
+      { type: SLASH_TOKEN },
+      { type: CLOSE_TAG_TOKEN },
+      { type: OPEN_TAG_TOKEN },
+      { type: SLASH_TOKEN },
+      { type: SLASH_TOKEN },
+      { type: CLOSE_TAG_TOKEN },
     ]);
   });
 
@@ -720,13 +693,13 @@ describe("edge cases", () => {
     const tokens = tokenizeTemplate`<${Comp}></${Comp}>`;
 
     expect(tokens).toEqual([
-      { type: OPEN_TAG_TOKEN, },
+      { type: OPEN_TAG_TOKEN },
       { type: EXPRESSION_TOKEN, value: 0 },
-      { type: CLOSE_TAG_TOKEN, },
-      { type: OPEN_TAG_TOKEN, },
-      { type: SLASH_TOKEN, },
+      { type: CLOSE_TAG_TOKEN },
+      { type: OPEN_TAG_TOKEN },
+      { type: SLASH_TOKEN },
       { type: EXPRESSION_TOKEN, value: 1 },
-      { type: CLOSE_TAG_TOKEN, },
+      { type: CLOSE_TAG_TOKEN },
     ]);
   });
 });
@@ -738,7 +711,6 @@ describe("special characters in names", () => {
     expect(tokens).toEqual([
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -746,11 +718,9 @@ describe("special characters in names", () => {
       },
       {
         type: SLASH_TOKEN,
-
       },
       {
         type: CLOSE_TAG_TOKEN,
-
       },
     ]);
   });
@@ -761,7 +731,6 @@ describe("special characters in names", () => {
     expect(tokens).toEqual([
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -769,11 +738,9 @@ describe("special characters in names", () => {
       },
       {
         type: SLASH_TOKEN,
-
       },
       {
         type: CLOSE_TAG_TOKEN,
-
       },
     ]);
   });
@@ -784,7 +751,6 @@ describe("special characters in names", () => {
     expect(tokens).toEqual([
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -792,11 +758,9 @@ describe("special characters in names", () => {
       },
       {
         type: SLASH_TOKEN,
-
       },
       {
         type: CLOSE_TAG_TOKEN,
-
       },
     ]);
   });
@@ -807,7 +771,6 @@ describe("special characters in names", () => {
     expect(tokens).toEqual([
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -815,11 +778,9 @@ describe("special characters in names", () => {
       },
       {
         type: SLASH_TOKEN,
-
       },
       {
         type: CLOSE_TAG_TOKEN,
-
       },
     ]);
   });
@@ -830,7 +791,6 @@ describe("special characters in names", () => {
     expect(tokens).toEqual([
       {
         type: OPEN_TAG_TOKEN,
-
       },
       {
         type: IDENTIFIER_TOKEN,
@@ -858,38 +818,34 @@ describe("special characters in names", () => {
       },
       {
         type: CLOSE_TAG_TOKEN,
-
       },
     ]);
   });
 });
 
 describe("invalid syntax", () => {
+  it("should throw with extra <", () => {
+    expect(() => tokenizeTemplate`<<div / >`).toThrow();
+  });
 
   it("should throw with extra <", () => {
-    expect(()=>tokenizeTemplate`<<div / >`).toThrow()
-  });
-
-  it("should throw with extra <", () => {
-    expect(()=>tokenizeTemplate`<div / <>`).toThrow()
+    expect(() => tokenizeTemplate`<div / <>`).toThrow();
   });
 
   it("should throw on invalid identofier", () => {
-    expect(()=>tokenizeTemplate`<.div />`).toThrow()
+    expect(() => tokenizeTemplate`<.div />`).toThrow();
   });
 
   it("should throw on invalid identofier", () => {
-    expect(()=>tokenizeTemplate`<div @fa />`).toThrow()
+    expect(() => tokenizeTemplate`<div @fa />`).toThrow();
   });
 
   it("should throw on invalid identofier", () => {
-    expect(()=>tokenizeTemplate`<div 0fa />`).toThrow()
+    expect(() => tokenizeTemplate`<div 0fa />`).toThrow();
   });
-
 });
 
-describe("bad but valid syntaxes",()=>{
-
+describe("bad but valid syntaxes", () => {
   it("should handle multiple attributes in tight syntax", () => {
     const tokens = tokenizeTemplate`<div a="1"b="2"c="3">`;
 
@@ -914,7 +870,6 @@ describe("bad but valid syntaxes",()=>{
     expect(tokens).toContainEqual(
       expect.objectContaining({
         type: SLASH_TOKEN,
-
       }),
     );
   });
@@ -942,14 +897,14 @@ describe("handling of raw text elements", () => {
     const tokens = tokenizeTemplate`<script>const a = 5<10;</script>`;
 
     expect(tokens).toEqual([
-      { type: OPEN_TAG_TOKEN, },
+      { type: OPEN_TAG_TOKEN },
       { type: IDENTIFIER_TOKEN, value: "script" },
-      { type: CLOSE_TAG_TOKEN, },
+      { type: CLOSE_TAG_TOKEN },
       { type: TEXT_TOKEN, value: "const a = 5<10;" },
-      { type: OPEN_TAG_TOKEN, },
-      { type: SLASH_TOKEN, },
+      { type: OPEN_TAG_TOKEN },
+      { type: SLASH_TOKEN },
       { type: IDENTIFIER_TOKEN, value: "script" },
-      { type: CLOSE_TAG_TOKEN, },
+      { type: CLOSE_TAG_TOKEN },
     ]);
   });
 
@@ -957,14 +912,14 @@ describe("handling of raw text elements", () => {
     const tokens = tokenizeTemplate`<style>.class > span { color: red; }</style>`;
 
     expect(tokens).toEqual([
-      { type: OPEN_TAG_TOKEN, },
+      { type: OPEN_TAG_TOKEN },
       { type: IDENTIFIER_TOKEN, value: "style" },
-      { type: CLOSE_TAG_TOKEN, },
+      { type: CLOSE_TAG_TOKEN },
       { type: TEXT_TOKEN, value: ".class > span { color: red; }" },
-      { type: OPEN_TAG_TOKEN, },
-      { type: SLASH_TOKEN, },
+      { type: OPEN_TAG_TOKEN },
+      { type: SLASH_TOKEN },
       { type: IDENTIFIER_TOKEN, value: "style" },
-      { type: CLOSE_TAG_TOKEN, },
+      { type: CLOSE_TAG_TOKEN },
     ]);
   });
 
@@ -972,26 +927,23 @@ describe("handling of raw text elements", () => {
     const tokens = tokenizeTemplate`<textarea>This is <span>not parsed</span>.</textarea>`;
 
     expect(tokens).toEqual([
-      { type: OPEN_TAG_TOKEN, },
+      { type: OPEN_TAG_TOKEN },
       { type: IDENTIFIER_TOKEN, value: "textarea" },
-      { type: CLOSE_TAG_TOKEN, },
+      { type: CLOSE_TAG_TOKEN },
       { type: TEXT_TOKEN, value: "This is <span>not parsed</span>." },
-      { type: OPEN_TAG_TOKEN, },
-      { type: SLASH_TOKEN, },
+      { type: OPEN_TAG_TOKEN },
+      { type: SLASH_TOKEN },
       { type: IDENTIFIER_TOKEN, value: "textarea" },
-      { type: CLOSE_TAG_TOKEN, },
+      { type: CLOSE_TAG_TOKEN },
     ]);
   });
 });
-
-
-
 
 describe("comments handling", () => {
   it("should not tokenzie comments", () => {
     const tokens = tokenizeTemplate`<div><!-- This is a comment --></div>`;
     expect(tokens).toEqual([
-      { type: OPEN_TAG_TOKEN, },
+      { type: OPEN_TAG_TOKEN },
       { type: IDENTIFIER_TOKEN, value: "div" },
       { type: CLOSE_TAG_TOKEN },
       { type: OPEN_TAG_TOKEN },
@@ -1003,14 +955,12 @@ describe("comments handling", () => {
 
   it("should handle comments with special characters", () => {
     const tokens = tokenizeTemplate`<!-- Special chars: <>&'" -->`;
-    expect(tokens).toEqual([
-    ]);
+    expect(tokens).toEqual([]);
   });
 
   it("should handle comments with expressions inside", () => {
     const value = "test";
     const tokens = tokenizeTemplate`<!-- Comment with ${value} inside -->`;
-    expect(tokens).toEqual([
-    ]);
+    expect(tokens).toEqual([]);
   });
 });
