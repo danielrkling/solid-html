@@ -103,7 +103,7 @@ export type PropNode =
   | SpreadProp
   | MixedProp;
 
-  export function parse(tokens: Token[], voidElements: Set<string>): RootNode {
+  export const parse = (tokens: Token[], voidElements: Set<string>): RootNode => {
     const root: RootNode = { type: ROOT_NODE, children: [] };
     const stack: (RootNode | ElementNode)[] = [root];
     let pos = 0;

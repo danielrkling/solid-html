@@ -31,26 +31,26 @@ const cache = new WeakMap<TemplateStringsArray, RootNode>();
 const walker = document.createTreeWalker(document, 129);
 
 //Factory function to create new SLD instances.
-export function createSLD<T extends ComponentRegistry>(
+export const createSLD = <T extends ComponentRegistry>(
   components: T,
-): SLDInstance<T> {
-  function sld(strings: TemplateStringsArray, ...values: any[]) {
+): SLDInstance<T> => {
+  const sld = (strings: TemplateStringsArray, ...values: any[]) => {
     const root = getCachedRoot(strings);
 
     return renderChildren(root, values, components);
   }
   sld.components = components;
   sld.sld = sld;
-  sld.define = function define<TNew extends ComponentRegistry>(
+  sld.define = <TNew extends ComponentRegistry>(
     newComponents: TNew,
-  ) {
+  ) => {
     return createSLD({ ...components, ...newComponents });
   };
 
   return sld as SLDInstance<T>;
 }
 
-function getCachedRoot(strings: TemplateStringsArray): RootNode {
+export const getCachedRoot = (strings: TemplateStringsArray): RootNode => {
   let root = cache.get(strings);
   if (!root) {
     root = parse(tokenize(strings, rawTextElements), voidElements);
@@ -60,11 +60,11 @@ function getCachedRoot(strings: TemplateStringsArray): RootNode {
   return root;
 }
 
-function renderNode(
+export const renderNode = (
   node: ChildNode,
   values: any[],
   components: ComponentRegistry,
-): any {
+): any => {
   switch (node.type) {
     case TEXT_NODE:
       return node.value;
@@ -99,20 +99,20 @@ function renderNode(
   }
 }
 
-function renderChildren(
+export const renderChildren = (
   node: RootNode | ElementNode,
   values: any[],
   components: ComponentRegistry,
-): JSX.Element {
+): JSX.Element => {
   if (!node.template) {
     return flat(node.children.map((n) => renderNode(n, values, components)));
   }
 
   const clone = node.template.content.cloneNode(true);
   walker.currentNode = clone;
-  walkNodes(node.children);
+  
 
-  function walkNodes(nodes: ChildNode[]) {
+  const walkNodes = (nodes: ChildNode[]) => {
     for (const node of nodes) {      
       if (node.type === ELEMENT_NODE || node.type === EXPRESSION_NODE) {
         const domNode = walker.nextNode()!;
@@ -139,15 +139,16 @@ function renderChildren(
       }
     }
   }
+  walkNodes(node.children);
   return Array.from(clone.childNodes);
 }
 
-function gatherProps(
+const gatherProps = (
   node: ElementNode,
   values: any[],
   components: ComponentRegistry,
   props: Record<string, any> = {},
-) {
+) => {
   for (const prop of node.props) {
     switch (prop.type) {
       case BOOLEAN_PROP:
@@ -186,7 +187,7 @@ function gatherProps(
   return props;
 }
 
-function applyGetter(props: Record<string, any>, name: string, value: any) {
+const applyGetter = (props: Record<string, any>, name: string, value: any) => {
   if (
     typeof value === "function" &&
     value.length === 0 &&

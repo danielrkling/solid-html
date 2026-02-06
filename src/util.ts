@@ -1,13 +1,12 @@
 import { SVGElements } from "solid-js/web";
 import { ELEMENT_NODE, ElementNode, ChildNode } from "./parse";
+import { c } from "vite/dist/node/moduleRunnerTransport.d-DJ_mE5sf";
 
-
-
-export function flat(arr: any[]) {
+export const flat = (arr: any[]) => {
   return arr.length === 1 ? arr[0] : arr;
 }
 
-export function getValue(value: any) {
+export const getValue = (value: any) => {
   while (typeof value === "function") value = value();
   return value;
 }
@@ -21,7 +20,7 @@ export function getValue(value: any) {
  * 2. Its name is a number (dynamic expression) OR
  * 3. Its name is a string starting with an Uppercase letter (static component).
  */
-export function isComponentNode(node: ElementNode): boolean {
+export const isComponentNode = (node: ElementNode): boolean => {
   const name = node.name;
   if (typeof name === "number") return true;
   const char = name.charCodeAt(0);

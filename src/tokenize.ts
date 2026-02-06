@@ -100,10 +100,10 @@ const STATE_ATTR_VALUE = 2
 const STATE_RAW_TEXT = 3
 const STATE_COMMENT = 4
 
-export function tokenize(
+export const tokenize = (
   strings: TemplateStringsArray | string[],
   rawTextElements: Set<string>,
-): Token[] {
+): Token[] => {
   const tokens: Token[] = [];
   let state = STATE_TEXT;
   let quoteChar: '"' | "'" | "" = "";

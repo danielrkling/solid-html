@@ -36,7 +36,7 @@ export const SLD = sld.define
  * @param component Function of component
  * @returns 
  */
-export function run<T extends FunctionComponent>(component: T): T {
+export const run = <T extends FunctionComponent>(component: T): T => {
     //@ts-expect-error
     return (props)=>createComponent(component, props)
 }

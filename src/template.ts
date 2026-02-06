@@ -12,7 +12,7 @@ import {
 import { isComponentNode } from "./util";
 
 //build template element with same exact shape as tree so they can be walked through in sync
-export function buildTemplate(node: RootNode | ChildNode): void {
+export const buildTemplate = (node: RootNode | ChildNode): void => {
   if (node.type === ROOT_NODE || node.type === ELEMENT_NODE) {
     //Criteria for using template is component or root has at least 1 element. May be be a more optimal condition.
     if (
@@ -31,7 +31,7 @@ export function buildTemplate(node: RootNode | ChildNode): void {
 const comment = "<!--+-->";
 
 //Lets browser handle svg,mathml, and html encoding
-function buildHTML(node: ChildNode): string {
+export const buildHTML = (node: ChildNode): string => {
   switch (node.type) {
     case TEXT_NODE:
       return node.value;

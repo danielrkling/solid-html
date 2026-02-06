@@ -57,9 +57,6 @@ type SLDInstance<T extends ComponentRegistry> = {
   elements: JSX.IntrinsicElements;
 };
 //#endregion
-//#region src/sld.d.ts
-declare function createSLD<T extends ComponentRegistry>(components: T): SLDInstance<T>;
-//#endregion
 //#region src/tokenize.d.ts
 declare const OPEN_TAG_TOKEN = 0;
 declare const CLOSE_TAG_TOKEN = 1;
@@ -167,7 +164,10 @@ interface MixedProp {
   quote?: "'" | '"';
 }
 type PropNode = BooleanProp | StaticProp | ExpressionProp | SpreadProp | MixedProp;
-declare function parse(tokens: Token[], voidElements: Set<string>): RootNode;
+declare const parse: (tokens: Token[], voidElements: Set<string>) => RootNode;
+//#endregion
+//#region src/sld.d.ts
+declare const createSLD: <T extends ComponentRegistry>(components: T) => SLDInstance<T>;
 //#endregion
 //#region src/index.d.ts
 /**
@@ -211,6 +211,6 @@ declare const SLD: <TNew extends ComponentRegistry>(components: TNew) => SLDInst
  * @param component Function of component
  * @returns
  */
-declare function run<T extends FunctionComponent>(component: T): T;
+declare const run: <T extends FunctionComponent>(component: T) => T;
 //#endregion
 export { SLD, SLDInstance, createSLD, sld as default, sld, defaultComponents, parse, run };
