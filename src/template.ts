@@ -28,7 +28,7 @@ export function buildTemplate(node: RootNode | ChildNode): void {
   }
 }
 
-const comment = "<--+-->";
+const comment = "<!--+-->";
 
 //Lets browser handle svg,mathml, and html encoding
 function buildHTML(node: ChildNode): string {
