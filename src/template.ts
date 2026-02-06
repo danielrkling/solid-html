@@ -16,7 +16,7 @@ export function buildTemplate(node: RootNode | ChildNode): void {
   if (node.type === ROOT_NODE || node.type === ELEMENT_NODE) {
     //Criteria for using template is component or root has at least 1 element. May be be a more optimal condition.
     if (
-      node.type === ELEMENT_NODE && isComponentNode(node) &&
+      (node.type === ROOT_NODE || (node.type === ELEMENT_NODE && isComponentNode(node))) &&
       node.children.some((v) => v.type === ELEMENT_NODE && !isComponentNode(v))
     ) {
       const template = document.createElement("template");

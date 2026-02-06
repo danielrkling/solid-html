@@ -14,17 +14,17 @@ import {
 } from "./tokenize";
 
 // Node type constants
-export const ROOT_NODE = "Root";
-export const ELEMENT_NODE = "Elem";
-export const TEXT_NODE = "Text";
-export const EXPRESSION_NODE = "Expression";
+export const ROOT_NODE = 0
+export const ELEMENT_NODE = 1;
+export const TEXT_NODE = 2;
+export const EXPRESSION_NODE = 3;
 
 // Prop type constants
-export const BOOLEAN_PROP = "Bool";
-export const STATIC_PROP = "Static";
-export const EXPRESSION_PROP = "Expression";
-export const SPREAD_PROP = "Spread";
-export const MIXED_PROP = "Mixed";
+export const BOOLEAN_PROP = 0
+export const STATIC_PROP = 1
+export const EXPRESSION_PROP = 2
+export const SPREAD_PROP = 3
+export const MIXED_PROP = 4
 
 export type NodeType =
   | typeof ROOT_NODE

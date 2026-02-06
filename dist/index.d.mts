@@ -61,16 +61,16 @@ type SLDInstance<T extends ComponentRegistry> = {
 declare function createSLD<T extends ComponentRegistry>(components: T): SLDInstance<T>;
 //#endregion
 //#region src/tokenize.d.ts
-declare const OPEN_TAG_TOKEN = "<";
-declare const CLOSE_TAG_TOKEN = ">";
-declare const SLASH_TOKEN = "/";
-declare const IDENTIFIER_TOKEN = "IDENTIFIER";
-declare const EQUALS_TOKEN = "=";
-declare const ATTRIBUTE_VALUE_TOKEN = "Attr";
-declare const TEXT_TOKEN = "Text";
-declare const EXPRESSION_TOKEN = "${}";
-declare const QUOTE_CHAR_TOKEN = "'";
-declare const SPREAD_TOKEN = "...";
+declare const OPEN_TAG_TOKEN = 0;
+declare const CLOSE_TAG_TOKEN = 1;
+declare const SLASH_TOKEN = 2;
+declare const IDENTIFIER_TOKEN = 3;
+declare const EQUALS_TOKEN = 4;
+declare const ATTRIBUTE_VALUE_TOKEN = 5;
+declare const TEXT_TOKEN = 6;
+declare const EXPRESSION_TOKEN = 7;
+declare const QUOTE_CHAR_TOKEN = 8;
+declare const SPREAD_TOKEN = 9;
 interface OpenTagToken {
   type: typeof OPEN_TAG_TOKEN;
 }
@@ -109,15 +109,15 @@ interface SpreadToken {
 type Token = OpenTagToken | CloseTagToken | SlashToken | IdentifierToken | EqualsToken | AttributeToken | TextToken | ExpressionToken | QuoteToken | SpreadToken;
 //#endregion
 //#region src/parse.d.ts
-declare const ROOT_NODE = "Root";
-declare const ELEMENT_NODE = "Elem";
-declare const TEXT_NODE = "Text";
-declare const EXPRESSION_NODE = "Expression";
-declare const BOOLEAN_PROP = "Bool";
-declare const STATIC_PROP = "Static";
-declare const EXPRESSION_PROP = "Expression";
-declare const SPREAD_PROP = "Spread";
-declare const MIXED_PROP = "Mixed";
+declare const ROOT_NODE = 0;
+declare const ELEMENT_NODE = 1;
+declare const TEXT_NODE = 2;
+declare const EXPRESSION_NODE = 3;
+declare const BOOLEAN_PROP = 0;
+declare const STATIC_PROP = 1;
+declare const EXPRESSION_PROP = 2;
+declare const SPREAD_PROP = 3;
+declare const MIXED_PROP = 4;
 type ChildNode = ElementNode | TextNode | ExpressionNode;
 interface RootNode {
   type: typeof ROOT_NODE;

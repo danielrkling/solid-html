@@ -1,13 +1,13 @@
-export const OPEN_TAG_TOKEN = "<";
-export const CLOSE_TAG_TOKEN = ">";
-export const SLASH_TOKEN = "/";
-export const IDENTIFIER_TOKEN = "IDENTIFIER";
-export const EQUALS_TOKEN = "=";
-export const ATTRIBUTE_VALUE_TOKEN = "Attr";
-export const TEXT_TOKEN = "Text"
-export const EXPRESSION_TOKEN = "${}"
-export const QUOTE_CHAR_TOKEN = "'"
-export const SPREAD_TOKEN = "..."
+export const OPEN_TAG_TOKEN = 0
+export const CLOSE_TAG_TOKEN = 1
+export const SLASH_TOKEN = 2
+export const IDENTIFIER_TOKEN = 3
+export const EQUALS_TOKEN = 4
+export const ATTRIBUTE_VALUE_TOKEN = 5
+export const TEXT_TOKEN = 6
+export const EXPRESSION_TOKEN = 7
+export const QUOTE_CHAR_TOKEN = 8
+export const SPREAD_TOKEN = 9
 
 
 // Character code helpers for fast path testing (faster than regex)
@@ -94,11 +94,11 @@ export type Token =
   | SpreadToken
 
 // Add a new state for elements that contain raw text only
-const STATE_TEXT = "TEXT";
-const STATE_TAG = "TAG";
-const STATE_ATTR_VALUE = "ATTR_VALUE";
-const STATE_RAW_TEXT = "RAW_TEXT";
-const STATE_COMMENT = "COMMENT";
+const STATE_TEXT = 0
+const STATE_TAG = 1
+const STATE_ATTR_VALUE = 2
+const STATE_RAW_TEXT = 3
+const STATE_COMMENT = 4
 
 export function tokenize(
   strings: TemplateStringsArray | string[],
