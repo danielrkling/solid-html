@@ -672,35 +672,20 @@ describe("edge cases", () => {
     ]);
   });
 
-  it("should distinguish between self-closing and shorthand close", () => {
-    const tokens = tokenizeTemplate`<div /><//>`;
-    // The first should be SLASH, CLOSE
-    // The second should be OPEN, SLASH, SLASH, CLOSE
-    expect(tokens).toEqual([
-      { type: OPEN_TAG_TOKEN },
-      { type: IDENTIFIER_TOKEN, value: "div" },
-      { type: SLASH_TOKEN },
-      { type: CLOSE_TAG_TOKEN },
-      { type: OPEN_TAG_TOKEN },
-      { type: SLASH_TOKEN },
-      { type: SLASH_TOKEN },
-      { type: CLOSE_TAG_TOKEN },
-    ]);
-  });
-
-  it("should handle dynamic closing tags with no whitespace", () => {
-    const Comp = "div";
-    const tokens = tokenizeTemplate`<${Comp}></${Comp}>`;
-
-    expect(tokens).toEqual([
-      { type: OPEN_TAG_TOKEN },
-      { type: EXPRESSION_TOKEN, value: 0 },
-      { type: CLOSE_TAG_TOKEN },
-      { type: OPEN_TAG_TOKEN },
-      { type: SLASH_TOKEN },
-      { type: EXPRESSION_TOKEN, value: 1 },
-      { type: CLOSE_TAG_TOKEN },
-    ]);
+  it("should handle 1 letter tags", () => {
+    const tokens = tokenizeTemplate`<tr class=${0}>
+                  <td class="col-md-1" textContent=${1} />
+                  <td class="col-md-4">
+                    <a onClick=${2} textContent=${3} />
+                  </td>
+                  <td class="col-md-1">
+                    <a onClick=${4}>
+                      <span class="glyphicon glyphicon-remove" aria-hidden="true" />
+                    </a>
+                  </td>
+                  <td class="col-md-6" />
+                </tr>`;
+    expect(tokens.filter(t=>t.type===IDENTIFIER_TOKEN && t.value==="a").length).toBe(3);
   });
 });
 

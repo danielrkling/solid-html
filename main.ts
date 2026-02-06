@@ -3,13 +3,19 @@ import { render } from "solid-js/web";
 import { sld } from "./src";
 
 
-function Counter() {
-    const [count, setCount] = createSignal(0);
-    return sld`<button  attr  =  "false"  ...${{class: "btn"}} onClick=${[() => setCount(count() + 1), true]}>Count: ${() => count()}</button>`;
-}
 
-render(Counter, document.getElementById("app")!);
+const jsx = sld`
+<tr class=${0}>
+                  <td class="col-md-1" textContent=${1} />
+                  <td class="col-md-4">
+                    <a onClick=${2} textContent=${3} />
+                  </td>
+                  <td class="col-md-1">
+                    <a onClick=${4}>
+                      <span class="glyphicon glyphicon-remove" aria-hidden="true" />
+                    </a>
+                  </td>
+                  <td class="col-md-6" />
+                </tr>`
 
-const span = document.createElement("span");
-span.innerHTML = `<button attr = "false" >btn</button>`;
-document.body.appendChild(span);
+render(()=>jsx, document.getElementById("app")!);
