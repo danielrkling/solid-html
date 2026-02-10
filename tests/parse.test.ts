@@ -628,7 +628,7 @@ describe("Specialized Element AST", () => {
 
   it("raw text elements: textarea ignoring content", () => {
     // The content inside <textarea> is treated as a single TEXT_NODE
-    const ast = jsx`<textarea><div class="fake">Content</div></textarea>`;
+    const ast = jsx`<textarea><div class="fake">${0}</div></textarea>`;
 
     expect(ast).toEqual({
       type: ROOT_NODE,
@@ -640,7 +640,12 @@ describe("Specialized Element AST", () => {
           children: [
             {
               type: TEXT_NODE,
-              value: '<div class="fake">Content</div>',
+              value: '<div class="fake">',
+            },
+            { type: EXPRESSION_NODE, value: 0 },
+            {
+              type: TEXT_NODE,
+              value: "</div>",
             },
           ],
         },

@@ -685,7 +685,10 @@ describe("edge cases", () => {
                   </td>
                   <td class="col-md-6" />
                 </tr>`;
-    expect(tokens.filter(t=>t.type===IDENTIFIER_TOKEN && t.value==="a").length).toBe(3);
+    expect(
+      tokens.filter((t) => t.type === IDENTIFIER_TOKEN && t.value === "a")
+        .length,
+    ).toBe(3);
   });
 });
 
@@ -921,6 +924,70 @@ describe("handling of raw text elements", () => {
       { type: IDENTIFIER_TOKEN, value: "textarea" },
       { type: CLOSE_TAG_TOKEN },
     ]);
+  });
+
+  it("should handle raw text elements with attributes and expressions", () => {
+    const tokens = tokenizeTemplate`<textarea type=${0}><span>${1}</span></textarea>`;
+    expect(tokens).toEqual([
+      { type: OPEN_TAG_TOKEN },
+      { type: IDENTIFIER_TOKEN, value: "textarea" },
+      { type: IDENTIFIER_TOKEN, value: "type" },
+      { type: EQUALS_TOKEN },
+      { type: EXPRESSION_TOKEN, value: 0 },
+      { type: CLOSE_TAG_TOKEN },
+      { type: TEXT_TOKEN, value: "<span>" },
+      { type: EXPRESSION_TOKEN, value: 1 },
+      { type: TEXT_TOKEN, value: "</span>" },
+      { type: OPEN_TAG_TOKEN },
+      { type: SLASH_TOKEN },
+      { type: IDENTIFIER_TOKEN, value: "textarea" },
+      { type: CLOSE_TAG_TOKEN },
+    ]);
+  });
+
+  it("should handle raw text elements and white space in tags", () => {
+    const tokens = tokenizeTemplate`<   textarea  >  ${0}<  /   textarea   >`;
+    expect(tokens).toEqual([
+      { type: OPEN_TAG_TOKEN },
+      { type: IDENTIFIER_TOKEN, value: "textarea" },
+      { type: CLOSE_TAG_TOKEN },
+      { type: TEXT_TOKEN, value: `  ` },
+      { type: EXPRESSION_TOKEN, value: 0 },
+      { type: OPEN_TAG_TOKEN },
+      { type: SLASH_TOKEN },
+      { type: IDENTIFIER_TOKEN, value: "textarea" },
+      { type: CLOSE_TAG_TOKEN },
+    ]);
+  });
+
+  it("should handle nested raw text elements", () => {
+    const tokens = tokenizeTemplate`<textarea><textarea>const a = 5;</textarea></textarea>`;
+    expect(tokens).toEqual([
+      { type: OPEN_TAG_TOKEN },
+      { type: IDENTIFIER_TOKEN, value: "textarea" },
+      { type: CLOSE_TAG_TOKEN },
+      { type: TEXT_TOKEN, value: "<textarea>const a = 5;" },
+      { type: OPEN_TAG_TOKEN },
+      { type: SLASH_TOKEN },
+      { type: IDENTIFIER_TOKEN, value: "textarea" },
+      { type: CLOSE_TAG_TOKEN },
+      { type: OPEN_TAG_TOKEN },
+      { type: SLASH_TOKEN },
+      { type: IDENTIFIER_TOKEN, value: "textarea" },
+      { type: CLOSE_TAG_TOKEN },
+    ]);
+  });
+
+  it("should handle self-closing raw text elements", () => {
+    const tokens = tokenizeTemplate`<textarea ${0} />Text`;
+    expect(tokens).toEqual([
+      { type: OPEN_TAG_TOKEN },
+      { type: IDENTIFIER_TOKEN, value: "textarea" },
+      { type: EXPRESSION_TOKEN, value: 0 },
+      { type: SLASH_TOKEN },
+      { type: CLOSE_TAG_TOKEN },
+      { type: TEXT_TOKEN, value: "Text" },
+    ]); 
   });
 });
 
