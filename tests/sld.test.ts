@@ -340,7 +340,7 @@ describe("SLD Advanced Integration", () => {
       const result = sld`
         <div id="main">
           <button onclick=${() => (exec.bound = true)}>Bound</button>
-          <button onClick=${[(v) => (exec.delegated = v), true]}>Delegated</button>
+          <button onClick=${[(v: any) => (exec.delegated = v), true]}>Delegated</button>
           <button on:click=${() => (exec.listener = true)}>Listener</button>
         </div>
       ` as HTMLElement[];
@@ -377,38 +377,45 @@ describe("SLD Advanced Integration", () => {
 describe("Github issues with solid 'html'", () => {
   it("https://github.com/ryansolid/dom-expressions/issues/156", () => {
     const elements =
-      sld`<div><For each=${() => [1, 2, 3]}>${(n) => sld`<h1>${n}</h1>`}</For></div>` as Node[];
+      sld`<div><For each=${() => [1, 2, 3]}>${(n:number) => sld`<h1>${n}</h1>`}</For></div>` as Node[];
     const container = document.createElement("div");
     container.append(...elements);
     expect(container.innerHTML).toBe(
-      "<div><h1>1<!--+--></h1><h1>2<!--+--></h1><h1>3<!--+--></h1><!--+--></div>",
+      "<div><h1>1<!--+--></h1><h1>2<!--+--></h1><h1>3<!--+--></h1><!--For--></div>",
     );
   });
 
   it("https://github.com/ryansolid/dom-expressions/issues/248", () => {
-    const Comp = (props) => sld`<div>${props.children}</div>`;
+    const Comp = (props: any) => sld`<div>${props.children}</div>`;
     const result = sld.define({ Comp }).sld`<Comp>test "ups"</Comp>`;
     const container = document.createElement("div");
     insert(container, result);
     expect(container.innerHTML).toBe('<div>test "ups"<!--+--></div>');
   });
 
-//   it("https://github.com/ryansolid/dom-expressions/issues/268", () => {
-//     const elements = sld`
-//   <div id="div"></div>
-//   <style>
-//     #div {
-//       ${""}
-//     }
-//   </style>
-// `;
-//     console.log(elements);
-//     const container = document.createElement("div");
-//     container.append(...elements);
-//     expect(container.innerHTML).toBe(
-//       '<div id="div"></div><style>#div { <!--+--> }</style>',
-//     );
-//   });
+  it("https://github.com/ryansolid/dom-expressions/issues/268", () => {
+    const elements = sld`
+  <div id="div">Test</div>
+  <style>
+    #div {
+      color:${()=>"red"};
+      background-color:blue;
+    }
+  </style>
+` as Node[];
+    console.log(elements);
+    const container = document.createElement("div");
+    container.append(...elements);
+    document.body.append(container)
+    expect(container.innerHTML).toEqual(
+      `<div id="div">Test</div><style>
+    #div {
+      color:red<!--+-->;
+      background-color:blue;
+    }
+  </style>`,
+    );
+  });
 
   it("https://github.com/ryansolid/dom-expressions/issues/269", () => {
     const elements = sld``;
@@ -416,7 +423,7 @@ describe("Github issues with solid 'html'", () => {
   });
 
   it("https://github.com/ryansolid/dom-expressions/issues/399", () => {
-    const Foo = (props) => sld`${props.bar}`;
+    const Foo = (props: any) => sld`${props.bar}`;
     const result = sld.define({ Foo }).sld`<Foo bar></Foo>`;
     expect(result).toEqual(true);
   });
@@ -453,3 +460,10 @@ describe("Github issues with solid 'html'", () => {
   })
 
 });
+
+
+it("handles html encodings",()=>{
+  const elem = sld`&copy;<span>&gt;</span>` as Node[]
+  expect(elem[0].textContent).toEqual("\u00A9")
+  expect(elem[1].textContent).toEqual(">")
+})

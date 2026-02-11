@@ -31,7 +31,7 @@ describe("Simple AST", () => {
     const ast = jsx`<div></div>`;
     expect(ast).toEqual({
       type: ROOT_NODE,
-      children: [{ type: ELEMENT_NODE, name: "div", props: [], children: [] }],
+      children: [{ type: ELEMENT_NODE, isSVG: false, name: "div", props: [], children: [], }],
     });
   });
 
@@ -41,7 +41,7 @@ describe("Simple AST", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "div",
           props: [],
           children: [{ type: TEXT_NODE, value: "Hello" }],
@@ -57,7 +57,7 @@ describe("Simple AST", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "div",
           props: [],
           children: [
@@ -74,7 +74,7 @@ describe("Simple AST", () => {
     expect(ast).toEqual({
       type: ROOT_NODE,
       children: [
-        { type: ELEMENT_NODE, name: "input", props: [], children: [] },
+        { type: ELEMENT_NODE, isSVG: false, name: "input", props: [], children: [] },
       ],
     });
   });
@@ -89,12 +89,12 @@ describe("Simple AST", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "div",
           props: [],
           children: [
             {
-              type: ELEMENT_NODE,
+              type: ELEMENT_NODE, isSVG: false,
               name: "span",
               props: [],
               children: [{ type: TEXT_NODE, value: "text" }],
@@ -113,7 +113,7 @@ describe("Attributes", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "div",
           props: [{ name: "id", type: STATIC_PROP, value: "app", quote: '"' }],
           children: [],
@@ -128,7 +128,7 @@ describe("Attributes", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "div",
           props: [{ name: "id", type: STATIC_PROP, value: "app", quote: "'" }],
           children: [],
@@ -144,6 +144,7 @@ describe("Attributes", () => {
       children: [
         {
           type: ELEMENT_NODE,
+          isSVG: false,
           name: "input",
           props: [{ name: "checked", type: BOOLEAN_PROP, value: true }],
           children: [],
@@ -159,6 +160,7 @@ describe("Attributes", () => {
       children: [
         {
           type: ELEMENT_NODE,
+          isSVG: false,
           name: "button",
           props: [{ name: "checked", type: BOOLEAN_PROP, value: true }],
           children: [],
@@ -175,6 +177,7 @@ describe("Attributes", () => {
       children: [
         {
           type: ELEMENT_NODE,
+          isSVG: false,
           name: "div",
           props: [{ name: "id", type: EXPRESSION_PROP, value: 0 }],
           children: [],
@@ -191,6 +194,7 @@ describe("Attributes", () => {
       children: [
         {
           type: ELEMENT_NODE,
+          isSVG: false,
           name: "div",
           props: [{ name: "id", type: EXPRESSION_PROP, value: 0, quote: '"' }],
           children: [],
@@ -207,6 +211,7 @@ describe("Attributes", () => {
       children: [
         {
           type: ELEMENT_NODE,
+          isSVG: false,
           name: "div",
           props: [{ name: "id", type: EXPRESSION_PROP, value: 0, quote: "'" }],
           children: [],
@@ -222,7 +227,7 @@ describe("Attributes", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "div",
           props: [
             {
@@ -247,7 +252,7 @@ describe("Attributes", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "div",
           props: [
             {
@@ -270,7 +275,7 @@ describe("Attributes", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "div",
           props: [
             {
@@ -294,7 +299,7 @@ describe("Attributes", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "h1",
           props: [
             {
@@ -317,7 +322,7 @@ describe("Attributes", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "input",
           props: [
             { name: "type", type: STATIC_PROP, value: "text", quote: '"' },
@@ -338,7 +343,7 @@ describe("Attributes", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "div",
           props: [{ type: SPREAD_PROP, value: 0 }],
           children: [],
@@ -356,7 +361,7 @@ describe("whitespace handling", () => {
       children: [
         { type: TEXT_NODE, value: "  Hello " },
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "div",
           props: [],
           children: [{ type: TEXT_NODE, value: "   Hello   World   " }],
@@ -374,7 +379,7 @@ describe("whitespace handling", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "div",
           props: [],
           children: [{ type: TEXT_NODE, value: "Hello World" }],
@@ -389,7 +394,7 @@ describe("whitespace handling", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "div",
           props: [],
           children: [{ type: TEXT_NODE, value: "   Hello   World   " }],
@@ -406,7 +411,7 @@ describe("whitespace handling", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "div",
           props: [],
           children: [
@@ -417,7 +422,7 @@ describe("whitespace handling", () => {
        `,
             },
             {
-              type: ELEMENT_NODE,
+              type: ELEMENT_NODE, isSVG: false,
               name: "span",
               props: [],
               children: [{ type: TEXT_NODE, value: "!" }],
@@ -435,7 +440,7 @@ describe("whitespace handling", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "div",
           props: [],
           children: [
@@ -457,7 +462,7 @@ describe("whitespace handling", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "div",
           props: [],
           children: [{ type: EXPRESSION_NODE, value: 0 }],
@@ -495,7 +500,7 @@ describe("whitespace handling", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "div",
           props: [],
           children: [
@@ -525,18 +530,18 @@ describe("Complex Examples", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "div",
           props: [{ name: "id", type: STATIC_PROP, value: "root", quote: '"' }],
           children: [
             {
-              type: ELEMENT_NODE,
+              type: ELEMENT_NODE, isSVG: false,
               name: "h1",
               props: [],
               children: [{ type: EXPRESSION_NODE, value: 0 }],
             },
             {
-              type: ELEMENT_NODE,
+              type: ELEMENT_NODE, isSVG: false,
               name: "p",
               props: [],
               children: [
@@ -564,24 +569,24 @@ describe("Complex Examples", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "ul",
           props: [],
           children: [
             {
-              type: ELEMENT_NODE,
+              type: ELEMENT_NODE, isSVG: false,
               name: "li",
               props: [],
               children: [{ type: EXPRESSION_NODE, value: 0 }],
             },
             {
-              type: ELEMENT_NODE,
+              type: ELEMENT_NODE, isSVG: false,
               name: "li",
               props: [],
               children: [{ type: EXPRESSION_NODE, value: 1 }],
             },
             {
-              type: ELEMENT_NODE,
+              type: ELEMENT_NODE, isSVG: false,
               name: "li",
               props: [],
               children: [{ type: EXPRESSION_NODE, value: 2 }],
@@ -602,13 +607,13 @@ describe("Specialized Element AST", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "div",
           props: [],
           children: [
 
             {
-              type: ELEMENT_NODE,
+              type: ELEMENT_NODE, isSVG: false,
               name: "img",
               props: [
                 {
@@ -634,7 +639,7 @@ describe("Specialized Element AST", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "textarea",
           props: [],
           children: [
@@ -661,7 +666,7 @@ describe("Specialized Element AST", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE,
+          type: ELEMENT_NODE, isSVG: false,
           name: "input",
           props: [
             {

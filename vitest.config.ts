@@ -8,8 +8,8 @@ export default defineConfig({
   test: {
     browser: {
       enabled: true,
-      provider: playwright(), 
-      headless: true,
+      provider: preview(), 
+      // headless: true,
       screenshotFailures: false,
       instances: [
         { browser: 'chromium' },

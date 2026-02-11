@@ -27,7 +27,7 @@ export const buildTemplate = (node: RootNode | ChildNode): void => {
       node.template = template;
     }
     node.children.forEach(buildTemplate);
-  } else if (node.type === ELEMENT_NODE){
+  } else if (node.type === ELEMENT_NODE) {
     node.children.forEach(buildTemplate);
 
   }
@@ -36,14 +36,14 @@ export const buildTemplate = (node: RootNode | ChildNode): void => {
 const comment = "<!--+-->";
 
 //Lets browser handle svg,mathml, and html encoding
-export const buildHTML = (node: ChildNode): string => {
+const buildHTML = (node: ChildNode): string => {
   switch (node.type) {
     case TEXT_NODE:
       return node.value;
     case EXPRESSION_NODE:
       return comment;
-      case COMPONENT_NODE:
-        return comment
+    case COMPONENT_NODE:
+      return comment
     case ELEMENT_NODE:
 
       let attributeHTML = "";
@@ -52,7 +52,7 @@ export const buildHTML = (node: ChildNode): string => {
       node.props = node.props.filter((prop) => {
         if (prop.type === STATIC_PROP) {
           if (prop.name.startsWith("prop:")) return true
-          const name = (prop.name.startsWith("attr:"))? prop.name.slice(5): prop.name
+          const name = (prop.name.startsWith("attr:")) ? prop.name.slice(5) : prop.name
           attributeHTML += ` ${name}=${prop.quote}${prop.value}${prop.quote}`;
           return hasSpread;
         } else if (prop.type === BOOLEAN_PROP) {
@@ -71,31 +71,30 @@ export const buildHTML = (node: ChildNode): string => {
 
 const textTemplate = document.createElement("template")
 
-const buildNodes = (node: ChildNode): Node =>{
-switch (node.type) {
+const buildNodes = (node: ChildNode): Node => {
+  switch (node.type) {
     case TEXT_NODE:
       textTemplate.innerHTML = node.value
-      return document.createTextNode(textTemplate.content.textContent)
+      return document.createTextNode(textTemplate.content.textContent ?? "")
     case EXPRESSION_NODE:
-      return document.createComment(node.value.toString());
+      return document.createComment("+");
     case COMPONENT_NODE:
       return document.createComment(node.name)
     case ELEMENT_NODE:
 
-      let attributeHTML = "";
       let hasSpread = false;
 
-      const elem = createElement(node.name,node.isSVG)
+      const elem = createElement(node.name, node.isSVG)
       //props located after spread need to be applied after spread for possible overrides
       node.props = node.props.filter((prop) => {
         if (prop.type === STATIC_PROP) {
           if (prop.name.startsWith("prop:")) return true
-          const name = (prop.name.startsWith("attr:"))? prop.name.slice(5): prop.name
-          elem.setAttribute(name,prop.value)
+          const name = (prop.name.startsWith("attr:")) ? prop.name.slice(5) : prop.name
+          elem.setAttribute(name, prop.value)
           return hasSpread;
         } else if (prop.type === BOOLEAN_PROP) {
           // attributeHTML += ` ${prop.name}`;
-          elem.setAttribute(prop.name,"")
+          elem.setAttribute(prop.name, "")
           return hasSpread;
         } else if (prop.type === SPREAD_PROP) {
           hasSpread = true;
