@@ -1,3 +1,4 @@
+import { SVGElements } from "solid-js/web";
 import {
   AttributeToken,
   CLOSE_TAG_TOKEN,
@@ -12,12 +13,14 @@ import {
   TEXT_TOKEN,
   Token
 } from "./tokenize";
+import { isComponentNode } from "./util";
 
 // Node type constants
 export const ROOT_NODE = 0
 export const ELEMENT_NODE = 1;
-export const TEXT_NODE = 2;
-export const EXPRESSION_NODE = 3;
+export const COMPONENT_NODE = 2;
+export const TEXT_NODE = 3;
+export const EXPRESSION_NODE = 4;
 
 // Prop type constants
 export const BOOLEAN_PROP = 0
@@ -29,6 +32,7 @@ export const MIXED_PROP = 4
 export type NodeType =
   | typeof ROOT_NODE
   | typeof ELEMENT_NODE
+  | typeof COMPONENT_NODE
   | typeof TEXT_NODE
   | typeof EXPRESSION_NODE;
 export type PropType =
@@ -38,7 +42,7 @@ export type PropType =
   | typeof SPREAD_PROP
   | typeof MIXED_PROP;
 
-export type ChildNode = ElementNode | TextNode | ExpressionNode;
+export type ChildNode = ElementNode | TextNode | ExpressionNode | ComponentNode;
 
 export interface RootNode {
   type: typeof ROOT_NODE;
@@ -48,6 +52,14 @@ export interface RootNode {
 
 export interface ElementNode {
   type: typeof ELEMENT_NODE;
+  name: string;
+  props: PropNode[];
+  children: ChildNode[];
+  isSVG?: boolean
+}
+
+export interface ComponentNode {
+  type: typeof COMPONENT_NODE;
   name: string;
   props: PropNode[];
   children: ChildNode[];
@@ -105,7 +117,7 @@ export type PropNode =
 
   export const parse = (tokens: Token[], voidElements: Set<string>): RootNode => {
     const root: RootNode = { type: ROOT_NODE, children: [] };
-    const stack: (RootNode | ElementNode)[] = [root];
+    const stack: (RootNode | ElementNode| ComponentNode)[] = [root];
     let pos = 0;
     const len = tokens.length;
   
@@ -166,12 +178,13 @@ export type PropNode =
           // Handle Opening Tag: <name ...>
           if (nextToken.type === IDENTIFIER_TOKEN) {
             const tagName = nextToken.value;
-            const node: ElementNode = {
-              type: ELEMENT_NODE,
+            const node: ElementNode | ComponentNode = {
+              type: isComponentNode(tagName) ? COMPONENT_NODE : ELEMENT_NODE,
               name: tagName,
               props: [],
               children: [],
             };
+            (node.type === ELEMENT_NODE && (node.isSVG = SVGElements.has(tagName)))
             parent.children.push(node);
             pos++; // Consume tag name
   

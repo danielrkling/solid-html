@@ -2,7 +2,9 @@ import { JSX, createComponent, mergeProps } from "solid-js";
 import { SVGElements, insert, spread } from "solid-js/web";
 import {
   BOOLEAN_PROP,
+  COMPONENT_NODE,
   ChildNode,
+  ComponentNode,
   ELEMENT_NODE,
   EXPRESSION_NODE,
   EXPRESSION_PROP,
@@ -18,6 +20,7 @@ import { buildTemplate } from "./template";
 import { tokenize } from "./tokenize";
 import { ComponentRegistry, SLDInstance } from "./types";
 import {
+  createElement,
   flat,
   getValue,
   isComponentNode,
@@ -56,6 +59,7 @@ export const getCachedRoot = (strings: TemplateStringsArray): RootNode => {
     root = parse(tokenize(strings, rawTextElements), voidElements);
     buildTemplate(root);
     cache.set(strings, root);
+    console.log(root) 
   }
   return root;
 }
@@ -70,27 +74,22 @@ export const renderNode = (
       return node.value;
     case EXPRESSION_NODE:
       return values[node.value];
-    case ELEMENT_NODE:
-      let name = node.name;
-
-      if (isComponentNode(node)) {
-        // Registered Component by static name
-        const component = components[name];
+    case COMPONENT_NODE:
+        const component = components[node.name];
         if (component) {
           return createComponent(
             component,
             gatherProps(node, values, components),
           );
         } else {
-          throw new Error(`Component "${name}" not found in registry`);
+          throw new Error(`Component "${node.name}" not found in registry`);
         }
-      }
+    case ELEMENT_NODE:
+      let name = node.name;
 
       const isSvg = SVGElements.has(name);
       // 3. Standard HTML Element (node.name is guaranteed string here)
-      const element = isSvg
-        ? document.createElementNS("http://www.w3.org/2000/svg", name)
-        : document.createElement(name);
+      const element = createElement(name,isSvg)
       const props = gatherProps(node, values, components);
 
       spread(element, props, isSvg, true);
@@ -100,7 +99,7 @@ export const renderNode = (
 }
 
 export const renderChildren = (
-  node: RootNode | ElementNode,
+  node: RootNode | ComponentNode,
   values: any[],
   components: ComponentRegistry,
 ): JSX.Element => {
@@ -111,12 +110,12 @@ export const renderChildren = (
   const clone = node.template.content.cloneNode(true);
   walker.currentNode = clone;
   
-
+  
   const walkNodes = (nodes: ChildNode[]) => {
     for (const node of nodes) {      
-      if (node.type === ELEMENT_NODE || node.type === EXPRESSION_NODE) {
+      if (node.type === ELEMENT_NODE || node.type === EXPRESSION_NODE||node.type === COMPONENT_NODE) {
         const domNode = walker.nextNode()!;
-        if (node.type === EXPRESSION_NODE || isComponentNode(node)) {
+        if (node.type === EXPRESSION_NODE || node.type === COMPONENT_NODE) {
           insert(
             domNode.parentNode!,
             renderNode(node, values, components),
@@ -144,7 +143,7 @@ export const renderChildren = (
 }
 
 const gatherProps = (
-  node: ElementNode,
+  node: ElementNode | ComponentNode,
   values: any[],
   components: ComponentRegistry,
   props: Record<string, any> = {},
@@ -177,7 +176,7 @@ const gatherProps = (
   }
 
   // children - childNodes overwrites any props.children
-  if (node.children.length) {
+  if (node.type === COMPONENT_NODE && node.children.length) {
     Object.defineProperty(props, "children", {
       get() {
         return renderChildren(node, values, components);

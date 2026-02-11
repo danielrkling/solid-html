@@ -1,8 +1,21 @@
-import { createSignal } from "solid-js";
+import { createEffect, createSignal } from "solid-js";
 import { render } from "solid-js/web";
-import { sld } from "./dist/index.mjs";
+import { sld } from "./src";
 
-const jsx = sld`
-<textarea type=${1}>alert("Hello");<span>${1}</span></textarea>`;
+const Circle = () => {
+  return sld`<circle cx="0" cy="0" r="50" fill="red" />`
+};
 
-render(() => jsx, document.getElementById("app")!);
+function Vector() {
+  return sld.define({Circle})`
+    <div>
+      <svg width="500" height="250">
+        <circle cx="0" cy="0" r="20" fill="#000" />
+        <Circle />
+      </svg>
+    </div>
+  `;
+}
+
+render(Vector, document.getElementById("app")!);
+
