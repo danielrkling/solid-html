@@ -108,14 +108,15 @@ type Token = OpenTagToken | CloseTagToken | SlashToken | IdentifierToken | Equal
 //#region src/parse.d.ts
 declare const ROOT_NODE = 0;
 declare const ELEMENT_NODE = 1;
-declare const TEXT_NODE = 2;
-declare const EXPRESSION_NODE = 3;
+declare const COMPONENT_NODE = 2;
+declare const TEXT_NODE = 3;
+declare const EXPRESSION_NODE = 4;
 declare const BOOLEAN_PROP = 0;
 declare const STATIC_PROP = 1;
 declare const EXPRESSION_PROP = 2;
 declare const SPREAD_PROP = 3;
 declare const MIXED_PROP = 4;
-type ChildNode = ElementNode | TextNode | ExpressionNode;
+type ChildNode = ElementNode | TextNode | ExpressionNode | ComponentNode;
 interface RootNode {
   type: typeof ROOT_NODE;
   children: ChildNode[];
@@ -123,6 +124,13 @@ interface RootNode {
 }
 interface ElementNode {
   type: typeof ELEMENT_NODE;
+  name: string;
+  props: PropNode[];
+  children: ChildNode[];
+  isSVG?: boolean;
+}
+interface ComponentNode {
+  type: typeof COMPONENT_NODE;
   name: string;
   props: PropNode[];
   children: ChildNode[];
