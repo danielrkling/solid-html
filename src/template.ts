@@ -84,7 +84,7 @@ const buildNodes = (node: ChildNode): Node => {
 
       let hasSpread = false;
 
-      const elem = createElement(node.name, node.isSVG)
+      const elem = createElement(node.name)
       //props located after spread need to be applied after spread for possible overrides
       node.props = node.props.filter((prop) => {
         if (prop.type === STATIC_PROP) {

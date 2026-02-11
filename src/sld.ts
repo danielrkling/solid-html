@@ -59,7 +59,6 @@ export const getCachedRoot = (strings: TemplateStringsArray): RootNode => {
     root = parse(tokenize(strings, rawTextElements), voidElements);
     buildTemplate(root);
     cache.set(strings, root);
-    console.log(root) 
   }
   return root;
 }
@@ -89,7 +88,7 @@ export const renderNode = (
 
       const isSvg = SVGElements.has(name);
       // 3. Standard HTML Element (node.name is guaranteed string here)
-      const element = createElement(name,isSvg)
+      const element = createElement(name)
       const props = gatherProps(node, values, components);
 
       spread(element, props, isSvg, true);

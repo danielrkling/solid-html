@@ -10,10 +10,10 @@ export const getValue = (value: any) => {
   return value;
 }
 
-export const createElement = (name: string, isSVG = false) => {
-  return isSVG
-        ? document.createElementNS("http://www.w3.org/2000/svg", name)
-        : document.createElement(name);
+export const createElement = (name: string) => {
+  return SVGElements.has(name)
+    ? document.createElementNS("http://www.w3.org/2000/svg", name)
+    : mathmlElements.has(name) ? document.createElementNS("http://www.w3.org/1998/Math/MathML", name) : document.createElement(name);
 }
 
 /**
@@ -54,3 +54,40 @@ export const rawTextElements = new Set([
   "textarea",
   "title",
 ]);
+
+export const mathmlElements = new Set([
+  "math",
+  "annotation",
+  "annotation-xml",
+  "maction",
+  "merror",
+  "mfrac",
+  "mi",
+  "mmultiscripts",
+  "mn",
+  "mo",
+  "mover",
+  "mpadded",
+  "mphantom",
+  "mprescripts",
+  "mroot",
+  "mrow",
+  "ms",
+  "mspace",
+  "msqrt",
+  "mstyle",
+  "msub",
+  "msubsup",
+  "msup",
+  "mtable",
+  "mtd",
+  "mtext",
+  "mtr",
+  "munder",
+  "munderover",
+  "semantics",
+  "menclose",
+  "mfenced"
+]);
+
+

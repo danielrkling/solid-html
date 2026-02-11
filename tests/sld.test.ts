@@ -447,7 +447,7 @@ describe("Github issues with solid 'html'", () => {
   expect(nodes[1]).toEqual(123);
   })
 
-  it("",()=>{
+  it("template element",()=>{
     const elem = sld`
   <div>
     <template>
@@ -456,7 +456,7 @@ describe("Github issues with solid 'html'", () => {
   </div>
 `
 
-    expect
+    expect(elem)
   })
 
 });
@@ -466,4 +466,31 @@ it("handles html encodings",()=>{
   const elem = sld`&copy;<span>&gt;</span>` as Node[]
   expect(elem[0].textContent).toEqual("\u00A9")
   expect(elem[1].textContent).toEqual(">")
+})
+
+it("handles mathml",()=>{
+  const Frac = ()=>sld`<mfrac>
+  <mn>1</mn>
+  <mn>3</mn>
+</mfrac>`
+
+  const result = sld.define({Frac}).sld`<p>
+  The fraction
+  <math>
+    <Frac />
+  </math>
+  is not a decimal number.
+</p>` as Node[]
+
+document.body.append(...result)
+})
+
+it("handles template",()=>{
+
+  const nodes = sld`${"hole"}<template>Count: ${()=>1}</template>` as Node[]
+
+  document.body.append(...nodes)
+
+  expect(nodes[2].textContent).toEqual("Count: 1")
+
 })
