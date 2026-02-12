@@ -55,7 +55,6 @@ export interface ElementNode {
   name: string;
   props: PropNode[];
   children: ChildNode[];
-  isSVG?: boolean
 }
 
 export interface ComponentNode {
@@ -184,7 +183,6 @@ export type PropNode =
               props: [],
               children: [],
             };
-            (node.type === ELEMENT_NODE && (node.isSVG = SVGElements.has(tagName)))
             parent.children.push(node);
             pos++; // Consume tag name
   
