@@ -1,6 +1,6 @@
 {
   "name": "solid-html",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "description": "A package for using SolidJS with JSX-like syntax in tagged template literals.",
   "keywords": [
     "html",
