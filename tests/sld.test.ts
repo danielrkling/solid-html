@@ -53,8 +53,7 @@ describe("SLD Integration Tests", () => {
 
     it("handles boolean attributes correctly", () => {
       const [disabled, setDisabled] = createSignal(true);
-      const result =
-        sld`<button disabled=${disabled} autofocus>Click</button>` as Node[];
+      const result = sld`<button disabled=${disabled} autofocus>Click</button>` as Node[];
       const btn = result[0] as HTMLButtonElement;
 
       expect(btn.disabled).toBe(true);
@@ -66,8 +65,7 @@ describe("SLD Integration Tests", () => {
 
     it("handles spread props with static before spread", () => {
       const props = { id: "spread", class: "blue", "data-attr": "val" };
-      const result =
-        sld`<div id="static" class="red" ...${props}></div>` as Node[];
+      const result = sld`<div id="static" class="red" ...${props}></div>` as Node[];
       const el = result[0] as HTMLElement;
 
       expect(el.id).toBe("spread");
@@ -77,8 +75,7 @@ describe("SLD Integration Tests", () => {
 
     it("handles spread props with static after spread", () => {
       const props = { id: "spread", class: "blue", "data-attr": "val" };
-      const result =
-        sld`<div ...${props} id="static" class="red"></div>` as Node[];
+      const result = sld`<div ...${props} id="static" class="red"></div>` as Node[];
       const el = result[0] as HTMLElement;
 
       expect(el.id).toBe("static");
@@ -97,8 +94,7 @@ describe("SLD Integration Tests", () => {
 
     it("handles explicit properties and attributes via namespaces", () => {
       const [val, setVal] = createSignal("initial");
-      const result =
-        sld`<input prop:value=${val} attr:title=${"hello"} />` as Node[];
+      const result = sld`<input prop:value=${val} attr:title=${"hello"} />` as Node[];
       const input = result[0] as HTMLInputElement;
 
       expect(input.value).toBe("initial");
@@ -140,9 +136,7 @@ describe("SLD Integration Tests", () => {
         <lume-box uniforms='{ "iTime": { "value": 0 } }'></lume-box>
       ` as HTMLElement[];
 
-      expect(result[0].getAttribute("uniforms")).toBe(
-        '{ "iTime": { "value": 0 } }',
-      );
+      expect(result[0].getAttribute("uniforms")).toBe('{ "iTime": { "value": 0 } }');
     });
   });
 
@@ -215,9 +209,7 @@ describe("SLD Integration Tests", () => {
 
       setVisible(true);
       expect(container.querySelector("#target")).not.toBeNull();
-      expect(container.querySelector("#target")?.textContent).toBe(
-        "I am visible",
-      );
+      expect(container.querySelector("#target")?.textContent).toBe("I am visible");
     });
 
     it("works with Solid's <For> component", () => {
@@ -297,8 +289,7 @@ describe("SLD Integration Tests", () => {
 
   describe("Custom Components", () => {
     it("passes children correctly to registered components", () => {
-      const Wrapper = (props: { children: any }) =>
-        sld`<section>${props.children}</section>`;
+      const Wrapper = (props: { children: any }) => sld`<section>${props.children}</section>`;
       const localSld = createSLD({ Wrapper });
 
       const result = localSld`
@@ -361,36 +352,36 @@ describe("SLD Integration Tests", () => {
     });
 
     it("handles template elements correctly", () => {
-      const nodes = sld`${"hole"}<template>Count: ${()=>1}</template>` as Node[]
-      document.body.append(...nodes)
-      expect(nodes[2].textContent).toEqual("Count: 1")
+      const nodes = sld`${"hole"}<template>Count: ${() => 1}</template>` as Node[];
+      document.body.append(...nodes);
+      expect(nodes[2].textContent).toEqual("Count: 1");
     });
 
     it("handles mathml elements", () => {
-      const Frac = ()=>sld`<mfrac>
+      const Frac = () => sld`<mfrac>
       <mn>1</mn>
       <mn>3</mn>
-    </mfrac>`
+    </mfrac>`;
 
-      const result = sld.define({Frac}).sld`<p>
+      const result = sld.define({ Frac }).sld`<p>
       The fraction
       <math>
         <Frac />
       </math>
       is not a decimal number.
-    </p>` as Node[]
+    </p>` as Node[];
 
-      document.body.append(...result)
-      expect(document.querySelector("math")).toBeTruthy()
+      document.body.append(...result);
+      expect(document.querySelector("math")).toBeTruthy();
     });
   });
 
   describe("HTML Entities and Encoding", () => {
     it("handles html encodings", () => {
-      const elem = sld`&copy;<span>&gt;</span>` as Node[]
-      expect(elem[0].textContent).toEqual("\u00A9")
-      expect(elem[1].textContent).toEqual(">")
-    })
+      const elem = sld`&copy;<span>&gt;</span>` as Node[];
+      expect(elem[0].textContent).toEqual("\u00A9");
+      expect(elem[1].textContent).toEqual(">");
+    });
   });
 
   describe("Edge Cases and Error Handling", () => {
@@ -440,10 +431,11 @@ describe("SLD Integration Tests", () => {
         const baseProps = { class: "base", id: "base-id" };
         const overrideProps = { class: "override", "data-override": true };
         const finalId = "final-id";
-        
-        const result = sld`<div ...${baseProps} ...${overrideProps} id="${finalId}" class="final">Content</div>` as Node[];
+
+        const result =
+          sld`<div ...${baseProps} ...${overrideProps} id="${finalId}" class="final">Content</div>` as Node[];
         const el = result[0] as HTMLElement;
-        
+
         expect(el.className).toBe("final");
         expect(el.id).toBe("final-id");
         expect(el.getAttribute("data-override")).toBe("true");
@@ -454,16 +446,17 @@ describe("SLD Integration Tests", () => {
         const [dynamicClass, setClass] = createSignal("active");
         const [dynamicId] = createSignal("dynamic-123");
         const staticTitle = "Static Title";
-        
-        const result = sld`<button class="btn-${dynamicClass}" id=${dynamicId} title="${staticTitle}" disabled=${dynamicClass() === "active"}>Click</button>` as Node[];
+
+        const result =
+          sld`<button class="btn-${dynamicClass}" id=${dynamicId} title="${staticTitle}" disabled=${dynamicClass() === "active"}>Click</button>` as Node[];
         const button = result[0] as HTMLButtonElement;
-        
+
         expect(button.className).toBe("btn-active");
         expect(button.id).toBe("dynamic-123");
         expect(button.title).toBe("Static Title");
         expect(button.disabled).toBe(true);
         expect(button.textContent).toBe("Click");
-        
+
         setClass("inactive");
         expect(button.className).toBe("btn-inactive");
       });
@@ -471,14 +464,15 @@ describe("SLD Integration Tests", () => {
       it("handles boolean attributes with dynamic expressions", () => {
         const [enabled, setEnabled] = createSignal(true);
         const [checked, setChecked] = createSignal(false);
-        
-        const result = sld`<input type="checkbox" disabled=${()=>!enabled()} checked=${checked} readonly />` as Node[];
+
+        const result =
+          sld`<input type="checkbox" disabled=${() => !enabled()} checked=${checked} readonly />` as Node[];
         const input = result[0] as HTMLInputElement;
-        
+
         expect(input.disabled).toBe(false);
         expect(input.checked).toBe(false);
         expect(input.hasAttribute("readonly")).toBe(true);
-        
+
         setEnabled(false);
         setChecked(true);
         expect(input.disabled).toBe(true);
@@ -487,13 +481,14 @@ describe("SLD Integration Tests", () => {
 
       it("handles style attribute with mixed static and dynamic values", () => {
         const [color, setColor] = createSignal("red");
-        const result = sld`<div style="color: ${color}; background: blue; padding: ${10}px">Styled content</div>` as Node[];
+        const result =
+          sld`<div style="color: ${color}; background: blue; padding: ${10}px">Styled content</div>` as Node[];
         const el = result[0] as HTMLElement;
-        
+
         expect(el.style.color).toBe("red");
         expect(el.style.backgroundColor).toBe("blue");
         expect(el.style.padding).toBe("10px");
-        
+
         setColor("green");
         expect(el.style.color).toBe("green");
       });
@@ -501,12 +496,13 @@ describe("SLD Integration Tests", () => {
       it("handles class attribute with complex expressions", () => {
         const [isActive, setActive] = createSignal(true);
         const [theme, setTheme] = createSignal("dark");
-        
-        const result = sld`<div class="${isActive() ? 'active' : 'inactive'} theme-${theme()} static-class">Mixed classes</div>` as Node[];
+
+        const result =
+          sld`<div class="${isActive() ? "active" : "inactive"} theme-${theme()} static-class">Mixed classes</div>` as Node[];
         const el = result[0] as HTMLElement;
-        
+
         expect(el.className).toBe("active theme-dark static-class");
-        
+
         setActive(false);
         setTheme("light");
         expect(el.className).toBe("active theme-dark static-class");
@@ -517,25 +513,25 @@ describe("SLD Integration Tests", () => {
       it("updates DOM when multiple signals change simultaneously", () => {
         const [count, setCount] = createSignal(0);
         const [text, setText] = createSignal("Initial");
-        
+
         const result = sld`<div>
           <span class="count-${count}">Count: ${count}</span>
           <span class="text-${text}">Text: ${text}</span>
         </div>` as Node[];
         const container = document.createElement("div");
         container.append(...result);
-        
+
         const countSpan = container.querySelector(".count-0")!;
         const textSpan = container.querySelector(".text-Initial")!;
-        
+
         expect(countSpan.className).toBe("count-0");
         expect(countSpan.textContent).toBe("Count: 0");
         expect(textSpan.className).toBe("text-Initial");
         expect(textSpan.textContent).toBe("Text: Initial");
-        
+
         setCount(5);
         setText("Updated");
-        
+
         expect(countSpan.className).toBe("count-5");
         expect(countSpan.textContent).toBe("Count: 5");
         expect(textSpan.className).toBe("text-Updated");
@@ -545,23 +541,23 @@ describe("SLD Integration Tests", () => {
       it("handles conditional attributes with boolean logic", () => {
         const [visible, setVisible] = createSignal(true);
         const [disabled, setDisabled] = createSignal(false);
-        
+
         const result = sld`<button 
-          hidden="${()=>!visible()}" 
+          hidden="${() => !visible()}" 
           disabled="${disabled}" 
-          aria-hidden="${()=>!visible()}"
-          class="${()=>visible() ? 'visible' : 'hidden'}"
+          aria-hidden="${() => !visible()}"
+          class="${() => (visible() ? "visible" : "hidden")}"
         >Button</button>` as Node[];
         const button = result[0] as HTMLButtonElement;
-        
+
         expect(button.hidden).toBe(false);
         expect(button.disabled).toBe(false);
         expect(button.getAttribute("aria-hidden")).toBe("false");
         expect(button.className).toBe("visible");
-        
+
         setVisible(false);
         setDisabled(true);
-        
+
         expect(button.hidden).toBe(true);
         expect(button.disabled).toBe(true);
         expect(button.getAttribute("aria-hidden")).toBe("true");
@@ -574,7 +570,7 @@ describe("SLD Integration Tests", () => {
         let clickCount = 0;
         let mouseOverCount = 0;
         let inputChangeCount = 0;
-        
+
         const result = sld`<div>
           <button on:click=${() => clickCount++}>Click me</button>
           <span on:mouseover=${() => mouseOverCount++}>Hover me</span>
@@ -582,32 +578,35 @@ describe("SLD Integration Tests", () => {
         </div>` as Node[];
         const container = document.createElement("div");
         container.append(...result);
-        document.body.append(container)
-        
+        document.body.append(container);
+
         const button = container.querySelector("button")!;
         const hoverDiv = container.querySelector("span")!;
         const input = container.querySelector("input")!;
-        
+
         button.click();
         hoverDiv.dispatchEvent(new MouseEvent("mouseover"));
-        
+
         expect(clickCount).toBe(1);
         expect(mouseOverCount).toBe(1);
       });
 
       it("handles event delegation with stopPropagation", () => {
         const events: string[] = [];
-        
+
         const result = sld`<div onClick=${() => events.push("parent")}>
-          <button onClick=${(e: Event) => { e.stopPropagation(); events.push("child"); }}>Child</button>
+          <button onClick=${(e: Event) => {
+            e.stopPropagation();
+            events.push("child");
+          }}>Child</button>
         </div>` as Node[];
         const container = document.createElement("div");
         container.append(...result);
-        document.body.append(container)
-        
+        document.body.append(container);
+
         const button = container.querySelector("button")!;
         button.click();
-        
+
         expect(events.length).toBeGreaterThan(0);
       });
     });
@@ -616,7 +615,7 @@ describe("SLD Integration Tests", () => {
       it("handles form controls with reactive values", () => {
         const [value, setValue] = createSignal("initial");
         const [checked, setChecked] = createSignal(false);
-        
+
         const result = sld`<form>
           <input type="text" value="${value}" />
           <input type="checkbox" checked="${checked}" />
@@ -627,18 +626,18 @@ describe("SLD Integration Tests", () => {
         </form>` as Node[];
         const container = document.createElement("div");
         container.append(...result);
-        
+
         const textInput = container.querySelector("input[type='text']") as HTMLInputElement;
         const checkboxInput = container.querySelector("input[type='checkbox']") as HTMLInputElement;
         const select = container.querySelector("select") as HTMLSelectElement;
-        
+
         expect(textInput.value).toBe("initial");
         expect(checkboxInput.checked).toBe(false);
         expect(select.value).toBe("initial");
-        
+
         setValue("updated");
         setChecked(true);
-        
+
         expect(textInput.value).toBe("updated");
         expect(checkboxInput.checked).toBe(true);
         expect(select.value).toBe("updated");
@@ -646,14 +645,14 @@ describe("SLD Integration Tests", () => {
 
       it("handles textarea with raw text content", () => {
         const [content, setContent] = createSignal("Initial content");
-        
+
         const result = sld`<textarea>${content}</textarea>` as Node[];
         const container = document.createElement("div");
         container.append(...result);
-        
+
         const textarea = container.querySelector("textarea") as HTMLTextAreaElement;
         expect(textarea.value).toBe("Initial content");
-        
+
         setContent("Updated content");
         expect(textarea.value).toBe("Updated content");
       });
@@ -663,9 +662,9 @@ describe("SLD Integration Tests", () => {
       it("renders table with dynamic rows and cells", () => {
         const [rows, setRows] = createSignal([
           ["Cell 1", "Cell 2", "Cell 3"],
-          ["Cell 4", "Cell 5", "Cell 6"]
+          ["Cell 4", "Cell 5", "Cell 6"],
         ]);
-        
+
         const result = sld`<table>
           <thead>
             <tr><th>Col 1</th><th>Col 2</th><th>Col 3</th></tr>
@@ -684,13 +683,13 @@ describe("SLD Integration Tests", () => {
         </table>` as Node[];
         const container = document.createElement("div");
         container.append(...result);
-        
+
         const table = container.querySelector("table")!;
         const tbody = table.querySelector("tbody")!;
         const trElements = tbody.querySelectorAll("tr");
-        
+
         expect(trElements.length).toBe(2);
-        
+
         const firstRowCells = trElements[0].querySelectorAll("td");
         expect(firstRowCells.length).toBe(3);
         expect(firstRowCells[0].textContent).toBe("Cell 1");
@@ -701,9 +700,9 @@ describe("SLD Integration Tests", () => {
       it("renders ordered and unordered lists with nested items", () => {
         const [items, setItems] = createSignal([
           { text: "Item 1", children: ["Subitem 1.1", "Subitem 1.2"] },
-          { text: "Item 2", children: [] }
+          { text: "Item 2", children: [] },
         ]);
-        
+
         const result = sld`<div>
           <ul>
             <For each=${items}>
@@ -722,10 +721,10 @@ describe("SLD Integration Tests", () => {
         </div>` as Node[];
         const container = document.createElement("div");
         container.append(...result);
-        
+
         const parentItems = container.querySelectorAll(".parent-item");
         expect(parentItems.length).toBe(2);
-        
+
         const childItems = container.querySelectorAll(".child-item");
         expect(childItems.length).toBe(2);
         expect(childItems[0].textContent).toBe("Subitem 1.1");
@@ -737,20 +736,20 @@ describe("SLD Integration Tests", () => {
       it("handles img element with reactive src and alt", () => {
         const [src, setSrc] = createSignal("image1.jpg");
         const [alt, setAlt] = createSignal("Image 1");
-        
+
         const result = sld`<img src="${src}" alt="${alt}" width="100" height="100" />` as Node[];
         const container = document.createElement("div");
         container.append(...result);
-        
+
         const img = container.querySelector("img") as HTMLImageElement;
         expect(img.src).toContain("image1.jpg");
         expect(img.alt).toBe("Image 1");
         expect(img.width).toBe(100);
         expect(img.height).toBe(100);
-        
+
         setSrc("image2.jpg");
         setAlt("Image 2");
-        
+
         expect(img.src).toContain("image2.jpg");
         expect(img.alt).toBe("Image 2");
       });
@@ -763,14 +762,14 @@ describe("SLD Integration Tests", () => {
         </head>` as Node[];
         const container = document.createElement("div");
         container.append(...result);
-        
+
         const link = container.querySelector("link") as HTMLLinkElement;
         expect(link.rel).toBe("stylesheet");
         expect(link.href).toContain("style.css");
-        
-        const charsetMeta = container.querySelector('meta[charset]') as HTMLMetaElement;
+
+        const charsetMeta = container.querySelector("meta[charset]") as HTMLMetaElement;
         expect(charsetMeta.getAttribute("charset")).toBe("utf-8");
-        
+
         const viewportMeta = container.querySelector('meta[name="viewport"]') as HTMLMetaElement;
         expect(viewportMeta.content).toBe("width=device-width, initial-scale=1");
       });
@@ -780,7 +779,7 @@ describe("SLD Integration Tests", () => {
   describe("GitHub Issues Compatibility", () => {
     it("https://github.com/ryansolid/dom-expressions/issues/156", () => {
       const elements =
-        sld`<div><For each=${() => [1, 2, 3]}>${(n:number) => sld`<h1>${n}</h1>`}</For></div>` as Node[];
+        sld`<div><For each=${() => [1, 2, 3]}>${(n: number) => sld`<h1>${n}</h1>`}</For></div>` as Node[];
       const container = document.createElement("div");
       container.append(...elements);
       expect(container.innerHTML).toBe(
@@ -801,14 +800,14 @@ describe("SLD Integration Tests", () => {
     <div id="div">Test</div>
     <style>
       #div {
-        color:${()=>"red"};
+        color:${() => "red"};
         background-color:blue;
       }
     </style>
   ` as Node[];
       const container = document.createElement("div");
       container.append(...elements);
-      document.body.append(container)
+      document.body.append(container);
       expect(container.innerHTML).toEqual(
         `<div id="div">Test</div><style>
       #div {
@@ -831,17 +830,17 @@ describe("SLD Integration Tests", () => {
     });
 
     it("https://github.com/solidjs/solid/issues/1996", () => {
-      const [elem] = sld`<some-el attr:foo="123">inspect element</some-el>` as HTMLElement[]
-      expect(elem.hasAttribute("foo")).toEqual(true)
+      const [elem] = sld`<some-el attr:foo="123">inspect element</some-el>` as HTMLElement[];
+      expect(elem.hasAttribute("foo")).toEqual(true);
     });
 
     it("https://github.com/solidjs/solid/issues/2299", () => {
       const nodes = sld`
     foo: ${123}
     bar: ${456}
-  ` as JSXElement[]
+  ` as JSXElement[];
 
-      expect(nodes[0]).toEqual("\n    foo: ")
+      expect(nodes[0]).toEqual("\n    foo: ");
       expect(nodes[1]).toEqual(123);
     });
 
@@ -852,8 +851,8 @@ describe("SLD Integration Tests", () => {
         <h1>${123}</h1>
       </template>
     </div>
-  `
-      expect(elem)
+  `;
+      expect(elem);
     });
   });
 });

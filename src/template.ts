@@ -17,11 +17,9 @@ import { createElement, isComponentNode } from "./util";
 export const buildTemplate = (node: RootNode | ChildNode): void => {
   if (node.type === ROOT_NODE || node.type === COMPONENT_NODE) {
     //Criteria for using template is component or root has at least 1 element. May be be a more optimal condition.
-    if (
-      node.children.some((v) => v.type === ELEMENT_NODE)
-    ) {
+    if (node.children.some((v) => v.type === ELEMENT_NODE)) {
       const template = document.createElement("template");
-      template.content.append(...node.children.map(buildNodes))
+      template.content.append(...node.children.map(buildNodes));
       // buildNodes(node.children, template.content);
       // template.innerHTML = node.children.map(buildHTML).join("");
       node.template = template;
@@ -29,9 +27,8 @@ export const buildTemplate = (node: RootNode | ChildNode): void => {
     node.children.forEach(buildTemplate);
   } else if (node.type === ELEMENT_NODE) {
     node.children.forEach(buildTemplate);
-
   }
-}
+};
 
 const comment = "<!--+-->";
 
@@ -43,16 +40,15 @@ const buildHTML = (node: ChildNode): string => {
     case EXPRESSION_NODE:
       return comment;
     case COMPONENT_NODE:
-      return comment
+      return comment;
     case ELEMENT_NODE:
-
       let attributeHTML = "";
       let hasSpread = false;
       //props located after spread need to be applied after spread for possible overrides
       node.props = node.props.filter((prop) => {
         if (prop.type === STATIC_PROP) {
-          if (prop.name.startsWith("prop:")) return true
-          const name = (prop.name.startsWith("attr:")) ? prop.name.slice(5) : prop.name
+          if (prop.name.startsWith("prop:")) return true;
+          const name = prop.name.startsWith("attr:") ? prop.name.slice(5) : prop.name;
           attributeHTML += ` ${name}=${prop.quote}${prop.value}${prop.quote}`;
           return hasSpread;
         } else if (prop.type === BOOLEAN_PROP) {
@@ -67,34 +63,33 @@ const buildHTML = (node: ChildNode): string => {
 
       return `<${node.name}${attributeHTML}>${node.children.map(buildHTML).join("")}</${node.name}>`;
   }
-}
+};
 
-const textTemplate = document.createElement("template")
+const textTemplate = document.createElement("template");
 
 const buildNodes = (node: ChildNode): Node => {
   switch (node.type) {
     case TEXT_NODE:
-      textTemplate.innerHTML = node.value
-      return document.createTextNode(textTemplate.content.textContent ?? "")
+      textTemplate.innerHTML = node.value;
+      return document.createTextNode(textTemplate.content.textContent ?? "");
     case EXPRESSION_NODE:
       return document.createComment("+");
     case COMPONENT_NODE:
-      return document.createComment(node.name)
+      return document.createComment(node.name);
     case ELEMENT_NODE:
-
       let hasSpread = false;
 
-      const elem = createElement(node.name)
+      const elem = createElement(node.name);
       //props located after spread need to be applied after spread for possible overrides
       node.props = node.props.filter((prop) => {
         if (prop.type === STATIC_PROP) {
-          if (prop.name.startsWith("prop:")) return true
-          const name = (prop.name.startsWith("attr:")) ? prop.name.slice(5) : prop.name
-          elem.setAttribute(name, prop.value)
+          if (prop.name.startsWith("prop:")) return true;
+          const name = prop.name.startsWith("attr:") ? prop.name.slice(5) : prop.name;
+          elem.setAttribute(name, prop.value);
           return hasSpread;
         } else if (prop.type === BOOLEAN_PROP) {
           // attributeHTML += ` ${prop.name}`;
-          elem.setAttribute(prop.name, "")
+          elem.setAttribute(prop.name, "");
           return hasSpread;
         } else if (prop.type === SPREAD_PROP) {
           hasSpread = true;
@@ -102,8 +97,8 @@ const buildNodes = (node: ChildNode): Node => {
         }
         return true;
       });
-      elem.append(...node.children.map(buildNodes))
+      elem.append(...node.children.map(buildNodes));
 
       return elem;
   }
-}
+};

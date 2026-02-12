@@ -3,18 +3,20 @@ import { ELEMENT_NODE, ElementNode, ChildNode } from "./parse";
 
 export const flat = (arr: any[]) => {
   return arr.length === 1 ? arr[0] : arr;
-}
+};
 
 export const getValue = (value: any) => {
   while (typeof value === "function") value = value();
   return value;
-}
+};
 
 export const createElement = (name: string) => {
   return SVGElements.has(name)
     ? document.createElementNS("http://www.w3.org/2000/svg", name)
-    : mathmlElements.has(name) ? document.createElementNS("http://www.w3.org/1998/Math/MathML", name) : document.createElement(name);
-}
+    : mathmlElements.has(name)
+      ? document.createElementNS("http://www.w3.org/1998/Math/MathML", name)
+      : document.createElement(name);
+};
 
 /**
  * Checks if a node is a Component.
@@ -28,8 +30,7 @@ export const isComponentNode = (name: string): boolean => {
   return (
     char >= 65 && char <= 90 // Uppercase A-Z
   );
-}
-
+};
 
 export const voidElements = new Set([
   "area",
@@ -48,12 +49,7 @@ export const voidElements = new Set([
   "wbr",
 ]);
 
-export const rawTextElements = new Set([
-  "script",
-  "style",
-  "textarea",
-  "title",
-]);
+export const rawTextElements = new Set(["script", "style", "textarea", "title"]);
 
 export const mathmlElements = new Set([
   "math",
@@ -87,7 +83,5 @@ export const mathmlElements = new Set([
   "munderover",
   "semantics",
   "menclose",
-  "mfenced"
+  "mfenced",
 ]);
-
-

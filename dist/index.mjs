@@ -1,1 +1,361 @@
-import{ErrorBoundary as e,For as t,Index as n,Match as r,Show as i,Suspense as a,Switch as o,createComponent as s,mergeProps as c}from"solid-js";import{SVGElements as l,insert as u,spread as d}from"solid-js/web";const f=e=>p(e)||e>=48&&e<=58||e===46||e===45,p=e=>e>=65&&e<=90||e>=97&&e<=122||e===95||e===36,m=e=>e>=9&&e<=13||e===32,h=(e,t)=>{let n=[],r=0,i=``,a=``,o=0;for(let s=0;s<e.length;s++){let c=e[s],l=c.length;for(o=0;o<l;)switch(r){case 0:{a=``;let e=c.indexOf(`<`,o);e===-1?(o<l&&n.push({type:6,value:c.slice(o)}),o=l):(e>o&&n.push({type:6,value:c.slice(o,e)}),c[e+1]===`!`&&c[e+2]===`-`&&c[e+3]===`-`?(r=4,o=e+4):(n.push({type:0}),r=1,o=e+1));break}case 1:{let e=c.charCodeAt(o);if(m(e))o++;else if(e===62)t.has(a)&&n[n.length-1]?.type!==2?r=3:(r=0,a=``),n.push({type:1}),o++;else if(e===61)n.push({type:4}),o++;else if(e===47)n.push({type:2}),o++;else if(e===34||e===39){let e=c[o];n.push({type:8,value:e}),i=e,r=2,o++}else if(p(e)){let e=o;for(;o<l&&f(c.charCodeAt(o));)o++;let t=c.slice(e,o);a===``&&(a=t),n.push({type:3,value:t})}else if(e===46&&c[o+1]===`.`&&c[o+2]===`.`)n.push({type:9}),o+=3;else throw Error(`Unexpected Character: ${c[o]}`);break}case 2:{let e=c.indexOf(i,o);e===-1?(n.push({type:5,value:c.slice(o)}),o=l):(e>o&&n.push({type:5,value:c.slice(o,e)}),n.push({type:8,value:i}),r=1,i=``,o=e+1);break}case 3:{let e=RegExp(`<\\s*/\\s*${a}\\s*>`,`g`);e.lastIndex=o;let t=e.exec(c);if(t){let e=t.index;e>o&&n.push({type:6,value:c.slice(o,e)}),r=0,o=e,a=``}else n.push({type:6,value:c.slice(o)}),o=l;break}case 4:{let e=c.indexOf(`-->`,o);e===-1?o=l:(r=0,o=e+3);break}}s<e.length-1&&r!==4&&n.push({type:7,value:s})}return n},g=e=>e.length===1?e[0]:e,_=e=>{for(;typeof e==`function`;)e=e();return e},v=e=>l.has(e)?document.createElementNS(`http://www.w3.org/2000/svg`,e):S.has(e)?document.createElementNS(`http://www.w3.org/1998/Math/MathML`,e):document.createElement(e),y=e=>{let t=e.charCodeAt(0);return t>=65&&t<=90},b=new Set([`area`,`base`,`br`,`col`,`embed`,`hr`,`img`,`input`,`link`,`meta`,`param`,`source`,`track`,`wbr`]),x=new Set([`script`,`style`,`textarea`,`title`]),S=new Set(`math.annotation.annotation-xml.maction.merror.mfrac.mi.mmultiscripts.mn.mo.mover.mpadded.mphantom.mprescripts.mroot.mrow.ms.mspace.msqrt.mstyle.msub.msubsup.msup.mtable.mtd.mtext.mtr.munder.munderover.semantics.menclose.mfenced`.split(`.`)),C=(e,t)=>{let n={type:0,children:[]},r=[n],i=0,a=e.length;for(;i<a;){let n=e[i],o=r[r.length-1];switch(n.type){case 6:{let t=n.value;if(t.trim()===``){let t=e[i-1]?.type,n=e[i+1]?.type;if(t===1||n===0){i++;continue}}o.children.push({type:3,value:t}),i++;continue}case 7:o.children.push({type:4,value:n.value}),i++;continue;case 0:{i++;let n=e[i];if(n.type===2){i++;let n=e[i];if(r.length>1&&n?.type===3&&r[r.length-1].name===n.value){let e=r.pop();e?.type===1&&t.has(e.name)&&(e.children=[]),i+=2;continue}throw Error(`Mismatched closing tag.`)}if(n.type===3){let t=n.value,s={type:y(t)?2:1,name:t,props:[],children:[]};for(s.type===1&&(s.isSVG=l.has(t)),o.children.push(s),i++;i<a;){let t=e[i];if(t.type===1||t.type===2)break;if(t.type===9){let t=e[i+1];if(t?.type===7)s.props.push({type:3,value:t.value}),i+=2;else throw Error(`Spread operator must be followed by an expression.`)}else if(t.type===3){let n=t.value,r=e[i+1];if(r?.type===4){i+=2;let t=e[i];if(t.type===7)s.props.push({name:n,type:2,value:t.value}),i++;else if(t.type===8){let r=t.value;i++;let o=[];for(;i<a&&e[i].type!==8;){let t=e[i++];t.value!==``&&o.push(t.value)}if(i++,o.length===0)s.props.push({name:n,type:1,value:``,quote:r});else if(o.length===1){let e=o[0];s.props.push({name:n,type:typeof e==`string`?1:2,value:e,quote:r})}else s.props.push({name:n,type:4,value:o,quote:r})}}else s.props.push({type:0,name:n,value:!0}),i++}else throw Error(`Invalid attribute.`)}let c=e[i];c.type===2?i+=2:c.type===1&&(i++,r.push(s));continue}}default:throw Error(`Unexpected token: ${JSON.stringify(n)}`)}}if(r.length>1)throw Error(`Unclosed tag found.`);return n},w=e=>{if(e.type===0||e.type===2){if(e.children.some(e=>e.type===1)){let t=document.createElement(`template`);t.content.append(...e.children.map(E)),e.template=t}e.children.forEach(w)}else e.type===1&&e.children.forEach(w)},T=document.createElement(`template`),E=e=>{switch(e.type){case 3:return T.innerHTML=e.value,document.createTextNode(T.content.textContent??``);case 4:return document.createComment(`+`);case 2:return document.createComment(e.name);case 1:let t=!1,n=v(e.name);return e.props=e.props.filter(e=>{if(e.type===1){if(e.name.startsWith(`prop:`))return!0;let r=e.name.startsWith(`attr:`)?e.name.slice(5):e.name;return n.setAttribute(r,e.value),t}else if(e.type===0)return n.setAttribute(e.name,``),t;else if(e.type===3)return t=!0,t;return!0}),n.append(...e.children.map(E)),n}},D=new WeakMap,O=document.createTreeWalker(document,129),k=e=>{let t=(t,...n)=>{let r=A(t);return M(r,n,e)};return t.components=e,t.sld=t,t.define=t=>k({...e,...t}),t},A=e=>{let t=D.get(e);return t||(t=C(h(e,x),b),w(t),D.set(e,t)),t},j=(e,t,n)=>{switch(e.type){case 3:return e.value;case 4:return t[e.value];case 2:let r=n[e.name];if(r)return s(r,N(e,t,n));throw Error(`Component "${e.name}" not found in registry`);case 1:let i=e.name,a=l.has(i),o=v(i),c=N(e,t,n);return d(o,c,a,!0),o}},M=(e,t,n)=>{if(!e.template)return g(e.children.map(e=>j(e,t,n)));let r=e.template.content.cloneNode(!0);O.currentNode=r;let i=e=>{for(let r of e)if(r.type===1||r.type===4||r.type===2){let e=O.nextNode();if(r.type===4||r.type===2)u(e.parentNode,j(r,t,n),e),O.currentNode=e;else{if(r.props.length){let i=N(r,t,n);d(e,i,l.has(r.name),!0)}i(r.children)}}};return i(e.children),Array.from(r.childNodes)},N=(e,t,n,r={})=>{for(let n of e.props)switch(n.type){case 0:r[n.name]=!0;break;case 1:r[n.name]=n.value;break;case 2:P(r,n.name,t[n.value]);break;case 4:let e=()=>n.value.map(e=>typeof e==`number`?_(t[e]):e).join(``);P(r,n.name,e);break;case 3:let i=t[n.value];if(!i||typeof i!=`object`)throw Error(`Can only spread objects`);r=c(r,i);break}return e.type===2&&e.children.length&&Object.defineProperty(r,`children`,{get(){return M(e,t,n)}}),r},P=(e,t,n)=>{typeof n==`function`&&n.length===0&&t!==`ref`&&!t.startsWith(`on`)?Object.defineProperty(e,t,{get(){return n()},enumerable:!0}):e[t]=n},F={For:t,Index:n,Match:r,Suspense:a,ErrorBoundary:e,Show:i,Switch:o},I=k(F);var L=I;const R=I.define,z=e=>t=>s(e,t);export{R as SLD,k as createSLD,L as default,F as defaultComponents,C as parse,z as run,I as sld};
+import {
+  ErrorBoundary as e,
+  For as t,
+  Index as n,
+  Match as r,
+  Show as i,
+  Suspense as a,
+  Switch as o,
+  createComponent as s,
+  mergeProps as c,
+} from "solid-js";
+import { SVGElements as l, insert as u, spread as d } from "solid-js/web";
+const f = (e) => p(e) || (e >= 48 && e <= 58) || e === 46 || e === 45,
+  p = (e) => (e >= 65 && e <= 90) || (e >= 97 && e <= 122) || e === 95 || e === 36,
+  m = (e) => (e >= 9 && e <= 13) || e === 32,
+  h = (e, t) => {
+    let n = [],
+      r = 0,
+      i = ``,
+      a = ``,
+      o = 0;
+    for (let s = 0; s < e.length; s++) {
+      let c = e[s],
+        l = c.length;
+      for (o = 0; o < l; )
+        switch (r) {
+          case 0: {
+            a = ``;
+            let e = c.indexOf(`<`, o);
+            e === -1
+              ? (o < l && n.push({ type: 6, value: c.slice(o) }), (o = l))
+              : (e > o && n.push({ type: 6, value: c.slice(o, e) }),
+                c[e + 1] === `!` && c[e + 2] === `-` && c[e + 3] === `-`
+                  ? ((r = 4), (o = e + 4))
+                  : (n.push({ type: 0 }), (r = 1), (o = e + 1)));
+            break;
+          }
+          case 1: {
+            let e = c.charCodeAt(o);
+            if (m(e)) o++;
+            else if (e === 62)
+              (t.has(a) && n[n.length - 1]?.type !== 2 ? (r = 3) : ((r = 0), (a = ``)),
+                n.push({ type: 1 }),
+                o++);
+            else if (e === 61) (n.push({ type: 4 }), o++);
+            else if (e === 47) (n.push({ type: 2 }), o++);
+            else if (e === 34 || e === 39) {
+              let e = c[o];
+              (n.push({ type: 8, value: e }), (i = e), (r = 2), o++);
+            } else if (p(e)) {
+              let e = o;
+              for (; o < l && f(c.charCodeAt(o)); ) o++;
+              let t = c.slice(e, o);
+              (a === `` && (a = t), n.push({ type: 3, value: t }));
+            } else if (e === 46 && c[o + 1] === `.` && c[o + 2] === `.`)
+              (n.push({ type: 9 }), (o += 3));
+            else throw Error(`Unexpected Character: ${c[o]}`);
+            break;
+          }
+          case 2: {
+            let e = c.indexOf(i, o);
+            e === -1
+              ? (n.push({ type: 5, value: c.slice(o) }), (o = l))
+              : (e > o && n.push({ type: 5, value: c.slice(o, e) }),
+                n.push({ type: 8, value: i }),
+                (r = 1),
+                (i = ``),
+                (o = e + 1));
+            break;
+          }
+          case 3: {
+            let e = RegExp(`<\\s*/\\s*${a}\\s*>`, `g`);
+            e.lastIndex = o;
+            let t = e.exec(c);
+            if (t) {
+              let e = t.index;
+              (e > o && n.push({ type: 6, value: c.slice(o, e) }), (r = 0), (o = e), (a = ``));
+            } else (n.push({ type: 6, value: c.slice(o) }), (o = l));
+            break;
+          }
+          case 4: {
+            let e = c.indexOf(`-->`, o);
+            e === -1 ? (o = l) : ((r = 0), (o = e + 3));
+            break;
+          }
+        }
+      s < e.length - 1 && r !== 4 && n.push({ type: 7, value: s });
+    }
+    return n;
+  },
+  g = (e) => (e.length === 1 ? e[0] : e),
+  _ = (e) => {
+    for (; typeof e == `function`; ) e = e();
+    return e;
+  },
+  v = (e) =>
+    l.has(e)
+      ? document.createElementNS(`http://www.w3.org/2000/svg`, e)
+      : S.has(e)
+        ? document.createElementNS(`http://www.w3.org/1998/Math/MathML`, e)
+        : document.createElement(e),
+  y = (e) => {
+    let t = e.charCodeAt(0);
+    return t >= 65 && t <= 90;
+  },
+  b = new Set([
+    `area`,
+    `base`,
+    `br`,
+    `col`,
+    `embed`,
+    `hr`,
+    `img`,
+    `input`,
+    `link`,
+    `meta`,
+    `param`,
+    `source`,
+    `track`,
+    `wbr`,
+  ]),
+  x = new Set([`script`, `style`, `textarea`, `title`]),
+  S = new Set(
+    `math.annotation.annotation-xml.maction.merror.mfrac.mi.mmultiscripts.mn.mo.mover.mpadded.mphantom.mprescripts.mroot.mrow.ms.mspace.msqrt.mstyle.msub.msubsup.msup.mtable.mtd.mtext.mtr.munder.munderover.semantics.menclose.mfenced`.split(
+      `.`,
+    ),
+  ),
+  C = (e, t) => {
+    let n = { type: 0, children: [] },
+      r = [n],
+      i = 0,
+      a = e.length;
+    for (; i < a; ) {
+      let n = e[i],
+        o = r[r.length - 1];
+      switch (n.type) {
+        case 6: {
+          let t = n.value;
+          if (t.trim() === ``) {
+            let t = e[i - 1]?.type,
+              n = e[i + 1]?.type;
+            if (t === 1 || n === 0) {
+              i++;
+              continue;
+            }
+          }
+          (o.children.push({ type: 3, value: t }), i++);
+          continue;
+        }
+        case 7:
+          (o.children.push({ type: 4, value: n.value }), i++);
+          continue;
+        case 0: {
+          i++;
+          let n = e[i];
+          if (n.type === 2) {
+            i++;
+            let n = e[i];
+            if (r.length > 1 && n?.type === 3 && r[r.length - 1].name === n.value) {
+              let e = r.pop();
+              (e?.type === 1 && t.has(e.name) && (e.children = []), (i += 2));
+              continue;
+            }
+            throw Error(`Mismatched closing tag.`);
+          }
+          if (n.type === 3) {
+            let t = n.value,
+              s = { type: y(t) ? 2 : 1, name: t, props: [], children: [] };
+            for (o.children.push(s), i++; i < a; ) {
+              let t = e[i];
+              if (t.type === 1 || t.type === 2) break;
+              if (t.type === 9) {
+                let t = e[i + 1];
+                if (t?.type === 7) (s.props.push({ type: 3, value: t.value }), (i += 2));
+                else throw Error(`Spread operator must be followed by an expression.`);
+              } else if (t.type === 3) {
+                let n = t.value,
+                  r = e[i + 1];
+                if (r?.type === 4) {
+                  i += 2;
+                  let t = e[i];
+                  if (t.type === 7) (s.props.push({ name: n, type: 2, value: t.value }), i++);
+                  else if (t.type === 8) {
+                    let r = t.value;
+                    i++;
+                    let o = [];
+                    for (; i < a && e[i].type !== 8; ) {
+                      let t = e[i++];
+                      t.value !== `` && o.push(t.value);
+                    }
+                    if ((i++, o.length === 0))
+                      s.props.push({ name: n, type: 1, value: ``, quote: r });
+                    else if (o.length === 1) {
+                      let e = o[0];
+                      s.props.push({
+                        name: n,
+                        type: typeof e == `string` ? 1 : 2,
+                        value: e,
+                        quote: r,
+                      });
+                    } else s.props.push({ name: n, type: 4, value: o, quote: r });
+                  }
+                } else (s.props.push({ type: 0, name: n, value: !0 }), i++);
+              } else throw Error(`Invalid attribute.`);
+            }
+            let c = e[i];
+            c.type === 2 ? (i += 2) : c.type === 1 && (i++, r.push(s));
+            continue;
+          }
+        }
+        default:
+          throw Error(`Unexpected token: ${JSON.stringify(n)}`);
+      }
+    }
+    if (r.length > 1) throw Error(`Unclosed tag found.`);
+    return n;
+  },
+  w = (e) => {
+    if (e.type === 0 || e.type === 2) {
+      if (e.children.some((e) => e.type === 1)) {
+        let t = document.createElement(`template`);
+        (t.content.append(...e.children.map(E)), (e.template = t));
+      }
+      e.children.forEach(w);
+    } else e.type === 1 && e.children.forEach(w);
+  },
+  T = document.createElement(`template`),
+  E = (e) => {
+    switch (e.type) {
+      case 3:
+        return ((T.innerHTML = e.value), document.createTextNode(T.content.textContent ?? ``));
+      case 4:
+        return document.createComment(`+`);
+      case 2:
+        return document.createComment(e.name);
+      case 1:
+        let t = !1,
+          n = v(e.name);
+        return (
+          (e.props = e.props.filter((e) => {
+            if (e.type === 1) {
+              if (e.name.startsWith(`prop:`)) return !0;
+              let r = e.name.startsWith(`attr:`) ? e.name.slice(5) : e.name;
+              return (n.setAttribute(r, e.value), t);
+            } else if (e.type === 0) return (n.setAttribute(e.name, ``), t);
+            else if (e.type === 3) return ((t = !0), t);
+            return !0;
+          })),
+          n.append(...e.children.map(E)),
+          n
+        );
+    }
+  },
+  D = new WeakMap(),
+  O = document.createTreeWalker(document, 129),
+  k = (e) => {
+    let t = (t, ...n) => {
+      let r = A(t);
+      return M(r, n, e);
+    };
+    return ((t.components = e), (t.sld = t), (t.define = (t) => k({ ...e, ...t })), t);
+  },
+  A = (e) => {
+    let t = D.get(e);
+    return (t || ((t = C(h(e, x), b)), w(t), D.set(e, t)), t);
+  },
+  j = (e, t, n) => {
+    switch (e.type) {
+      case 3:
+        return e.value;
+      case 4:
+        return t[e.value];
+      case 2:
+        let r = n[e.name];
+        if (r) return s(r, N(e, t, n));
+        throw Error(`Component "${e.name}" not found in registry`);
+      case 1:
+        let i = e.name,
+          a = l.has(i),
+          o = v(i),
+          c = N(e, t, n);
+        return (d(o, c, a, !0), o);
+    }
+  },
+  M = (e, t, n) => {
+    if (!e.template) return g(e.children.map((e) => j(e, t, n)));
+    let r = e.template.content.cloneNode(!0);
+    O.currentNode = r;
+    let i = (e) => {
+      for (let r of e)
+        if (r.type === 1 || r.type === 4 || r.type === 2) {
+          let e = O.nextNode();
+          if (r.type === 4 || r.type === 2) (u(e.parentNode, j(r, t, n), e), (O.currentNode = e));
+          else {
+            if (r.props.length) {
+              let i = N(r, t, n);
+              d(e, i, l.has(r.name), !0);
+            }
+            i(r.children);
+          }
+        }
+    };
+    return (i(e.children), Array.from(r.childNodes));
+  },
+  N = (e, t, n, r = {}) => {
+    for (let n of e.props)
+      switch (n.type) {
+        case 0:
+          r[n.name] = !0;
+          break;
+        case 1:
+          r[n.name] = n.value;
+          break;
+        case 2:
+          P(r, n.name, t[n.value]);
+          break;
+        case 4:
+          let e = () => n.value.map((e) => (typeof e == `number` ? _(t[e]) : e)).join(``);
+          P(r, n.name, e);
+          break;
+        case 3:
+          let i = t[n.value];
+          if (!i || typeof i != `object`) throw Error(`Can only spread objects`);
+          r = c(r, i);
+          break;
+      }
+    return (
+      e.type === 2 &&
+        e.children.length &&
+        Object.defineProperty(r, `children`, {
+          get() {
+            return M(e, t, n);
+          },
+        }),
+      r
+    );
+  },
+  P = (e, t, n) => {
+    typeof n == `function` && n.length === 0 && t !== `ref` && !t.startsWith(`on`)
+      ? Object.defineProperty(e, t, {
+          get() {
+            return n();
+          },
+          enumerable: !0,
+        })
+      : (e[t] = n);
+  },
+  F = { For: t, Index: n, Match: r, Suspense: a, ErrorBoundary: e, Show: i, Switch: o },
+  I = k(F);
+var L = I;
+const R = I.define,
+  z = (e) => (t) => s(e, t);
+export {
+  R as SLD,
+  k as createSLD,
+  L as default,
+  F as defaultComponents,
+  C as parse,
+  z as run,
+  I as sld,
+};

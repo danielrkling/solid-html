@@ -103,7 +103,17 @@ interface QuoteToken {
 interface SpreadToken {
   type: typeof SPREAD_TOKEN;
 }
-type Token = OpenTagToken | CloseTagToken | SlashToken | IdentifierToken | EqualsToken | AttributeToken | TextToken | ExpressionToken | QuoteToken | SpreadToken;
+type Token =
+  | OpenTagToken
+  | CloseTagToken
+  | SlashToken
+  | IdentifierToken
+  | EqualsToken
+  | AttributeToken
+  | TextToken
+  | ExpressionToken
+  | QuoteToken
+  | SpreadToken;
 //#endregion
 //#region src/parse.d.ts
 declare const ROOT_NODE = 0;
@@ -127,7 +137,6 @@ interface ElementNode {
   name: string;
   props: PropNode[];
   children: ChildNode[];
-  isSVG?: boolean;
 }
 interface ComponentNode {
   type: typeof COMPONENT_NODE;
@@ -205,15 +214,19 @@ declare const sld: SLDInstance<{
 /**
  * SLD factory function to create new SLD instances with built-in components.
  */
-declare const SLD: <TNew extends ComponentRegistry>(components: TNew) => SLDInstance<{
-  For: typeof For;
-  Index: typeof Index;
-  Match: typeof Match;
-  Suspense: typeof Suspense;
-  ErrorBoundary: typeof ErrorBoundary;
-  Show: typeof Show;
-  Switch: typeof Switch;
-} & TNew>;
+declare const SLD: <TNew extends ComponentRegistry>(
+  components: TNew,
+) => SLDInstance<
+  {
+    For: typeof For;
+    Index: typeof Index;
+    Match: typeof Match;
+    Suspense: typeof Suspense;
+    ErrorBoundary: typeof ErrorBoundary;
+    Show: typeof Show;
+    Switch: typeof Switch;
+  } & TNew
+>;
 /**
  * Helper function for giving better typescript to components. Wrap in createComponent but keep same signature of function. Helps for overlaods.
  * @param component Function of component

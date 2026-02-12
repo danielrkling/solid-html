@@ -3,11 +3,11 @@ import { render } from "solid-js/web";
 import { sld } from "./src";
 
 const Circle = () => {
-  return sld`<circle cx="0" cy="0" r="50" fill="red" />`
+  return sld`<circle cx="0" cy="0" r="50" fill="red" />`;
 };
 
 function Vector() {
-  return sld.define({Circle})`
+  return sld.define({ Circle })`
     <div>
       <svg width="500" height="250">
         <circle cx="0" cy="0" r="20" fill="#000" />
@@ -18,4 +18,3 @@ function Vector() {
 }
 
 render(Vector, document.getElementById("app")!);
-

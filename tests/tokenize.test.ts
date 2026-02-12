@@ -502,8 +502,7 @@ describe("expressions", () => {
     const tokens = tokenizeTemplate`<div data-my_value="test" data_other-name="value">`;
 
     const attrNames = tokens.filter(
-      (t) =>
-        t.type === IDENTIFIER_TOKEN && (t.value as string).includes("data"),
+      (t) => t.type === IDENTIFIER_TOKEN && (t.value as string).includes("data"),
     );
     expect(attrNames.length).toBeGreaterThanOrEqual(2);
   });
@@ -685,10 +684,7 @@ describe("edge cases", () => {
                   </td>
                   <td class="col-md-6" />
                 </tr>`;
-    expect(
-      tokens.filter((t) => t.type === IDENTIFIER_TOKEN && t.value === "a")
-        .length,
-    ).toBe(3);
+    expect(tokens.filter((t) => t.type === IDENTIFIER_TOKEN && t.value === "a").length).toBe(3);
   });
 });
 
@@ -838,10 +834,7 @@ describe("bad but valid syntaxes", () => {
     const tokens = tokenizeTemplate`<div a="1"b="2"c="3">`;
 
     const attrNames = tokens.filter(
-      (t) =>
-        t.type === IDENTIFIER_TOKEN &&
-        t.value &&
-        /^[abc]$/.test(t.value as string),
+      (t) => t.type === IDENTIFIER_TOKEN && t.value && /^[abc]$/.test(t.value as string),
     );
     expect(attrNames).toHaveLength(3);
   });
@@ -987,7 +980,7 @@ describe("handling of raw text elements", () => {
       { type: SLASH_TOKEN },
       { type: CLOSE_TAG_TOKEN },
       { type: TEXT_TOKEN, value: "Text" },
-    ]); 
+    ]);
   });
 });
 

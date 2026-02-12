@@ -1,24 +1,22 @@
-import { defineConfig } from 'vitest/config'
-import solidPlugin from 'vite-plugin-solid'
-import { playwright } from '@vitest/browser-playwright'
-import {preview} from "@vitest/browser-preview"
+import { defineConfig } from "vitest/config";
+import solidPlugin from "vite-plugin-solid";
+import { playwright } from "@vitest/browser-playwright";
+import { preview } from "@vitest/browser-preview";
 
 export default defineConfig({
   plugins: [solidPlugin()],
   test: {
     browser: {
       enabled: true,
-      provider: preview(), 
+      provider: preview(),
       // headless: true,
       screenshotFailures: false,
-      instances: [
-        { browser: 'chromium' },
-      ],
+      instances: [{ browser: "chromium" }],
     },
     // environment:"node",
     // include:[
     //   "./tests/parse.test.ts",
     //   "./tests/tokenize.test.ts"
     // ]
-  }
-})
+  },
+});

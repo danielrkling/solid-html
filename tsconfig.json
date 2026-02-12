@@ -1,19 +1,19 @@
 {
-    "compilerOptions": {
-        "target": "esnext",
-        "module": "esnext",
-        "declaration": true,
-        "outDir": "dist",
-        "strict": true,
-        "moduleResolution": "Node",
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true,
-        "lib": ["dom", "dom.iterable", "esnext"],
-        "baseUrl": ".",
-        "jsx": "preserve",
-        "jsxImportSource": "solid-js",
-    },
-    "include": ["src","tests"],
-    "exclude": ["node_modules", "dist"]
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "esnext",
+    "declaration": true,
+    "outDir": "dist",
+    "strict": true,
+    "moduleResolution": "Node",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "baseUrl": ".",
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js"
+  },
+  "include": ["src", "tests"],
+  "exclude": ["node_modules", "dist"]
 }

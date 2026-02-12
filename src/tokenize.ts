@@ -122,8 +122,7 @@ export const tokenize = (
           lastTagName = "";
           const nextTag = str.indexOf("<", cursor);
           if (nextTag === -1) {
-            if (cursor < len)
-              tokens.push({ type: TEXT_TOKEN, value: str.slice(cursor) });
+            if (cursor < len) tokens.push({ type: TEXT_TOKEN, value: str.slice(cursor) });
             cursor = len;
           } else {
             if (nextTag > cursor)
@@ -132,11 +131,7 @@ export const tokenize = (
                 value: str.slice(cursor, nextTag),
               });
 
-            if (
-              str[nextTag + 1] === "!" &&
-              str[nextTag + 2] === "-" &&
-              str[nextTag + 3] === "-"
-            ) {
+            if (str[nextTag + 1] === "!" && str[nextTag + 2] === "-" && str[nextTag + 3] === "-") {
               state = STATE_COMMENT;
               cursor = nextTag + 4;
             } else {
@@ -183,18 +178,13 @@ export const tokenize = (
             cursor++;
           } else if (isIdentifierStart(code)) {
             const start = cursor;
-            while (cursor < len && isIdentifierChar(str.charCodeAt(cursor)))
-              cursor++;
+            while (cursor < len && isIdentifierChar(str.charCodeAt(cursor))) cursor++;
             const value = str.slice(start, cursor);
             if (lastTagName === "") {
               lastTagName = value;
             }
             tokens.push({ type: IDENTIFIER_TOKEN, value });
-          } else if (
-            code === 46 &&
-            str[cursor + 1] === "." &&
-            str[cursor + 2] === "."
-          ) {
+          } else if (code === 46 && str[cursor + 1] === "." && str[cursor + 2] === ".") {
             // "."
             tokens.push({ type: SPREAD_TOKEN });
             cursor += 3;

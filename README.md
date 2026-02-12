@@ -27,30 +27,34 @@ function Counter() {
 }
 
 //Use component in another template by defining or inlining
-function App(){
-  return sld.define({Counter}).sld`
+function App() {
+  return sld.define({ Counter }).sld`
   <Counter />
   ${run(Counter)()}
-`
+`;
 }
 
 //Render like normal solid-js component
-render(()=>App(),document.body)
+render(() => App(), document.body);
 ```
+
 ## Syntax
 
 ### Text & Whitespace
+
 - Text in the template gets set via innerHTML so it will decode html encoded characters. You really only need this for < `&lt;` and > `&gt;` and sometimes spaces (&nbsp;)
 - Pure whitepace between elements is ignored in the AST. Leading and Trailing Whitespace is omitted when there is at least one expression in it.
 - When in doubt set text via expression to ensure exact match.
 
 ### Elements && Component Tags
-- Tag names must start with `a-zA-Z$_` and then can  have `a-zA-Z0-9$.:-_` characters.
+
+- Tag names must start with `a-zA-Z$_` and then can have `a-zA-Z0-9$.:-_` characters.
 - Elements/Components must be self closing `<div />` or matched closing `<div></div>`
 - Capital tags are treated as components and will throw if now registered `<ComponentA></ComponentA>` or `<ComponentA />`
 - Content between tags is treated as children. Will return an array unless only a single child node (text,elem, or expression)
 
 ### Attributes & Properties
+
 - `<input value="Hello World" />` - static string property
 - `<input value='Hello World' />` - static string property
 - `<input disabled />` - static boolean property
@@ -83,37 +87,35 @@ sld`<button count=${() => count()}  />`;
 sld`<button count=${count} />`;
 
 //Add ()=> to avoid Counter possibly getting auto-wrapped
-sld`<Route component=${()=>Counter} />`
+sld`<Route component=${() => Counter} />`;
 
 //Using the run helper with getters. (TS support)
 //reactive props must be read in getters.
-const [show,setShow] = createSignal(true)
+const [show, setShow] = createSignal(true);
 sld`<div>
   ${run(Show)({
-    get when(){
-      return show()
+    get when() {
+      return show();
     },
-    children: "Hello World"
+    children: "Hello World",
   })}
-</div>`
+</div>`;
 //vs
 sld`<div>
   <Show when=${show}>
     Hello World
   </Show>
-</div>`
-
+</div>`;
 ```
-
 
 ## JSX vs SLD
 
-| Feature | Solid JSX | `sld` Tagged Template |
-| :--- | :--- | :--- |
-| **Fragments** | Required: `<>...</>` for multiple root nodes | **None needed**: Returns a flat array of nodes |
-| **Dot Notation** | Supported: `<Input.Label />` | **Supported**: `.` is valid in identifier tokens |
-| **Mixed Attributes** | Requires template literals: `class=${`btn ${p}`}` | **Native**: `class="btn ${p}"` is handled by the parser |
-| **Spread Syntax** | `<div {...props} />` | `<div ...${props} />` |
-| **Comments** | `{/* JSX Comment */}` | `<!-- -->` (Stripped by parser) |
-| **Raw Text Tags** | Escaping or `innerHTML` required | **Automatic**: `<style>`/`<script>` treat children as text |
-| **Whitespace** | JSX-style stripping | Contextual: Trims between tags, preserves inside text |
+| Feature              | Solid JSX                                         | `sld` Tagged Template                                      |
+| :------------------- | :------------------------------------------------ | :--------------------------------------------------------- |
+| **Fragments**        | Required: `<>...</>` for multiple root nodes      | **None needed**: Returns a flat array of nodes             |
+| **Dot Notation**     | Supported: `<Input.Label />`                      | **Supported**: `.` is valid in identifier tokens           |
+| **Mixed Attributes** | Requires template literals: `class=${`btn ${p}`}` | **Native**: `class="btn ${p}"` is handled by the parser    |
+| **Spread Syntax**    | `<div {...props} />`                              | `<div ...${props} />`                                      |
+| **Comments**         | `{/* JSX Comment */}`                             | `<!-- -->` (Stripped by parser)                            |
+| **Raw Text Tags**    | Escaping or `innerHTML` required                  | **Automatic**: `<style>`/`<script>` treat children as text |
+| **Whitespace**       | JSX-style stripping                               | Contextual: Trims between tags, preserves inside text      |

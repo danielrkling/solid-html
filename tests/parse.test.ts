@@ -23,7 +23,7 @@ describe("Simple AST", () => {
     const ast = jsx`Hello World!`;
     expect(ast).toEqual({
       type: ROOT_NODE,
-      children: [{ type: TEXT_NODE,  value: "Hello World!" }],
+      children: [{ type: TEXT_NODE, value: "Hello World!" }],
     });
   });
 
@@ -31,7 +31,7 @@ describe("Simple AST", () => {
     const ast = jsx`<div></div>`;
     expect(ast).toEqual({
       type: ROOT_NODE,
-      children: [{ type: ELEMENT_NODE,  name: "div", props: [], children: [], }],
+      children: [{ type: ELEMENT_NODE, name: "div", props: [], children: [] }],
     });
   });
 
@@ -41,7 +41,7 @@ describe("Simple AST", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "div",
           props: [],
           children: [{ type: TEXT_NODE, value: "Hello" }],
@@ -57,7 +57,7 @@ describe("Simple AST", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "div",
           props: [],
           children: [
@@ -73,9 +73,7 @@ describe("Simple AST", () => {
     const ast = jsx`<input />`;
     expect(ast).toEqual({
       type: ROOT_NODE,
-      children: [
-        { type: ELEMENT_NODE,  name: "input", props: [], children: [] },
-      ],
+      children: [{ type: ELEMENT_NODE, name: "input", props: [], children: [] }],
     });
   });
 
@@ -89,12 +87,12 @@ describe("Simple AST", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "div",
           props: [],
           children: [
             {
-              type: ELEMENT_NODE, 
+              type: ELEMENT_NODE,
               name: "span",
               props: [],
               children: [{ type: TEXT_NODE, value: "text" }],
@@ -113,7 +111,7 @@ describe("Attributes", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "div",
           props: [{ name: "id", type: STATIC_PROP, value: "app", quote: '"' }],
           children: [],
@@ -128,7 +126,7 @@ describe("Attributes", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "div",
           props: [{ name: "id", type: STATIC_PROP, value: "app", quote: "'" }],
           children: [],
@@ -144,7 +142,7 @@ describe("Attributes", () => {
       children: [
         {
           type: ELEMENT_NODE,
-          
+
           name: "input",
           props: [{ name: "checked", type: BOOLEAN_PROP, value: true }],
           children: [],
@@ -160,7 +158,7 @@ describe("Attributes", () => {
       children: [
         {
           type: ELEMENT_NODE,
-          
+
           name: "button",
           props: [{ name: "checked", type: BOOLEAN_PROP, value: true }],
           children: [],
@@ -177,7 +175,7 @@ describe("Attributes", () => {
       children: [
         {
           type: ELEMENT_NODE,
-          
+
           name: "div",
           props: [{ name: "id", type: EXPRESSION_PROP, value: 0 }],
           children: [],
@@ -194,7 +192,7 @@ describe("Attributes", () => {
       children: [
         {
           type: ELEMENT_NODE,
-          
+
           name: "div",
           props: [{ name: "id", type: EXPRESSION_PROP, value: 0, quote: '"' }],
           children: [],
@@ -211,7 +209,7 @@ describe("Attributes", () => {
       children: [
         {
           type: ELEMENT_NODE,
-          
+
           name: "div",
           props: [{ name: "id", type: EXPRESSION_PROP, value: 0, quote: "'" }],
           children: [],
@@ -227,7 +225,7 @@ describe("Attributes", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "div",
           props: [
             {
@@ -243,8 +241,6 @@ describe("Attributes", () => {
     });
   });
 
-
-
   it("mixed attribute (string + expression) with single quotes", () => {
     const active = true;
     const ast = jsx`<div class='btn ${active ? "active" : ""}'></div>`;
@@ -252,7 +248,7 @@ describe("Attributes", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "div",
           props: [
             {
@@ -275,7 +271,7 @@ describe("Attributes", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "div",
           props: [
             {
@@ -291,15 +287,15 @@ describe("Attributes", () => {
     });
   });
 
-  it("mixed attributes",()=>{
+  it("mixed attributes", () => {
     const ast = jsx`
         <h1 title="${1} John ${"Smith"}"></h1>
-      `
+      `;
     expect(ast).toEqual({
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "h1",
           props: [
             {
@@ -313,7 +309,7 @@ describe("Attributes", () => {
         },
       ],
     });
-  })
+  });
 
   it("multiple attributes", () => {
     const value = "test";
@@ -322,7 +318,7 @@ describe("Attributes", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "input",
           props: [
             { name: "type", type: STATIC_PROP, value: "text", quote: '"' },
@@ -335,7 +331,6 @@ describe("Attributes", () => {
     });
   });
 
-
   it("spread attribute with ...", () => {
     const id = "my-id";
     const ast = jsx`<div ...${id}></div>`;
@@ -343,7 +338,7 @@ describe("Attributes", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "div",
           props: [{ type: SPREAD_PROP, value: 0 }],
           children: [],
@@ -361,7 +356,7 @@ describe("whitespace handling", () => {
       children: [
         { type: TEXT_NODE, value: "  Hello " },
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "div",
           props: [],
           children: [{ type: TEXT_NODE, value: "   Hello   World   " }],
@@ -379,7 +374,7 @@ describe("whitespace handling", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "div",
           props: [],
           children: [{ type: TEXT_NODE, value: "Hello World" }],
@@ -394,7 +389,7 @@ describe("whitespace handling", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "div",
           props: [],
           children: [{ type: TEXT_NODE, value: "   Hello   World   " }],
@@ -411,7 +406,7 @@ describe("whitespace handling", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "div",
           props: [],
           children: [
@@ -422,7 +417,7 @@ describe("whitespace handling", () => {
        `,
             },
             {
-              type: ELEMENT_NODE, 
+              type: ELEMENT_NODE,
               name: "span",
               props: [],
               children: [{ type: TEXT_NODE, value: "!" }],
@@ -440,7 +435,7 @@ describe("whitespace handling", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "div",
           props: [],
           children: [
@@ -462,7 +457,7 @@ describe("whitespace handling", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "div",
           props: [],
           children: [{ type: EXPRESSION_NODE, value: 0 }],
@@ -471,7 +466,7 @@ describe("whitespace handling", () => {
     });
   });
 
-    it("trims whitespace-only text nodes around expressions", () => {
+  it("trims whitespace-only text nodes around expressions", () => {
     const name = "User";
     const ast = jsx`   ${name}   `;
     expect(ast).toEqual({
@@ -500,7 +495,7 @@ describe("whitespace handling", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "div",
           props: [],
           children: [
@@ -530,18 +525,18 @@ describe("Complex Examples", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "div",
           props: [{ name: "id", type: STATIC_PROP, value: "root", quote: '"' }],
           children: [
             {
-              type: ELEMENT_NODE, 
+              type: ELEMENT_NODE,
               name: "h1",
               props: [],
               children: [{ type: EXPRESSION_NODE, value: 0 }],
             },
             {
-              type: ELEMENT_NODE, 
+              type: ELEMENT_NODE,
               name: "p",
               props: [],
               children: [
@@ -569,24 +564,24 @@ describe("Complex Examples", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "ul",
           props: [],
           children: [
             {
-              type: ELEMENT_NODE, 
+              type: ELEMENT_NODE,
               name: "li",
               props: [],
               children: [{ type: EXPRESSION_NODE, value: 0 }],
             },
             {
-              type: ELEMENT_NODE, 
+              type: ELEMENT_NODE,
               name: "li",
               props: [],
               children: [{ type: EXPRESSION_NODE, value: 1 }],
             },
             {
-              type: ELEMENT_NODE, 
+              type: ELEMENT_NODE,
               name: "li",
               props: [],
               children: [{ type: EXPRESSION_NODE, value: 2 }],
@@ -607,13 +602,12 @@ describe("Specialized Element AST", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "div",
           props: [],
           children: [
-
             {
-              type: ELEMENT_NODE, 
+              type: ELEMENT_NODE,
               name: "img",
               props: [
                 {
@@ -639,7 +633,7 @@ describe("Specialized Element AST", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "textarea",
           props: [],
           children: [
@@ -666,7 +660,7 @@ describe("Specialized Element AST", () => {
       type: ROOT_NODE,
       children: [
         {
-          type: ELEMENT_NODE, 
+          type: ELEMENT_NODE,
           name: "input",
           props: [
             {
@@ -688,8 +682,6 @@ describe("Specialized Element AST", () => {
   });
 });
 
-
-
 describe("Edge Cases", () => {
   it("empty template", () => {
     const ast = jsx``;
@@ -707,39 +699,37 @@ describe("Edge Cases", () => {
       ],
     });
   });
-
-
 });
 
-describe("Errors",()=>{
-  it("error on open tag",()=>{
-    expect(()=>jsx`<div`).toThrow()
-  })
+describe("Errors", () => {
+  it("error on open tag", () => {
+    expect(() => jsx`<div`).toThrow();
+  });
 
-  it("error on mismatched tag",()=>{
-    expect(()=>jsx`<div></span>`).toThrow()
-  })
+  it("error on mismatched tag", () => {
+    expect(() => jsx`<div></span>`).toThrow();
+  });
 
-  it("error on extra <",()=>{
-    expect(()=>jsx`<div><</span>`).toThrow()
-  })
+  it("error on extra <", () => {
+    expect(() => jsx`<div><</span>`).toThrow();
+  });
 
-  it("error on bad tag name",()=>{
-    expect(()=>jsx`<1div><</1div>`).toThrow()
-  })
+  it("error on bad tag name", () => {
+    expect(() => jsx`<1div><</1div>`).toThrow();
+  });
 
-  it("error on unclosed tags",()=>{
-    expect(()=>jsx`<div>`).toThrow()
-  })
+  it("error on unclosed tags", () => {
+    expect(() => jsx`<div>`).toThrow();
+  });
 
-  it("error on spread without expression",()=>{
-    expect(()=>jsx`<div ... bool></div>`).toThrow()
-  })
+  it("error on spread without expression", () => {
+    expect(() => jsx`<div ... bool></div>`).toThrow();
+  });
 
-  it("error on unmatched close",()=>{
-    expect(()=>jsx`</div>`).toThrow()
-  })
-})
+  it("error on unmatched close", () => {
+    expect(() => jsx`</div>`).toThrow();
+  });
+});
 
 describe("Advanced Parser Edge Cases", () => {
   describe("Spread Attributes", () => {
@@ -747,7 +737,7 @@ describe("Advanced Parser Edge Cases", () => {
       const props1 = { class: "first" };
       const props2 = { id: "second" };
       const ast = jsx`<div ...${props1} ...${props2}></div>`;
-      
+
       expect(ast).toEqual({
         type: ROOT_NODE,
         children: [
@@ -756,7 +746,7 @@ describe("Advanced Parser Edge Cases", () => {
             name: "div",
             props: [
               { type: SPREAD_PROP, value: 0 },
-              { type: SPREAD_PROP, value: 1 }
+              { type: SPREAD_PROP, value: 1 },
             ],
             children: [],
           },
@@ -767,7 +757,7 @@ describe("Advanced Parser Edge Cases", () => {
     it("handles spread with mixed other attributes", () => {
       const props = { class: "dynamic", "data-test": "value" };
       const ast = jsx`<div id="static" ...${props} required></div>`;
-      
+
       expect(ast).toEqual({
         type: ROOT_NODE,
         children: [
@@ -777,7 +767,7 @@ describe("Advanced Parser Edge Cases", () => {
             props: [
               { name: "id", type: STATIC_PROP, value: "static", quote: '"' },
               { type: SPREAD_PROP, value: 0 },
-              { name: "required", type: BOOLEAN_PROP, value: true }
+              { name: "required", type: BOOLEAN_PROP, value: true },
             ],
             children: [],
           },
@@ -788,7 +778,7 @@ describe("Advanced Parser Edge Cases", () => {
     it("handles spread in quoted attribute context", () => {
       const props = { class: "test" };
       const ast = jsx`<div class="prefix-${props}-suffix"></div>`;
-      
+
       expect(ast).toEqual({
         type: ROOT_NODE,
         children: [
@@ -815,7 +805,7 @@ describe("Advanced Parser Edge Cases", () => {
       const firstName = "John";
       const lastName = "Doe";
       const ast = jsx`<div title="${firstName} ${lastName}"></div>`;
-      
+
       expect(ast).toEqual({
         type: ROOT_NODE,
         children: [
@@ -840,7 +830,7 @@ describe("Advanced Parser Edge Cases", () => {
       const getValue = () => "test";
       const prefix = "pre-";
       const ast = jsx`<div class="${prefix}${getValue()}"></div>`;
-      
+
       expect(ast).toEqual({
         type: ROOT_NODE,
         children: [
@@ -865,7 +855,7 @@ describe("Advanced Parser Edge Cases", () => {
       const part1 = "hello";
       const part2 = "world";
       const ast = jsx`<div class="${part1}${part2}"></div>`;
-      
+
       expect(ast).toEqual({
         type: ROOT_NODE,
         children: [
@@ -890,16 +880,14 @@ describe("Advanced Parser Edge Cases", () => {
   describe("Special Tag Names and Namespaces", () => {
     it("handles custom elements with hyphens", () => {
       const ast = jsx`<my-custom-element attr="value"></my-custom-element>`;
-      
+
       expect(ast).toEqual({
         type: ROOT_NODE,
         children: [
           {
             type: ELEMENT_NODE,
             name: "my-custom-element",
-            props: [
-              { name: "attr", type: STATIC_PROP, value: "value", quote: '"' }
-            ],
+            props: [{ name: "attr", type: STATIC_PROP, value: "value", quote: '"' }],
             children: [],
           },
         ],
@@ -908,7 +896,7 @@ describe("Advanced Parser Edge Cases", () => {
 
     it("handles namespaced tags", () => {
       const ast = jsx`<svg:rect x="10" y="20"></svg:rect>`;
-      
+
       expect(ast).toEqual({
         type: ROOT_NODE,
         children: [
@@ -917,7 +905,7 @@ describe("Advanced Parser Edge Cases", () => {
             name: "svg:rect",
             props: [
               { name: "x", type: STATIC_PROP, value: "10", quote: '"' },
-              { name: "y", type: STATIC_PROP, value: "20", quote: '"' }
+              { name: "y", type: STATIC_PROP, value: "20", quote: '"' },
             ],
             children: [],
           },
@@ -927,7 +915,7 @@ describe("Advanced Parser Edge Cases", () => {
 
     it("handles foreignObject in SVG", () => {
       const ast = jsx`<svg><foreignObject><div>HTML content</div></foreignObject></svg>`;
-      
+
       expect(ast).toEqual({
         type: ROOT_NODE,
         children: [
@@ -945,9 +933,7 @@ describe("Advanced Parser Edge Cases", () => {
                     type: ELEMENT_NODE,
                     name: "div",
                     props: [],
-                    children: [
-                      { type: TEXT_NODE, value: "HTML content" }
-                    ],
+                    children: [{ type: TEXT_NODE, value: "HTML content" }],
                   },
                 ],
               },
@@ -963,7 +949,7 @@ describe("Advanced Parser Edge Cases", () => {
       const items = ["a", "b", "c"];
       const separator = ", ";
       const ast = jsx`${items[0]}${separator}${items[1]}${separator}${items[2]}`;
-      
+
       expect(ast).toEqual({
         type: ROOT_NODE,
         children: [
@@ -978,7 +964,7 @@ describe("Advanced Parser Edge Cases", () => {
 
     it("handles text with HTML entities", () => {
       const ast = jsx`<div>Use &lt; and &gt; for brackets</div>`;
-      
+
       expect(ast).toEqual({
         type: ROOT_NODE,
         children: [
@@ -986,9 +972,7 @@ describe("Advanced Parser Edge Cases", () => {
             type: ELEMENT_NODE,
             name: "div",
             props: [],
-            children: [
-              { type: TEXT_NODE, value: "Use &lt; and &gt; for brackets" }
-            ],
+            children: [{ type: TEXT_NODE, value: "Use &lt; and &gt; for brackets" }],
           },
         ],
       });
@@ -996,7 +980,7 @@ describe("Advanced Parser Edge Cases", () => {
 
     it("handles text with numeric character references", () => {
       const ast = jsx`<div>Copyright &#169; 2023</div>`;
-      
+
       expect(ast).toEqual({
         type: ROOT_NODE,
         children: [
@@ -1004,9 +988,7 @@ describe("Advanced Parser Edge Cases", () => {
             type: ELEMENT_NODE,
             name: "div",
             props: [],
-            children: [
-              { type: TEXT_NODE, value: "Copyright &#169; 2023" }
-            ],
+            children: [{ type: TEXT_NODE, value: "Copyright &#169; 2023" }],
           },
         ],
       });
@@ -1032,18 +1014,18 @@ describe("Advanced Parser Edge Cases", () => {
           </section>
         </div>
       `;
-      
+
       const divChild = ast.children[0] as any;
       const sectionChild = divChild.children[0] as any;
       const articleChild = sectionChild.children[0] as any;
-      
+
       expect(articleChild.name).toBe("article");
       expect(articleChild.children.length).toBe(3);
     });
 
     it("handles sibling elements at root", () => {
       const ast = jsx`<div>First</div><span>Second</span><p>Third</p>`;
-      
+
       expect(ast.children).toHaveLength(3);
       expect((ast.children[0] as any).name).toBe("div");
       expect((ast.children[1] as any).name).toBe("span");
@@ -1052,7 +1034,7 @@ describe("Advanced Parser Edge Cases", () => {
 
     it("handles mixed text and elements at root", () => {
       const ast = jsx`Before<div>Element</div>After`;
-      
+
       expect(ast.children).toHaveLength(3);
       expect((ast.children[0] as any).type).toBe(TEXT_NODE);
       expect((ast.children[1] as any).type).toBe(ELEMENT_NODE);
@@ -1063,7 +1045,7 @@ describe("Advanced Parser Edge Cases", () => {
   describe("Void and Raw Text Elements", () => {
     it("handles void elements with attributes and self-closing syntax", () => {
       const ast = jsx`<img src="test.jpg" alt="Test Image" />`;
-      
+
       expect(ast).toEqual({
         type: ROOT_NODE,
         children: [
@@ -1072,7 +1054,7 @@ describe("Advanced Parser Edge Cases", () => {
             name: "img",
             props: [
               { name: "src", type: STATIC_PROP, value: "test.jpg", quote: '"' },
-              { name: "alt", type: STATIC_PROP, value: "Test Image", quote: '"' }
+              { name: "alt", type: STATIC_PROP, value: "Test Image", quote: '"' },
             ],
             children: [],
           },
@@ -1082,7 +1064,7 @@ describe("Advanced Parser Edge Cases", () => {
 
     it("handles void elements without explicit slash", () => {
       const ast = jsx`<br></br>`;
-      
+
       expect(ast).toEqual({
         type: ROOT_NODE,
         children: [
@@ -1102,8 +1084,10 @@ describe("Advanced Parser Edge Cases", () => {
           return x < y && z > w;
         }
       </script>`;
-      
-      expect(((ast.children[0] as any).children[0] as any).value).toContain("return x < y && z > w;");
+
+      expect(((ast.children[0] as any).children[0] as any).value).toContain(
+        "return x < y && z > w;",
+      );
     });
 
     it("handles style element with CSS content", () => {
@@ -1113,7 +1097,7 @@ describe("Advanced Parser Edge Cases", () => {
           .responsive { display: block; }
         }
       </style>`;
-      
+
       const styleContent = ((ast.children[0] as any).children[0] as any).value;
       expect(styleContent).toContain(".class > .child");
       expect(styleContent).toContain("@media");
@@ -1124,16 +1108,14 @@ describe("Advanced Parser Edge Cases", () => {
     it("handles on: namespace for events", () => {
       const handler = () => {};
       const ast = jsx`<div on:click=${handler}></div>`;
-      
+
       expect(ast).toEqual({
         type: ROOT_NODE,
         children: [
           {
             type: ELEMENT_NODE,
             name: "div",
-            props: [
-              { name: "on:click", type: EXPRESSION_PROP, value: 0 }
-            ],
+            props: [{ name: "on:click", type: EXPRESSION_PROP, value: 0 }],
             children: [],
           },
         ],
@@ -1143,7 +1125,7 @@ describe("Advanced Parser Edge Cases", () => {
     it("handles prop: and attr: namespaces", () => {
       const value = "test";
       const ast = jsx`<input prop:value=${value} attr:title="Title"></input>`;
-      
+
       expect(ast).toEqual({
         type: ROOT_NODE,
         children: [
@@ -1152,7 +1134,7 @@ describe("Advanced Parser Edge Cases", () => {
             name: "input",
             props: [
               { name: "prop:value", type: EXPRESSION_PROP, value: 0 },
-              { name: "attr:title", type: STATIC_PROP, value: "Title", quote: '"' }
+              { name: "attr:title", type: STATIC_PROP, value: "Title", quote: '"' },
             ],
             children: [],
           },
@@ -1163,16 +1145,14 @@ describe("Advanced Parser Edge Cases", () => {
     it("handles ref attribute", () => {
       const ref = (el: HTMLElement) => {};
       const ast = jsx`<div ref=${ref}></div>`;
-      
+
       expect(ast).toEqual({
         type: ROOT_NODE,
         children: [
           {
             type: ELEMENT_NODE,
             name: "div",
-            props: [
-              { name: "ref", type: EXPRESSION_PROP, value: 0 }
-            ],
+            props: [{ name: "ref", type: EXPRESSION_PROP, value: 0 }],
             children: [],
           },
         ],
@@ -1183,13 +1163,13 @@ describe("Advanced Parser Edge Cases", () => {
   describe("Error Recovery and Edge Cases", () => {
     it("handles attributes with special characters", () => {
       const ast = jsx`<div data-attr_with.special:chars="value"></div>`;
-      
+
       expect(((ast.children[0] as any).props[0] as any).name).toBe("data-attr_with.special:chars");
     });
 
     it("handles unusual attribute values", () => {
       const ast = jsx`<div data-empty="" data-null="${null}" data-undefined="${undefined}"></div>`;
-      
+
       expect(((ast.children[0] as any).props[0] as any).value).toBe("");
     });
 
@@ -1197,14 +1177,14 @@ describe("Advanced Parser Edge Cases", () => {
       const baseProps = { class: "base", id: "test" };
       const additionalProps = { "data-info": "additional" };
       const dynamicClass = "dynamic";
-      
+
       const ast = jsx`<div 
         class="static ${dynamicClass}"
         ...${baseProps}
         ...${additionalProps}
         id="override"
       ></div>`;
-      
+
       const elementProps = (ast.children[0] as any).props;
       expect(elementProps).toHaveLength(4);
       expect(elementProps[0].type).toBe(MIXED_PROP);
